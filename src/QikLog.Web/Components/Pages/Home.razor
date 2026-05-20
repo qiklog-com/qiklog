@@ -1,0 +1,28 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>QikLog</PageTitle>
+
+<FluentCard Style="max-width: 720px; margin: 2rem auto; padding: 2rem;">
+    <h1 style="margin-top: 0;">QikLog</h1>
+    <p>
+        Lightweight log tailing for developers who want to see what their app is doing right now —
+        without setting up Datadog.
+    </p>
+    <p style="opacity: 0.8;">
+        This is the pre-alpha Hello World. Send a log via curl and watch it appear on the tail page in real time.
+    </p>
+
+    <h3>Try it</h3>
+    <FluentCard Style="background: var(--neutral-fill-secondary-rest); padding: 1rem; margin-bottom: 1rem;">
+        <code style="white-space: pre; display: block; font-family: 'Consolas', 'Monaco', monospace;">
+curl -X POST http://localhost:5080/v1/logs \
+  -H "Content-Type: application/json" \
+  -d '{"source":"demo","level":2,"message":"hello from curl"}'
+        </code>
+    </FluentCard>
+
+    <FluentButton Appearance="Appearance.Accent" Href="/tail/demo">
+        Open live tail for "demo"
+    </FluentButton>
+</FluentCard>

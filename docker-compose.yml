@@ -1,0 +1,61 @@
+# `docker compose up` to run the whole stack locally.
+# Postgres and Redis are scaffolded for Phase 2 (persistence + caching).
+# They run now so connection strings line up later; the Hello World API ignores them.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: qiklog
+      POSTGRES_PASSWORD: qiklog_dev
+      POSTGRES_DB: qiklog
+    ports:
+      - "5432:5432"
+    volumes:
+      - qiklog_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qiklog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/QikLog.Api/Dockerfile
+    ports:
+      - "5080:5080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Postgres: "Host=postgres;Database=qiklog;Username=qiklog;Password=qiklog_dev"
+      ConnectionStrings__Redis: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: src/QikLog.Web/Dockerfile
+    ports:
+      - "5081:5081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      QikLog__ApiBaseUrl: "http://api:5080"
+    depends_on:
+      - api
+
+volumes:
+  qiklog_pg_data:

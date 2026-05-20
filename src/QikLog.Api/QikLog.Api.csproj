@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>QikLog.Api</RootNamespace>
+    <AssemblyName>QikLog.Api</AssemblyName>
+    <UserSecretsId>qiklog-api-dev</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QikLog.Core\QikLog.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- SignalR is built into ASP.NET Core; no extra package needed for server side -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+  </ItemGroup>
+</Project>

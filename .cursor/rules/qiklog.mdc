@@ -1,0 +1,89 @@
+---
+description: QikLog project conventions and architecture context
+alwaysApply: true
+---
+
+# QikLog — Cursor context
+
+You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS aimed at developers who want to see what their app is doing in real time without setting up Datadog or Grafana. Indie/.NET-first positioning.
+
+## Stack (all Microsoft, all the time)
+
+- **.NET 9 LTS** for everything (Core lib, API, Web, CLI)
+- **ASP.NET Core minimal APIs** for `QikLog.Api`
+- **SignalR** for real-time log streaming (not raw SSE — we use SignalR for built-in reconnect, grouping, and Blazor symmetry)
+- **Blazor Server** + **Fluent UI Blazor** for the dashboard (`QikLog.Web`)
+- **System.CommandLine** for the CLI (`QikLog.Cli`), published as a single-file self-contained executable
+- **PostgreSQL 16** for persistent storage (Phase 2+)
+- **Redis 7** for hot buffers, rate limiting, SignalR backplane when scaling (Phase 2+)
+- **Docker Compose** for local dev
+- **xUnit + Shouldly** for tests
+- **GitHub Actions** for CI
+- **Azure Container Apps** for production hosting (Phase 4+)
+
+## Project layout
+
+- `src/QikLog.Core/` — domain models, validation, contracts. Reference target for everything else. No web/IO dependencies.
+- `src/QikLog.Api/` — minimal API + SignalR `LogHub`. Stateless except for in-memory state during MVP.
+- `src/QikLog.Web/` — Blazor Server dashboard. Uses SignalR client to subscribe to `LogHub`.
+- `src/QikLog.Cli/` — `qiklog send`, `qiklog tail-file`, more later.
+- `tests/QikLog.Core.Tests/` — unit tests; add API/Web test projects as those grow.
+
+## Coding conventions
+
+- File-scoped namespaces always.
+- `sealed` by default on classes and records — open them only when there's a real reason.
+- Records for DTOs and value objects; classes for entities with identity.
+- Nullable reference types enabled and warnings as errors. Don't suppress with `!` unless there's a comment explaining why.
+- Use primary constructors and collection expressions (C# 12/13 features) freely.
+- `var` is fine when the type is obvious from the right-hand side; explicit type when it aids readability.
+- Async all the way down. No `.Result` or `.Wait()`. Pass `CancellationToken` through every async call.
+- DI via constructor injection. No service locator pattern.
+- Logging via `ILogger<T>`. Structured logging with named placeholders, never string interpolation:
+  - Good: `_log.LogInformation("Ingested {Count} entries for {Source}", count, source);`
+  - Bad: `_log.LogInformation($"Ingested {count} entries for {source}");`
+- Tests use `Shouldly` for assertions (`result.ShouldBe(expected)`), not `Assert.Equal`.
+
+## Naming
+
+- Public API surface: `PascalCase`, no Hungarian, no `I` prefix on records.
+- Private fields: `_camelCase` with leading underscore.
+- SignalR groups: `source:{name}` convention. Keep names grep-able.
+- Configuration keys: `QikLog:Section:Key` in `appsettings.json`, `QikLog__Section__Key` as env vars.
+
+## What we are NOT building right now
+
+When suggesting code, do not add:
+- Authentication / authorization (coming Phase 2)
+- Multi-tenancy enforcement (coming Phase 2)
+- Persistence beyond in-memory (coming Phase 2)
+- Alerts / webhooks (Phase 3)
+- Billing / Stripe (Phase 4)
+- Agents in other languages (Phase 2+)
+
+If a task seems to need one of those, flag it and ask before scaffolding it in. Premature scope creep is the enemy.
+
+## Working with Jamey
+
+- He's a Principal Systems Architect with 30+ years of .NET. Default to senior-engineer-level explanations. Skip basics unless asked.
+- He prefers direct answers with no preamble. Cut the "Great question!" and "I'd be happy to help" stuff.
+- When he asks for code, deliver code. When he asks for an opinion, give him the opinion before the caveat.
+- Disagreement is welcome. If he proposes something that has a real downside, say so before writing it.
+- Files are preferred over inline code dumps for anything substantial.
+- He cares about deliverable craft. Read existing files before editing; match the style that's there.
+- The Bobiverse metaphor is canon: Garfield (Cursor/this assistant) is the implementer Bob. Bill (the assistant on qiklog.com later) is the interview twin. Reference is fine, don't overdo it.
+
+## Definition of done for a feature
+
+1. Code compiles with zero warnings (warnings are errors here).
+2. Unit tests cover the happy path and at least one failure case.
+3. Public APIs have XML doc comments.
+4. `docker compose up` still works end-to-end.
+5. The README quickstart still demonstrates the system correctly.
+
+## When in doubt
+
+- Smaller changes are better than larger ones.
+- Working code is better than clever code.
+- Boring is better than novel.
+- Ask before adding a NuGet dependency.

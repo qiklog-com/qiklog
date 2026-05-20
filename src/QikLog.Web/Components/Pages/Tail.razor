@@ -1,0 +1,127 @@
+@page "/tail/{Source}"
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
+
+<PageTitle>tail @Source &middot; QikLog</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Style="padding: 1rem;">
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center">
+        <h2 style="margin: 0;">tail <code>@Source</code></h2>
+        <FluentSpacer />
+        <FluentBadge Appearance="@StatusAppearance">@StatusText</FluentBadge>
+        <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
+        <FluentButton OnClick="ClearBuffer" IconStart="@(new Icons.Regular.Size16.Delete())">Clear</FluentButton>
+    </FluentStack>
+
+    <FluentCard Style="padding: 0; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d;">
+        <div id="tail-viewport" style="height: 70vh; overflow-y: auto; padding: 1rem; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; line-height: 1.5;">
+            @if (_entries.Count == 0)
+            {
+                <div style="opacity: 0.6; padding: 1rem;">
+                    Waiting for logs on source <code>@Source</code>...
+                </div>
+            }
+            else
+            {
+                @foreach (var entry in _entries)
+                {
+                    <div style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
+                        <span style="opacity: 0.5; white-space: nowrap;">@entry.Timestamp.ToString("HH:mm:ss.fff")</span>
+                        <span style="@LevelStyle(entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(entry.Level)</span>
+                        <span style="white-space: pre-wrap; word-break: break-word;">@entry.Message</span>
+                    </div>
+                }
+            }
+        </div>
+    </FluentCard>
+
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="opacity: 0.7; font-size: 0.85rem;">
+        <span>@_entries.Count entries buffered</span>
+        <span>&middot;</span>
+        <span>Buffer cap: @BufferCap (oldest drop)</span>
+    </FluentStack>
+</FluentStack>
+
+@code {
+    [Parameter] public string Source { get; set; } = "";
+
+    private const int BufferCap = 500;
+    private readonly LinkedList<LogEntry> _entries = new();
+    private HubConnection? _hub;
+    private bool AutoScroll { get; set; } = true;
+
+    private string StatusText => _hub?.State switch
+    {
+        HubConnectionState.Connected => "connected",
+        HubConnectionState.Connecting => "connecting",
+        HubConnectionState.Reconnecting => "reconnecting",
+        HubConnectionState.Disconnected => "disconnected",
+        _ => "unknown"
+    };
+
+    private Appearance StatusAppearance => _hub?.State == HubConnectionState.Connected
+        ? Appearance.Accent
+        : Appearance.Neutral;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
+        _hub = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/hubs/logs")
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<LogEntry>("LogReceived", entry =>
+        {
+            _entries.AddLast(entry);
+            while (_entries.Count > BufferCap)
+                _entries.RemoveFirst();
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hub.Reconnected += _ => InvokeAsync(StateHasChanged);
+        _hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
+        _hub.Closed += _ => InvokeAsync(StateHasChanged);
+
+        await _hub.StartAsync();
+        await _hub.InvokeAsync("Subscribe", Source);
+    }
+
+    private void ClearBuffer()
+    {
+        _entries.Clear();
+        StateHasChanged();
+    }
+
+    private static string LevelLabel(LogLevel level) => level switch
+    {
+        LogLevel.Trace => "TRACE",
+        LogLevel.Debug => "DEBUG",
+        LogLevel.Info => "INFO",
+        LogLevel.Warning => "WARN",
+        LogLevel.Error => "ERROR",
+        LogLevel.Critical => "CRIT",
+        _ => level.ToString().ToUpperInvariant()
+    };
+
+    private static string LevelStyle(LogLevel level) => level switch
+    {
+        LogLevel.Trace => "color: #6e7681;",
+        LogLevel.Debug => "color: #79c0ff;",
+        LogLevel.Info => "color: #56d364;",
+        LogLevel.Warning => "color: #d29922;",
+        LogLevel.Error => "color: #f85149;",
+        LogLevel.Critical => "color: #ff7b72; text-shadow: 0 0 4px rgba(248,81,73,0.5);",
+        _ => ""
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null)
+        {
+            try { await _hub.InvokeAsync("Unsubscribe", Source); } catch { /* connection may be gone */ }
+            await _hub.DisposeAsync();
+        }
+    }
+}
