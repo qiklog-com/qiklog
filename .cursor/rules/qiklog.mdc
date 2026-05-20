@@ -40,8 +40,8 @@ You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS
 - Async all the way down. No `.Result` or `.Wait()`. Pass `CancellationToken` through every async call.
 - DI via constructor injection. No service locator pattern.
 - Logging via `ILogger<T>`. Structured logging with named placeholders, never string interpolation:
-  - Good: `_log.LogInformation("Ingested {Count} entries for {Source}", count, source);`
-  - Bad: `_log.LogInformation($"Ingested {count} entries for {source}");`
+    - Good: `_log.LogInformation("Ingested {Count} entries for {Source}", count, source);`
+    - Bad: `_log.LogInformation($"Ingested {count} entries for {source}");`
 - Tests use `Shouldly` for assertions (`result.ShouldBe(expected)`), not `Assert.Equal`.
 
 ## Naming
@@ -54,6 +54,7 @@ You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS
 ## What we are NOT building right now
 
 When suggesting code, do not add:
+
 - Authentication / authorization (coming Phase 2)
 - Multi-tenancy enforcement (coming Phase 2)
 - Persistence beyond in-memory (coming Phase 2)
@@ -87,3 +88,24 @@ If a task seems to need one of those, flag it and ask before scaffolding it in. 
 - Working code is better than clever code.
 - Boring is better than novel.
 - Ask before adding a NuGet dependency.
+
+## Commits
+
+Use Conventional Commits. Format: `<type>(<scope>): <description>`.
+
+Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
+Scopes: api, web, cli, core, docs, infra, deps. Omit if it spans multiple.
+Description: lowercase, imperative ("add" not "added"), no trailing period.
+
+Examples:
+
+- feat(api): add POST /v1/logs ingest endpoint
+- fix(web): reconnect SignalR hub on transient drop
+- chore(deps): bump FluentUI to 4.12.0
+- refactor(core): extract LogEntry validation into rules
+
+Breaking changes: append ! to type and add BREAKING CHANGE: footer.
+Reference issues with `Closes #N` or `Refs #N` in the footer.
+
+Prefer small commits. If you wrote "and" in the description, it should
+have been two commits.
