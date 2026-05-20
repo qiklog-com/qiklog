@@ -14,8 +14,8 @@
         <FluentButton OnClick="ClearBuffer" IconStart="@(new Icons.Regular.Size16.Delete())">Clear</FluentButton>
     </FluentStack>
 
-    <FluentCard Style="padding: 0; background: #0d1117; color: #c9d1d9; border: 1px solid #30363d;">
-        <div id="tail-viewport" style="height: 70vh; overflow-y: auto; padding: 1rem; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; line-height: 1.5;">
+    <FluentCard Style="padding: 0; background: var(--ql-surface-ink); color: var(--ql-text-fg); border: 1px solid var(--ql-surface-border);">
+        <div id="tail-viewport" style="height: 70vh; overflow-y: auto; padding: 1rem; font-family: var(--ql-font-mono); font-size: 0.85rem; line-height: 1.5;">
             @if (_entries.Count == 0)
             {
                 <div style="opacity: 0.6; padding: 1rem;">
@@ -107,12 +107,12 @@
 
     private static string LevelStyle(LogLevel level) => level switch
     {
-        LogLevel.Trace => "color: #6e7681;",
-        LogLevel.Debug => "color: #79c0ff;",
-        LogLevel.Info => "color: #56d364;",
-        LogLevel.Warning => "color: #d29922;",
-        LogLevel.Error => "color: #f85149;",
-        LogLevel.Critical => "color: #ff7b72; text-shadow: 0 0 4px rgba(248,81,73,0.5);",
+        LogLevel.Trace => "color: var(--ql-level-trace);",
+        LogLevel.Debug => "color: var(--ql-level-debug);",
+        LogLevel.Info => "color: var(--ql-level-info);",
+        LogLevel.Warning => "color: var(--ql-level-warning);",
+        LogLevel.Error => "color: var(--ql-level-error);",
+        LogLevel.Critical => "color: var(--ql-level-critical); text-shadow: 0 0 4px var(--ql-accent-teal-glow);",
         _ => ""
     };
 

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/QikLog.Web/wwwroot/brand/lockup.svg" alt="QikLog" width="360" />
+</p>
+
 # QikLog
 
 Lightweight log tailing for developers who want to see what their app is doing right now — without setting up Datadog.

@@ -1,0 +1,111 @@
+/*
+ * QikLog brand tokens.
+ *
+ * One file, every color. If you find yourself hardcoding a hex anywhere
+ * else in the app, stop and ask whether it should be a token here instead.
+ *
+ * Naming convention: --ql-{category}-{role}
+ *   category: color | surface | text | accent | level
+ *   role:     name (e.g. ink, paper, teal, fg, bg-elev1)
+ */
+
+:root {
+  /* Brand color: teal cursor */
+  --ql-accent-teal:        #2dd4bf;   /* primary accent, dark-mode surfaces */
+  --ql-accent-teal-dark:   #0d9488;   /* same accent on light-mode surfaces */
+  --ql-accent-teal-glow:   rgba(45, 212, 191, 0.25);  /* halos, focus rings */
+
+  /* Surface (background) ramp - GitHub-dark family */
+  --ql-surface-ink:        #0d1117;   /* deepest bg, brand black, terminal */
+  --ql-surface-elev1:      #161b22;   /* card on ink */
+  --ql-surface-elev2:      #21262d;   /* card on elev1 */
+  --ql-surface-border:     #30363d;   /* divider on dark */
+
+  /* Text on dark surfaces */
+  --ql-text-fg:            #c9d1d9;   /* body */
+  --ql-text-fg-strong:     #f0f6fc;   /* headings */
+  --ql-text-fg-muted:      #8b949e;   /* secondary */
+  --ql-text-fg-dim:        #6e7681;   /* timestamps, tertiary */
+
+  /* Text on light surfaces */
+  --ql-text-ink:           #0d1117;   /* body on white */
+  --ql-text-ink-muted:     #57606a;   /* secondary on white */
+
+  /* Light-mode surfaces (marketing site, light dashboard) */
+  --ql-paper:              #ffffff;
+  --ql-paper-elev1:        #f6f8fa;
+  --ql-paper-border:       #d0d7de;
+
+  /* Log level colors (used by Tail.razor) */
+  --ql-level-trace:        #6e7681;
+  --ql-level-debug:        #79c0ff;
+  --ql-level-info:         #56d364;
+  --ql-level-warning:      #d29922;
+  --ql-level-error:        #f85149;
+  --ql-level-critical:     #ff7b72;
+
+  /* Typography */
+  --ql-font-sans:  'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --ql-font-mono:  ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* Sizing */
+  --ql-radius-sm:  4px;
+  --ql-radius-md:  8px;
+  --ql-radius-lg:  12px;
+  --ql-radius-xl:  22px;  /* matches icon corner */
+}
+
+/* Utility classes Garfield can reach for instead of inlining colors */
+
+.ql-bg-ink     { background: var(--ql-surface-ink); }
+.ql-bg-elev1   { background: var(--ql-surface-elev1); }
+.ql-bg-elev2   { background: var(--ql-surface-elev2); }
+.ql-bg-paper   { background: var(--ql-paper); }
+
+.ql-text-fg          { color: var(--ql-text-fg); }
+.ql-text-fg-strong   { color: var(--ql-text-fg-strong); }
+.ql-text-fg-muted    { color: var(--ql-text-fg-muted); }
+.ql-text-accent      { color: var(--ql-accent-teal); }
+
+.ql-mono   { font-family: var(--ql-font-mono); }
+.ql-sans   { font-family: var(--ql-font-sans); }
+
+/* The cursor blink — used in the wordmark and any "live" indicators */
+@keyframes ql-blink {
+  0%, 45%   { opacity: 1; }
+  50%, 95%  { opacity: 0; }
+  100%      { opacity: 1; }
+}
+
+.ql-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  background: var(--ql-accent-teal);
+  vertical-align: text-bottom;
+  margin-left: 0.08em;
+  border-radius: 1.5px;
+  animation: ql-blink 1.2s steps(1, end) infinite;
+}
+
+/* Wordmark - HTML version of the SVG lockup, for places where text reflows */
+.ql-wordmark {
+  font-family: var(--ql-font-mono);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: var(--ql-text-ink);
+  display: inline-flex;
+  align-items: baseline;
+}
+.ql-wordmark .ql-wordmark-accent {
+  color: var(--ql-accent-teal-dark);
+}
+
+/* Dark surface variant of the wordmark */
+.ql-on-dark .ql-wordmark {
+  color: var(--ql-text-fg-strong);
+}
+.ql-on-dark .ql-wordmark .ql-wordmark-accent {
+  color: var(--ql-accent-teal);
+}
