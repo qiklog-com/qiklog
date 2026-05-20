@@ -32,3 +32,9 @@ secrets.json
 
 # Docker
 docker-compose.override.yml
+
+# Personal/local Cursor or AI assistant rules - never check these in
+jamey-user-rules.mdc
+*-user-rules.mdc
+.cursor/rules/local-*.mdc
+.cursor/rules/*-personal.mdc

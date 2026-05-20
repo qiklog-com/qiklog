@@ -1,15 +1,19 @@
 ---
-description: QikLog project conventions and architecture context
+description: 
 alwaysApply: true
 ---
 
-# QikLog — Cursor context
+# QikLog — project rules
 
-You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS aimed at developers who want to see what their app is doing in real time without setting up Datadog or Grafana. Indie/.NET-first positioning.
+Operating context for any AI assistant working in this repo.
 
-## Stack (all Microsoft, all the time)
+## What QikLog is
 
-- **.NET 9 LTS** for everything (Core lib, API, Web, CLI)
+A lightweight log-tailing SaaS for developers who want to see what their app is doing in real time without setting up Datadog or Grafana. Indie/.NET-first positioning. The product is "tail -f from a browser, but also a CLI, also an SDK."
+
+## Stack
+
+- **.NET 9 LTS** for everything (Core, Api, Web, Cli)
 - **ASP.NET Core minimal APIs** for `QikLog.Api`
 - **SignalR** for real-time log streaming (not raw SSE — we use SignalR for built-in reconnect, grouping, and Blazor symmetry)
 - **Blazor Server** + **Fluent UI Blazor** for the dashboard (`QikLog.Web`)
@@ -40,8 +44,8 @@ You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS
 - Async all the way down. No `.Result` or `.Wait()`. Pass `CancellationToken` through every async call.
 - DI via constructor injection. No service locator pattern.
 - Logging via `ILogger<T>`. Structured logging with named placeholders, never string interpolation:
-    - Good: `_log.LogInformation("Ingested {Count} entries for {Source}", count, source);`
-    - Bad: `_log.LogInformation($"Ingested {count} entries for {source}");`
+  - Good: `_log.LogInformation("Ingested {Count} entries for {Source}", count, source);`
+  - Bad: `_log.LogInformation($"Ingested {count} entries for {source}");`
 - Tests use `Shouldly` for assertions (`result.ShouldBe(expected)`), not `Assert.Equal`.
 
 ## Naming
@@ -54,7 +58,6 @@ You are working in the QikLog monorepo. QikLog is a lightweight log-tailing SaaS
 ## What we are NOT building right now
 
 When suggesting code, do not add:
-
 - Authentication / authorization (coming Phase 2)
 - Multi-tenancy enforcement (coming Phase 2)
 - Persistence beyond in-memory (coming Phase 2)
@@ -64,48 +67,37 @@ When suggesting code, do not add:
 
 If a task seems to need one of those, flag it and ask before scaffolding it in. Premature scope creep is the enemy.
 
-## Working with Jamey
+## Brand
 
-- He's a Principal Systems Architect with 30+ years of .NET. Default to senior-engineer-level explanations. Skip basics unless asked.
-- He prefers direct answers with no preamble. Cut the "Great question!" and "I'd be happy to help" stuff.
-- When he asks for code, deliver code. When he asks for an opinion, give him the opinion before the caveat.
-- Disagreement is welcome. If he proposes something that has a real downside, say so before writing it.
-- Files are preferred over inline code dumps for anything substantial.
-- He cares about deliverable craft. Read existing files before editing; match the style that's there.
-- The Bobiverse metaphor is canon: Garfield (Cursor/this assistant) is the implementer Bob. Bill (the assistant on qiklog.com later) is the interview twin. Reference is fine, don't overdo it.
+The visual identity is the **terminal Q with a blinking cursor**. Accent color is teal (`#2dd4bf` on dark, `#0d9488` on light). Wordmark is `qiklog` in monospace with `log` in the accent color and a blinking cursor block trailing the `g`.
 
-## Definition of done for a feature
+**Never hardcode hex values in components.** All colors live as CSS custom properties in `src/QikLog.Web/wwwroot/brand/brand.css`. Reference them as `var(--ql-accent-teal)`, `var(--ql-surface-ink)`, etc. If you need a color that isn't there, add it to `brand.css` as a new `--ql-*` token first, then use it. This keeps the brand tunable from one file.
 
-1. Code compiles with zero warnings (warnings are errors here).
-2. Unit tests cover the happy path and at least one failure case.
-3. Public APIs have XML doc comments.
-4. `docker compose up` still works end-to-end.
-5. The README quickstart still demonstrates the system correctly.
+Brand assets live in `src/QikLog.Web/wwwroot/brand/`:
+- `icon.svg` — animated icon (cursor blinks)
+- `favicon.svg` — static favicon
+- `lockup.svg` — icon + wordmark for headers/READMEs
+- `brand.css` — all design tokens
+- See `docs/BRAND_GUIDE.md` for the full guide.
 
-## When in doubt
-
-- Smaller changes are better than larger ones.
-- Working code is better than clever code.
-- Boring is better than novel.
-- Ask before adding a NuGet dependency.
+The logo is a prototype. Treat it as good enough to ship the MVP, not as the final mark. A designer pass comes after $1K MRR.
 
 ## Commits
 
 Use Conventional Commits. Format: `<type>(<scope>): <description>`.
 
 Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
-Scopes: api, web, cli, core, docs, infra, deps. Omit if it spans multiple.
+Scopes: api, web, cli, core, infra, brand, deps. Omit if it spans multiple.
 Description: lowercase, imperative ("add" not "added"), no trailing period.
 
 Examples:
+- `feat(api): add POST /v1/logs ingest endpoint`
+- `fix(web): reconnect SignalR hub on transient drop`
+- `chore(deps): bump FluentUI to 4.12.0`
+- `refactor(core): extract LogEntry validation into rules`
+- `docs(brand): document cursor blink animation rhythm`
 
-- feat(api): add POST /v1/logs ingest endpoint
-- fix(web): reconnect SignalR hub on transient drop
-- chore(deps): bump FluentUI to 4.12.0
-- refactor(core): extract LogEntry validation into rules
-
-Breaking changes: append ! to type and add BREAKING CHANGE: footer.
+Breaking changes: append `!` to type and add `BREAKING CHANGE:` footer.
 Reference issues with `Closes #N` or `Refs #N` in the footer.
 
-Prefer small commits. If you wrote "and" in the description, it should
-have been two commits.
+Prefer small commits. If you wrote "and" in the description, it should have been two commits.
