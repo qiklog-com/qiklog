@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.SignalR;
 using QikLog.Api.Hubs;
 using QikLog.Core;
+using CoreLogLevel = QikLog.Core.LogLevel;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new LogLevelJsonConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -40,7 +43,7 @@ app.MapPost("/v1/logs", async (
 
     var entry = new LogEntry(
         Source: dto.Source.Trim(),
-        Level: dto.Level ?? LogLevel.Info,
+        Level: dto.Level ?? CoreLogLevel.Info,
         Message: dto.Message,
         Timestamp: dto.Timestamp ?? DateTimeOffset.UtcNow,
         Properties: dto.Properties
@@ -54,8 +57,7 @@ app.MapPost("/v1/logs", async (
 
     return Results.Accepted();
 })
-.WithName("IngestLog")
-.WithOpenApi();
+.WithName("IngestLog");
 
 // GET /healthz - for container orchestrators
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
@@ -72,7 +74,7 @@ app.Run();
 public sealed record LogEntryDto(
     string Source,
     string Message,
-    LogLevel? Level,
+    CoreLogLevel? Level,
     DateTimeOffset? Timestamp,
     IReadOnlyDictionary<string, string>? Properties
 );

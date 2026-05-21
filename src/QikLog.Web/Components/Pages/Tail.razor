@@ -11,7 +11,7 @@
         <FluentSpacer />
         <FluentBadge Appearance="@StatusAppearance">@StatusText</FluentBadge>
         <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
-        <FluentButton OnClick="ClearBuffer" IconStart="@(new Icons.Regular.Size16.Delete())">Clear</FluentButton>
+        <FluentButton OnClick="ClearBuffer">Clear</FluentButton>
     </FluentStack>
 
     <FluentCard Style="padding: 0; background: var(--ql-surface-ink); color: var(--ql-text-fg); border: 1px solid var(--ql-surface-border);">

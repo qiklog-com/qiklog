@@ -11,6 +11,9 @@ obj/
 publish/
 out/
 
+# ASP.NET DataProtection keys (local dev)
+dataprotection-keys/
+
 # Rider / Visual Studio
 .idea/
 *.DotSettings.user

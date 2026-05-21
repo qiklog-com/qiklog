@@ -37,6 +37,9 @@ services:
       - "5080:5080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      # aspnet image defaults to 8080; empty disables it so Kestrel/appsettings ports win.
+      ASPNETCORE_HTTP_PORTS: ""
+      ASPNETCORE_HTTPS_PORTS: ""
       ConnectionStrings__Postgres: "Host=postgres;Database=qiklog;Username=qiklog;Password=qiklog_dev"
       ConnectionStrings__Redis: "redis:6379"
     depends_on:
@@ -53,9 +56,15 @@ services:
       - "5081:5081"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: ""
+      ASPNETCORE_HTTPS_PORTS: ""
       QikLog__ApiBaseUrl: "http://api:5080"
+      DataProtection__KeysPath: /var/qiklog/dataprotection
+    volumes:
+      - qiklog_web_dataprotection:/var/qiklog/dataprotection
     depends_on:
       - api
 
 volumes:
   qiklog_pg_data:
+  qiklog_web_dataprotection:

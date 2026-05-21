@@ -1,7 +1,23 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.FluentUI.AspNetCore.Components;
 using QikLog.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    // Unencrypted key XML is expected in local/docker dev (no cert). Stale antiforgery cookies log once.
+    builder.Logging.AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", LogLevel.Error);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Antiforgery", LogLevel.Warning);
+}
+
+// Blazor antiforgery + interactive circuits need stable keys across container restarts.
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"]
+    ?? Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+    .SetApplicationName("QikLog.Web");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

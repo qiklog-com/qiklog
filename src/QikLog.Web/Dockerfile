@@ -13,5 +13,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 5081
-ENV ASPNETCORE_URLS=http://+:5081
 ENTRYPOINT ["dotnet", "QikLog.Web.dll"]
