@@ -43,6 +43,9 @@ jamey-user-rules.mdc
 .cursor/rules/*-personal.mdc
 _patches/
 
+# Accidental uploads
+docs/*.pdf
+
 # Marketing site (Astro)
 www/node_modules/
 www/dist/
