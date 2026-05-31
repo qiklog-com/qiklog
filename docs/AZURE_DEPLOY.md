@@ -17,110 +17,27 @@ Container Apps consumption plan includes a monthly free grant: **180,000 vCPU-se
 ## Prerequisites
 
 - Azure subscription (sign up at azure.microsoft.com — free trial includes $200 credit for 30 days)
-- Azure CLI installed locally: `brew install azure-cli` (or download for Windows)
+- Azure CLI: `brew install azure-cli`
 - Docker Desktop running
+- Copy `.env.example` → `.env` and set `QIKLOG_SEED`, `ACR_NAME`, etc.
 
-## One-time setup
+## Automated deploy (idempotent)
 
-```bash
-# Log in
-az login
-
-# Set variables (customize)
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-LOCATION=eastus2
-RESOURCE_GROUP=qiklog-prod
-ACR_NAME=qiklogacr$RANDOM  # must be globally unique, lowercase alphanumeric
-ENV_NAME=qiklog-env
-PG_SERVER=qiklog-pg-$RANDOM
-PG_ADMIN=qiklogadmin
-PG_PASSWORD='ChangeMe!StrongP@ssw0rd'  # use a generated value; store in 1Password
-PG_DB=qiklog
-
-# Create resource group
-az group create --name $RESOURCE_GROUP --location $LOCATION
-
-# Create ACR
-az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic
-az acr login --name $ACR_NAME
-
-# Create Container Apps environment
-az containerapp env create \
-  --name $ENV_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION
-
-# Create Postgres Flexible Server (smallest burstable tier)
-az postgres flexible-server create \
-  --resource-group $RESOURCE_GROUP \
-  --name $PG_SERVER \
-  --location $LOCATION \
-  --admin-user $PG_ADMIN \
-  --admin-password "$PG_PASSWORD" \
-  --tier Burstable \
-  --sku-name Standard_B1ms \
-  --storage-size 32 \
-  --version 16 \
-  --database-name $PG_DB \
-  --public-access 0.0.0.0
-```
-
-## Build and push images
-
-From the repo root:
+Scripts live under `scripts/`. Entry point: `./scripts/main.sh <name>`.
 
 ```bash
-# Build for linux/amd64 (Container Apps runs amd64)
-docker build --platform linux/amd64 -t $ACR_NAME.azurecr.io/qiklog-api:latest -f src/QikLog.Api/Dockerfile .
-docker build --platform linux/amd64 -t $ACR_NAME.azurecr.io/qiklog-web:latest -f src/QikLog.Web/Dockerfile .
+az login                    # or set AZURE_CLIENT_ID / SECRET / TENANT_ID in .env
 
-# Push
-docker push $ACR_NAME.azurecr.io/qiklog-api:latest
-docker push $ACR_NAME.azurecr.io/qiklog-web:latest
+make azure-setup            # resource group, ACR, Container Apps env
+make azure-deploy           # build linux/amd64 images, push, create/update apps
+# or: make azure            # both
 ```
 
-## Deploy to Container Apps
+Re-running `azure-setup` or `azure-deploy` is safe: existing resources are detected and skipped or updated.
 
-```bash
-# API
-az containerapp create \
-  --name qiklog-api \
-  --resource-group $RESOURCE_GROUP \
-  --environment $ENV_NAME \
-  --image $ACR_NAME.azurecr.io/qiklog-api:latest \
-  --target-port 5080 \
-  --ingress external \
-  --registry-server $ACR_NAME.azurecr.io \
-  --min-replicas 0 \
-  --max-replicas 2 \
-  --cpu 0.25 --memory 0.5Gi \
-  --env-vars \
-    ASPNETCORE_ENVIRONMENT=Production \
-    ConnectionStrings__Postgres="Host=$PG_SERVER.postgres.database.azure.com;Database=$PG_DB;Username=$PG_ADMIN;Password=$PG_PASSWORD;SslMode=Require"
+Set `SKIP_POSTGRES=false` in `.env` when you are ready for managed Postgres (~$13/mo). Default `true` matches the current app (no persistence yet).
 
-# Grab the API URL
-API_URL=$(az containerapp show --name qiklog-api --resource-group $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv)
-echo "API: https://$API_URL"
-
-# Web (points at API)
-az containerapp create \
-  --name qiklog-web \
-  --resource-group $RESOURCE_GROUP \
-  --environment $ENV_NAME \
-  --image $ACR_NAME.azurecr.io/qiklog-web:latest \
-  --target-port 5081 \
-  --ingress external \
-  --registry-server $ACR_NAME.azurecr.io \
-  --min-replicas 1 \
-  --max-replicas 2 \
-  --cpu 0.25 --memory 0.5Gi \
-  --env-vars \
-    ASPNETCORE_ENVIRONMENT=Production \
-    QikLog__ApiBaseUrl="https://$API_URL"
-
-WEB_URL=$(az containerapp show --name qiklog-web --resource-group $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv)
-echo "Web: https://$WEB_URL"
-```
+See [SHIP_CHECKLIST.md](SHIP_CHECKLIST.md) for what is left before you can sell subscriptions.
 
 ## Custom domain (qiklog.com → Container Apps)
 

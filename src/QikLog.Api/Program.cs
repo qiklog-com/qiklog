@@ -12,9 +12,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
-    // Permissive for local dev. Lock down per-environment in Program startup later.
+    var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        ?? ["http://localhost:5081", "https://localhost:5443"];
+
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5081", "https://localhost:5443")
+        policy.WithOrigins(origins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -78,3 +80,6 @@ public sealed record LogEntryDto(
     DateTimeOffset? Timestamp,
     IReadOnlyDictionary<string, string>? Properties
 );
+
+/// <summary>Entry point type for integration tests.</summary>
+public partial class Program;

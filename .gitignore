@@ -41,3 +41,10 @@ jamey-user-rules.mdc
 *-user-rules.mdc
 .cursor/rules/local-*.mdc
 .cursor/rules/*-personal.mdc
+_patches/
+
+# Marketing site (Astro)
+www/node_modules/
+www/dist/
+www/.env
+www/.astro/

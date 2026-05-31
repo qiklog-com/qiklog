@@ -1,0 +1,303 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Wordmark from '../components/Wordmark.astro';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
+const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
+---
+<BaseLayout>
+  <header class="nav glass glass-sm container">
+    <Wordmark />
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href={appUrl} class="btn btn-primary">Open app</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div class="hero-copy glass">
+        <p class="eyebrow">Real-time · Indie-friendly · .NET-native</p>
+        <h1>
+          <span class="hero-line">Tail production</span>
+          <span class="hero-line accent">from the browser.</span>
+        </h1>
+        <p class="lead">
+          QikLog is <code>tail -f</code> for teams who want visibility now — POST a line, watch it land live.
+          No Grafana ceremony. No six-figure observability bill.
+        </p>
+        <div class="hero-actions">
+          <a href={appUrl} class="btn btn-primary">Start tailing</a>
+          <a href="#demo" class="btn btn-ghost">See the curl</a>
+        </div>
+      </div>
+      <div class="hero-terminal glass" id="demo">
+        <div class="terminal-chrome">
+          <span></span><span></span><span></span>
+          <span class="terminal-title">demo · live</span>
+        </div>
+        <pre class="terminal-body"><code><span class="dim">$</span> curl -X POST http://localhost:5080/v1/logs \
+  -H "Content-Type: application/json" \
+  -d '<span class="json">{demoPayload}</span>'
+
+<span class="dim">→</span> <span class="ok">202 Accepted</span>
+
+<span class="dim">14:02:11.004</span> <span class="lvl-info">INFO</span>  shipped
+<span class="dim">14:02:14.881</span> <span class="lvl-warn">WARN</span>  cache miss on /api/v1/widgets
+<span class="dim">14:02:15.102</span> <span class="lvl-info">INFO</span>  retry succeeded</code></pre>
+      </div>
+    </section>
+
+    <section class="features container" id="features">
+      <h2>Built for the boring path</h2>
+      <div class="feature-grid">
+        <article class="glass glass-sm feature-card">
+          <h3>Ingest anywhere</h3>
+          <p>HTTP JSON, CLI <code>qiklog send</code>, or tail a file. Your app already knows how to POST.</p>
+        </article>
+        <article class="glass glass-sm feature-card">
+          <h3>Live by default</h3>
+          <p>SignalR groups per source. Open <code>/tail/demo</code> and watch lines stream in.</p>
+        </article>
+        <article class="glass glass-sm feature-card">
+          <h3>.NET all the way down</h3>
+          <p>ASP.NET Core API, Blazor dashboard, single-file CLI. One stack, one hiring story.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="pricing container" id="pricing">
+      <div class="glass pricing-card">
+        <h2>Simple pricing (coming soon)</h2>
+        <p class="pricing-lead">Pre-alpha today. Paid tiers land with API keys, persistence, and Stripe.</p>
+        <ul class="tier-list">
+          <li><strong>Free</strong> — play locally, limited cloud tail</li>
+          <li><strong>Pro $9/mo</strong> — sources, API keys, history</li>
+          <li><strong>Tinkerer $20</strong> — prepaid credits for side projects</li>
+        </ul>
+        <a href={appUrl} class="btn btn-primary">Try the Hello World</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <Wordmark />
+    <p class="footer-note">© {new Date().getFullYear()} QikLog · <a href="https://github.com">GitHub</a> (soon)</p>
+  </footer>
+</BaseLayout>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    padding: 0.85rem 1.25rem;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .nav-links a:not(.btn) {
+    color: var(--ql-text-fg-muted);
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+    padding: 4rem 0 3rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .hero-copy {
+    padding: 2rem 2.25rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ql-accent-teal);
+    font-weight: 600;
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.15;
+    color: var(--ql-text-fg-strong);
+  }
+
+  .hero-line {
+    display: block;
+  }
+
+  .hero-line.accent {
+    color: var(--ql-accent-teal);
+  }
+
+  .lead {
+    margin: 0 0 1.5rem;
+    color: var(--ql-text-fg-muted);
+    font-size: 1.05rem;
+    max-width: 38ch;
+  }
+
+  .lead code {
+    font-family: var(--ql-font-mono);
+    font-size: 0.9em;
+    color: var(--ql-text-fg);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .hero-terminal {
+    overflow: hidden;
+  }
+
+  .terminal-chrome {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .terminal-chrome span:nth-child(1) { width: 10px; height: 10px; border-radius: 50%; background: #f85149; }
+  .terminal-chrome span:nth-child(2) { width: 10px; height: 10px; border-radius: 50%; background: #d29922; }
+  .terminal-chrome span:nth-child(3) { width: 10px; height: 10px; border-radius: 50%; background: #56d364; }
+
+  .terminal-title {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--ql-text-fg-muted);
+    font-family: var(--ql-font-mono);
+  }
+
+  .terminal-body {
+    margin: 0;
+    padding: 1.25rem 1.35rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+
+  .dim { color: var(--ql-text-fg-muted); }
+  .json { color: #79c0ff; }
+  .ok { color: #56d364; }
+  .lvl-info { color: #56d364; font-weight: 600; }
+  .lvl-warn { color: #d29922; font-weight: 600; }
+
+  .features {
+    padding: 2rem 0 3rem;
+  }
+
+  .features h2 {
+    text-align: center;
+    color: var(--ql-text-fg-strong);
+    margin-bottom: 2rem;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 800px) {
+    .feature-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+  }
+
+  .feature-card h3 {
+    margin: 0 0 0.5rem;
+    color: var(--ql-text-fg-strong);
+    font-size: 1.1rem;
+  }
+
+  .feature-card p {
+    margin: 0;
+    color: var(--ql-text-fg-muted);
+    font-size: 0.92rem;
+  }
+
+  .feature-card code {
+    font-family: var(--ql-font-mono);
+    font-size: 0.85em;
+  }
+
+  .pricing {
+    padding-bottom: 4rem;
+  }
+
+  .pricing-card {
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  .pricing-card h2 {
+    margin: 0 0 0.5rem;
+    color: var(--ql-text-fg-strong);
+  }
+
+  .pricing-lead {
+    color: var(--ql-text-fg-muted);
+    margin: 0 0 1.5rem;
+  }
+
+  .tier-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+    text-align: left;
+    display: inline-block;
+    color: var(--ql-text-fg);
+  }
+
+  .tier-list li {
+    padding: 0.35rem 0;
+  }
+
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 2rem 0 3rem;
+    border-top: 1px solid var(--glass-border);
+    margin-top: 2rem;
+  }
+
+  .footer-note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ql-text-fg-muted);
+  }
+</style>
