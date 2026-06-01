@@ -1,23 +1,39 @@
 # HOMER.md — Status Log for Product Owner
 
 ## Current State
-- Branch: `main`
+- Branch: `main` (synced with `origin/main`)
 - Latest tag: `v0.8.1-hardening`
 - Working state: **green** (build and tests pass)
-- Test count and pass rate: **53/53 passing** (`Category!=E2E`; 24 Core + 24 Api + 5 Infrastructure; DocGen has no unit tests in that filter)
-- Last commit hash and date: `15d75bf` — 2026-06-01 — `test(hardening): tenant isolation, billing limits, SSE load, property-based billing math`
+- Test count and pass rate: **53/53 passing** (`Category!=E2E`; 24 Core + 24 Api + 5 Infrastructure)
+- Last commit hash and date: `5966e0a` — 2026-06-01 — `chore: add HOMER.md for PO/Dev communication protocol`
+- GitHub: https://github.com/qiklog-com/qiklog — **all hardening commits are on `main`**
+
+## Homer verification checklist (Tier 1.5 hardening)
+Confirm on `main` at https://github.com/qiklog-com/qiklog/commits/main:
+
+| Commit | Description |
+|--------|-------------|
+| `ddaab31` | OpenAPI + Scalar (`/openapi/v1.json`, `/scalar/v1`) |
+| `03ab79e` | Observability (`/health`, `/metrics`, structured logging) |
+| `15d75bf` | Hardening tests + tenant isolation in Infrastructure |
+| `5966e0a` | This status log |
+
+Tags: `v0.8.1-openapi-docs`, `v0.8.1-hardening` (points at `15d75bf`).
+
+Key paths: `src/QikLog.Api/OpenApi/`, `src/QikLog.Api/Observability/`, `tests/QikLog.Infrastructure.Tests/`, `src/QikLog.Core/Billing/BillingMath.cs`.
 
 ## Last Session Summary
 **Date:** 2026-06-01  
-**Prompt received from PO:** Adopt PO/Dev protocol; create and maintain `HOMER.md` as persistent artifact between Cursor (Dev) and Homer (PO); document current repo state retroactively.  
+**Prompt received from PO:** Stop stale background dev processes; ensure GitHub is complete for Homer review.  
 **Work completed:**
-- Created `HOMER.md` with required sections and retroactive session history
-- Captured current green state: Tier 1 + Tier 1.5 hardening on `main`, tags through `v0.8.1-hardening`
+- Confirmed `main` == `origin/main` (nothing unpushed)
+- Stopped stale local `dotnet run` API (port 5080); cleared old Web on 5081
+- Re-ran `make test` — 53/53 green
+- Updated HOMER.md: fixed last-commit reference, added Homer verification checklist
 **Decisions made (and why):**
-- Session history entries are condensed by milestone (not every micro-commit) so Homer gets signal without noise
-- Working state marked green based on `dotnet test --filter "Category!=E2E"` (matches Makefile `make test`)
-**Issues encountered:** None for this protocol setup.  
-**Files changed:** `HOMER.md` (new)
+- No code changes required — hardening was already pushed; gap was PO visibility, not missing commits
+**Issues encountered:** Homer could not see hardening if viewing wrong branch/repo or expecting a single commit.  
+**Files changed:** `HOMER.md`
 
 ## Open Questions for PO
 1. **Session boundaries:** Should HOMER.md be updated only when Jamey explicitly ends a session, or also after every pushed commit batch Homer didn’t witness live?
@@ -26,11 +42,14 @@
 4. **Coverage gate:** Coverlet is on test projects (~43% blended line coverage last run). Does Homer want a minimum coverage % in “Current State” each session?
 
 ## Suggested Next Steps
-1. **Tier 2 planning** — Homer to prioritize: persistence hardening (Redis buffer #16), auth enforcement on management API, or Azure deploy path (`scripts/azure-setup.sh` exists but not production-verified).
-2. **Wire tenant context on API** — OIDC JWT → `ITenantContext` on API (today tenant scoping works when context is set; management/ingest without auth still global).
-3. **Document OpenAPI in www** — Link `/scalar/v1` from developer docs when API is deployed (www untouched per scope rules so far).
+1. **Tier 2 planning** — Homer to prioritize: persistence hardening (Redis buffer #16), auth enforcement on management API, or Azure deploy path.
+2. **Wire tenant context on API** — OIDC JWT → `ITenantContext` on API (tenant scoping works when context is set; management without auth still global).
+3. **Document OpenAPI in www** — Link `/scalar/v1` from developer docs when API is deployed.
 
 ## Session History
+
+### 2026-06-01 — GitHub sync confirmation + local cleanup
+Verified all hardening commits on `origin/main`. Stopped stale dev API/Web processes. Added Homer verification checklist to HOMER.md. 53/53 tests green.
 
 ### 2026-06-01 — PO/Dev protocol + HOMER.md
 Established HOMER.md communication protocol. Repo at `v0.8.1-hardening`, 53/53 tests green on `main`.
