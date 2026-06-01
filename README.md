@@ -52,6 +52,8 @@ make www-dev       # http://localhost:4321  →  /docs/quickstart/
 
 Deploy `www/dist/` to your static host; point `app.qiklog.com` at the Web container when ready.
 
+Doc screenshots and terminal GIFs: see [docs/DOC_CAPTURE.md](docs/DOC_CAPTURE.md) (`make docs-capture`, `make demos-record`).
+
 ## Architecture
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full detail.
