@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using QikLog.Infrastructure.Auth;
+using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Data;
 using QikLog.Infrastructure.Sources;
+using QikLog.Infrastructure.Tenants;
 
 namespace QikLog.Infrastructure;
 
@@ -17,6 +19,11 @@ public static class DependencyInjection
     {
         services.Configure<IngestAuthOptions>(configuration.GetSection(IngestAuthOptions.SectionName));
         services.Configure<ManagementOptions>(configuration.GetSection(ManagementOptions.SectionName));
+        services.Configure<QikLogAuthOptions>(configuration.GetSection(QikLogAuthOptions.SectionName));
+        services.Configure<UsageLimitOptions>(configuration.GetSection(UsageLimitOptions.SectionName));
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
+        services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<TenantProvisioner>();
         services.AddScoped<IIngestContext, IngestContext>();
         services.AddSingleton<ApiKeyHasher>();
         services.AddSingleton<ApiKeyRateLimiter>();
@@ -32,6 +39,7 @@ public static class DependencyInjection
             services.AddScoped<ILogHistoryService, EfLogHistoryService>();
             services.AddScoped<IApiKeyService, ApiKeyService>();
             services.AddScoped<ISourceCatalog, SourceCatalogService>();
+            services.AddScoped<IUsageLimitService, UsageLimitService>();
             return services;
         }
 
@@ -42,6 +50,7 @@ public static class DependencyInjection
             services.AddSingleton<ILogHistoryService, NullLogHistoryService>();
             services.AddSingleton<IApiKeyService, NullApiKeyService>();
             services.AddSingleton<ISourceCatalog, NullSourceCatalog>();
+            services.AddSingleton<IUsageLimitService, NullUsageLimitService>();
             return services;
         }
 
@@ -52,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ILogHistoryService, EfLogHistoryService>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ISourceCatalog, SourceCatalogService>();
+        services.AddScoped<IUsageLimitService, UsageLimitService>();
         return services;
     }
 

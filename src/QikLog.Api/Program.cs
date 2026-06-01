@@ -5,7 +5,9 @@ using QikLog.Api.Hubs;
 using QikLog.Api.Middleware;
 using QikLog.Core;
 using QikLog.Infrastructure;
+using Microsoft.Extensions.Options;
 using QikLog.Infrastructure.Auth;
+using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Data;
 using CoreLogLevel = QikLog.Core.LogLevel;
 
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddQikLogPersistence(builder.Configuration, builder.Environment);
+builder.Services.AddQikLogJwtAuth(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new LogLevelJsonConverter()));
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +43,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+var authOptions = app.Services.GetRequiredService<IOptions<QikLogAuthOptions>>().Value;
+if (authOptions.Enabled && !string.IsNullOrWhiteSpace(authOptions.Authority))
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+
 app.UseMiddleware<IngestApiKeyMiddleware>();
 
 // POST /v1/logs - ingest endpoint
@@ -47,12 +57,18 @@ app.MapPost("/v1/logs", async (
     LogEntryDto dto,
     IHubContext<LogHub> hub,
     ILogEntryStore store,
+    IServiceProvider sp,
     CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(dto.Source))
         return Results.BadRequest(new { error = "source is required" });
     if (string.IsNullOrWhiteSpace(dto.Message))
         return Results.BadRequest(new { error = "message is required" });
+
+    var usage = sp.GetRequiredService<IUsageLimitService>();
+    var usageCheck = await usage.CheckIngestAllowedAsync(ct);
+    if (!usageCheck.Allowed)
+        return Results.Json(new { error = usageCheck.Reason, usage = usageCheck.Count, limit = usageCheck.Limit }, statusCode: 402);
 
     var entry = new LogEntry(
         Source: dto.Source.Trim(),
@@ -73,6 +89,7 @@ app.MapPost("/v1/logs", async (
 .WithName("IngestLog");
 
 app.MapQikLogManagement();
+app.MapQikLogBilling();
 
 // Back-compat alias for CLI/scripts when management API is enabled.
 if (app.Environment.IsDevelopment())

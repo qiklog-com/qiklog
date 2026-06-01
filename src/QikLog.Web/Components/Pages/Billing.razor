@@ -1,0 +1,66 @@
+@page "/billing"
+@rendermode InteractiveServer
+<PageTitle>Billing · QikLog</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <FluentCard Style="max-width: 560px; margin: 2rem auto; padding: 2rem;">
+            <h2 style="margin-top: 0;">Billing</h2>
+            <p>Upgrade to <strong>Pro $9/mo</strong> for higher ingest limits and production-ready defaults.</p>
+            <FluentButton Appearance="Appearance.Accent" OnClick="StartCheckout" Disabled="@_busy">
+                Upgrade with Stripe
+            </FluentButton>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p style="margin-top: 1rem; opacity: 0.85;">@_error</p>
+            }
+        </FluentCard>
+    </Authorized>
+    <NotAuthorized>
+        <FluentCard Style="max-width: 420px; margin: 2rem auto; padding: 2rem;">
+            <p>Sign in to manage billing.</p>
+            <FluentButton Appearance="Appearance.Accent" Href="/login">Sign in</FluentButton>
+        </FluentCard>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool _busy;
+    private string? _error;
+
+    [Inject] private IHttpClientFactory HttpClientFactory { get; set; } = null!;
+    [Inject] private Microsoft.Extensions.Options.IOptions<QikLogOptions> Options { get; set; } = null!;
+
+    private async Task StartCheckout()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress = new Uri(Options.Value.ApiBaseUrl.TrimEnd('/') + "/");
+            var response = await client.PostAsync("/v1/billing/checkout", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                _error = "Checkout is not configured. Set QikLog:Stripe in the API.";
+                return;
+            }
+
+            var doc = await response.Content.ReadFromJsonAsync<CheckoutResponse>();
+            if (!string.IsNullOrEmpty(doc?.Url))
+                NavigationManager.NavigateTo(doc.Url, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    private sealed record CheckoutResponse(string? Url);
+}
