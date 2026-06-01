@@ -10,19 +10,22 @@ using Xunit;
 
 namespace QikLog.Api.Tests;
 
-public sealed class IngestEndpointTests : IClassFixture<QikLogApiWebApplicationFactory>
+public sealed class IngestEndpointTests : IAsyncLifetime
 {
-    private readonly QikLogApiWebApplicationFactory _factory;
-    private readonly HttpClient _client;
+    private readonly QikLogApiWebApplicationFactory _factory = new();
+    private HttpClient _client = null!;
 
-    public IngestEndpointTests(QikLogApiWebApplicationFactory factory)
+    public async Task InitializeAsync()
     {
-        _factory = factory;
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        var apiKey = await ApiTestData.CreateApiKeyForPrimaryTenantAsync(_factory.Services);
+        _client = _factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
         });
+        ApiTestAuth.SetApiKey(_client, apiKey);
     }
+
+    public async Task DisposeAsync() => await _factory.DisposeAsync();
 
     [Fact]
     public async Task Healthz_returns_ok()

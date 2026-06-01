@@ -9,7 +9,7 @@ using Xunit;
 
 namespace QikLog.Api.Tests;
 
-public sealed class ManagementApiWebApplicationFactory : QikLogApiWebApplicationFactory
+public sealed class ManagementDisabledWebApplicationFactory : QikLogApiWebApplicationFactory
 {
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
@@ -18,7 +18,7 @@ public sealed class ManagementApiWebApplicationFactory : QikLogApiWebApplication
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["QikLog:Management:Enabled"] = "true"
+                ["QikLog:Management:Enabled"] = "false"
             });
         });
     }
@@ -28,13 +28,15 @@ public sealed class ManagementEndpointTests : IAsyncLifetime
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private readonly ManagementApiWebApplicationFactory _factory = new();
+    private readonly QikLogApiWebApplicationFactory _factory = new();
     private HttpClient _client = null!;
+    private string _apiKey = "";
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
+        _apiKey = await ApiTestData.CreateApiKeyForPrimaryTenantAsync(_factory.Services);
         _client = _factory.CreateClient();
-        return Task.CompletedTask;
+        ApiTestAuth.SetValidJwt(_client);
     }
 
     public async Task DisposeAsync() => await _factory.DisposeAsync();
@@ -73,9 +75,12 @@ public sealed class ManagementEndpointTests : IAsyncLifetime
     [Fact]
     public async Task List_sources_after_ingest()
     {
+        var ingestClient = _factory.CreateClient();
+        ApiTestAuth.SetApiKey(ingestClient, _apiKey);
+
         var sourceName = $"mgmt-{Guid.NewGuid():N}"[..12];
         var ingestJson = JsonSerializer.Serialize(new { source = sourceName, message = "hello" });
-        await _client.PostAsync(
+        await ingestClient.PostAsync(
             "/v1/logs",
             new StringContent(ingestJson, Encoding.UTF8, "application/json"));
 
@@ -87,8 +92,9 @@ public sealed class ManagementEndpointTests : IAsyncLifetime
     [Fact]
     public async Task Management_disabled_returns_not_found()
     {
-        await using var bareFactory = new QikLogApiWebApplicationFactory();
+        await using var bareFactory = new ManagementDisabledWebApplicationFactory();
         var client = bareFactory.CreateClient();
+        ApiTestAuth.SetValidJwt(client);
         var response = await client.GetAsync("/v1/keys");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }

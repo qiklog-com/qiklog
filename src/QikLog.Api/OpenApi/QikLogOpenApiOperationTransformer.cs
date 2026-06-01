@@ -25,34 +25,42 @@ internal sealed class QikLogOpenApiOperationTransformer : IOpenApiOperationTrans
 
     private static void ApplySecurity(string operationName, OpenApiOperation operation)
     {
-        if (operationName is "IngestLog")
+        switch (operationName)
         {
-            operation.Security =
-            [
-                new OpenApiSecurityRequirement
-                {
-                    [new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKeyBearer" }
-                    }] = []
-                }
-            ];
-        }
-
-        if (operationName is "CreateCheckoutSession")
-        {
-            operation.Security =
-            [
-                new OpenApiSecurityRequirement
-                {
-                    [new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "OidcBearer" }
-                    }] = []
-                }
-            ];
+            case "IngestLog":
+                operation.Security = [ApiKeySecurity()];
+                break;
+            case "GetSourceLogs":
+                operation.Security = [ApiKeySecurity(), OidcSecurity()];
+                break;
+            case "ListApiKeys":
+            case "CreateApiKey":
+            case "CreateDevApiKey":
+            case "RevokeApiKey":
+            case "ListSources":
+            case "CreateCheckoutSession":
+                operation.Security = [OidcSecurity()];
+                break;
         }
     }
+
+    private static OpenApiSecurityRequirement ApiKeySecurity() =>
+        new()
+        {
+            [new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKeyHeader" }
+            }] = []
+        };
+
+    private static OpenApiSecurityRequirement OidcSecurity() =>
+        new()
+        {
+            [new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "OidcBearer" }
+            }] = []
+        };
 
     private static void ApplyExamples(string operationName, OpenApiOperation operation)
     {

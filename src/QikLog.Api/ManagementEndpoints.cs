@@ -26,8 +26,10 @@ internal static class ManagementEndpoints
         .WithOpenApiMetadata(
             OpenApiTags.Auth,
             "List API keys",
-            "Returns API key metadata (never includes secrets). Requires `QikLog:Management:Enabled`.")
-        .Produces<IReadOnlyList<ApiKeySummary>>(StatusCodes.Status200OK);
+            "Returns API key metadata (never includes secrets). Requires OIDC JWT and `QikLog:Management:Enabled`.")
+        .Produces<IReadOnlyList<ApiKeySummary>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden);
 
         group.MapPost("/keys", async (
             CreateApiKeyRequest request,

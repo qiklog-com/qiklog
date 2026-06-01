@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Data;
 using QikLog.Infrastructure.Tenants;
@@ -30,6 +31,7 @@ public sealed class UsageLimitServiceTests
             db,
             new TenantContext { TenantId = tenantId },
             options,
+            Options.Create(new AuthEnforcementOptions { Enabled = false }),
             NullLogger<UsageLimitService>.Instance);
 
         var result = await service.CheckIngestAllowedAsync(CancellationToken.None);
@@ -79,6 +81,7 @@ public sealed class UsageLimitServiceTests
             db,
             new TenantContext { TenantId = tenantId },
             options,
+            Options.Create(new AuthEnforcementOptions { Enabled = false }),
             NullLogger<UsageLimitService>.Instance);
 
         var result = await service.CheckIngestAllowedAsync(CancellationToken.None);

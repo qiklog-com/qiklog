@@ -21,9 +21,19 @@ public sealed class UsageLimitApiWebApplicationFactory : QikLogApiWebApplication
     }
 }
 
-public sealed class UsageLimitTests(UsageLimitApiWebApplicationFactory factory) : IClassFixture<UsageLimitApiWebApplicationFactory>
+public sealed class UsageLimitTests : IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly UsageLimitApiWebApplicationFactory _factory = new();
+    private HttpClient _client = null!;
+
+    public async Task InitializeAsync()
+    {
+        var apiKey = await ApiTestData.CreateApiKeyForPrimaryTenantAsync(_factory.Services);
+        _client = _factory.CreateClient();
+        ApiTestAuth.SetApiKey(_client, apiKey);
+    }
+
+    public async Task DisposeAsync() => await _factory.DisposeAsync();
 
     [Fact]
     public async Task Ingest_over_free_limit_returns_payment_required()

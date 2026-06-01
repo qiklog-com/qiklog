@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddQikLogPersistence(builder.Configuration, builder.Environment);
-builder.Services.AddQikLogJwtAuth(builder.Configuration);
+builder.Services.AddQikLogJwtAuth(builder.Configuration, builder.Environment);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new LogLevelJsonConverter()));
 builder.Services.AddQikLogOpenApi(builder.Configuration);
@@ -42,13 +42,14 @@ app.UseQikLogObservability();
 
 app.UseCors();
 var authOptions = app.Services.GetRequiredService<IOptions<QikLogAuthOptions>>().Value;
-if (authOptions.Enabled && !string.IsNullOrWhiteSpace(authOptions.Authority))
+if (app.Environment.IsEnvironment("Testing")
+    || (authOptions.Enabled && !string.IsNullOrWhiteSpace(authOptions.Authority)))
 {
     app.UseAuthentication();
     app.UseAuthorization();
 }
 
-app.UseMiddleware<IngestApiKeyMiddleware>();
+app.UseMiddleware<TenantAuthMiddleware>();
 
 // POST /v1/logs - ingest endpoint
 app.MapPost("/v1/logs", async (
@@ -111,12 +112,13 @@ app.MapPost("/v1/logs", async (
     OpenApiTags.Logs,
     "Ingest a log entry",
     "Accepts a JSON log line, persists it when Postgres is configured, and broadcasts to live tail subscribers via SignalR. " +
-    "Requires an API key when `QikLog:Ingest:RequireApiKey` is true.")
+    "Requires API key header `X-QikLog-API-Key` when auth enforcement is enabled.")
 .Accepts<LogEntryDto>("application/json")
 .Produces(StatusCodes.Status202Accepted)
 .ProducesProblem(StatusCodes.Status400BadRequest)
 .ProducesProblem(StatusCodes.Status401Unauthorized)
 .ProducesProblem(StatusCodes.Status402PaymentRequired)
+.ProducesProblem(StatusCodes.Status403Forbidden)
 .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
 app.MapQikLogManagement();
@@ -193,9 +195,11 @@ app.MapGet("/v1/sources/{source}/logs", async (
 .WithOpenApiMetadata(
     OpenApiTags.Logs,
     "Get recent logs for a source",
-    "Returns persisted log entries for the source, oldest-first, up to `limit` (max 500). Empty array when persistence is disabled.")
+    "Returns persisted log entries for the source, oldest-first, up to `limit` (max 500). Requires OIDC JWT or `X-QikLog-API-Key`.")
 .Produces<IReadOnlyList<LogEntry>>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status400BadRequest);
+.ProducesProblem(StatusCodes.Status400BadRequest)
+.ProducesProblem(StatusCodes.Status401Unauthorized)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
 app.MapHub<LogHub>("/hubs/logs");
 app.MapQikLogObservability();

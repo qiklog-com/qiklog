@@ -10,7 +10,7 @@ namespace QikLog.Infrastructure.Auth;
 
 public sealed record ApiKeyCreateResult(Guid Id, string Plaintext, string Name);
 
-public sealed record ApiKeyValidationResult(Guid Id, int RateLimitPerMinute);
+public sealed record ApiKeyValidationResult(Guid Id, int RateLimitPerMinute, Guid? TenantId);
 
 public interface IApiKeyService
 {
@@ -71,7 +71,7 @@ public sealed class ApiKeyService(
             candidate.LastUsedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
 
-            return new ApiKeyValidationResult(candidate.Id, candidate.RateLimitPerMinute);
+            return new ApiKeyValidationResult(candidate.Id, candidate.RateLimitPerMinute, candidate.TenantId);
         }
 
         return null;

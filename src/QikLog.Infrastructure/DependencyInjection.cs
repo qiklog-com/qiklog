@@ -18,6 +18,7 @@ public static class DependencyInjection
         IHostEnvironment environment)
     {
         services.Configure<IngestAuthOptions>(configuration.GetSection(IngestAuthOptions.SectionName));
+        services.Configure<AuthEnforcementOptions>(configuration.GetSection(AuthEnforcementOptions.SectionName));
         services.Configure<ManagementOptions>(configuration.GetSection(ManagementOptions.SectionName));
         services.Configure<QikLogAuthOptions>(configuration.GetSection(QikLogAuthOptions.SectionName));
         services.Configure<UsageLimitOptions>(configuration.GetSection(UsageLimitOptions.SectionName));

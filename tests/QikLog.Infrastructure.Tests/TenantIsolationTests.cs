@@ -78,11 +78,12 @@ public sealed class TenantIsolationTests
         await db.SaveChangesAsync();
 
         var options = Options.Create(new UsageLimitOptions { FreeIngestPerMonth = 2, ProIngestPerMonth = 100 });
-        var serviceA = new UsageLimitService(db, new TenantContext { TenantId = _tenantA }, options, NullLogger<UsageLimitService>.Instance);
+        var enforcement = Options.Create(new QikLog.Infrastructure.Auth.AuthEnforcementOptions { Enabled = false });
+        var serviceA = new UsageLimitService(db, new TenantContext { TenantId = _tenantA }, options, enforcement, NullLogger<UsageLimitService>.Instance);
         var blocked = await serviceA.CheckIngestAllowedAsync(CancellationToken.None);
         blocked.Allowed.ShouldBeFalse();
 
-        var serviceB = new UsageLimitService(db, new TenantContext { TenantId = _tenantB }, options, NullLogger<UsageLimitService>.Instance);
+        var serviceB = new UsageLimitService(db, new TenantContext { TenantId = _tenantB }, options, enforcement, NullLogger<UsageLimitService>.Instance);
         var allowed = await serviceB.CheckIngestAllowedAsync(CancellationToken.None);
         allowed.Allowed.ShouldBeTrue();
         allowed.Count.ShouldBe(0);

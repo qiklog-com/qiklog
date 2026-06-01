@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
 using QikLog.Infrastructure.Tenants;
 
@@ -17,10 +18,17 @@ public sealed class UsageLimitService(
     QikLogDbContext db,
     ITenantContext tenantContext,
     IOptions<UsageLimitOptions> options,
+    IOptions<AuthEnforcementOptions> enforcementOptions,
     ILogger<UsageLimitService> log) : IUsageLimitService
 {
     public async Task<UsageCheckResult> CheckIngestAllowedAsync(CancellationToken cancellationToken)
     {
+        if (enforcementOptions.Value.Enabled && tenantContext.TenantId is null)
+        {
+            log.LogWarning("Ingest usage check rejected: missing tenant context");
+            return new UsageCheckResult(false, "tenant context required", 0, 0);
+        }
+
         var limit = options.Value.FreeIngestPerMonth;
         if (tenantContext.TenantId is Guid tenantId)
         {

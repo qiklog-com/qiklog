@@ -8,15 +8,25 @@ using Xunit;
 
 namespace QikLog.Api.Tests;
 
-public sealed class LogHistoryEndpointTests(QikLogApiWebApplicationFactory factory) : IClassFixture<QikLogApiWebApplicationFactory>
+public sealed class LogHistoryEndpointTests : IAsyncLifetime
 {
+    private readonly QikLogApiWebApplicationFactory _factory = new();
+    private HttpClient _client = null!;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new LogLevelJsonConverter() }
     };
 
-    private readonly HttpClient _client = factory.CreateClient();
+    public async Task InitializeAsync()
+    {
+        var apiKey = await ApiTestData.CreateApiKeyForPrimaryTenantAsync(_factory.Services);
+        _client = _factory.CreateClient();
+        ApiTestAuth.SetApiKey(_client, apiKey);
+    }
+
+    public async Task DisposeAsync() => await _factory.DisposeAsync();
 
     [Fact]
     public async Task Get_source_logs_returns_recent_entries_newest_last()

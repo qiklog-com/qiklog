@@ -23,12 +23,19 @@ internal sealed class QikLogOpenApiDocumentTransformer : IOpenApiDocumentTransfo
         document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
         {
+            ["ApiKeyHeader"] = new()
+            {
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Name = "X-QikLog-API-Key",
+                Description = "Ingest and history API key: `X-QikLog-API-Key: ql_{prefix}_{secret}` (also accepts `X-Api-Key` or `Authorization: Bearer`)."
+            },
             ["ApiKeyBearer"] = new()
             {
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
                 BearerFormat = "API key",
-                Description = "Ingest API key: `Authorization: Bearer ql_{prefix}_{secret}` or header `X-Api-Key`."
+                Description = "Legacy: API key as Bearer token."
             },
             ["OidcBearer"] = new()
             {
