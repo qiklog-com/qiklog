@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
+@inject QikLog.Web.Services.QikLogApiClient Api
 
 <PageTitle>tail @Source &middot; QikLog</PageTitle>
 
@@ -11,6 +12,7 @@
         <FluentSpacer />
         <FluentBadge Appearance="@StatusAppearance">@StatusText</FluentBadge>
         <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
+        <FluentSwitch @bind-Value="@ShowHistory">History</FluentSwitch>
         <FluentButton OnClick="ClearBuffer">Clear</FluentButton>
     </FluentStack>
 
@@ -40,6 +42,11 @@
         <span>@_entries.Count entries buffered</span>
         <span>&middot;</span>
         <span>Buffer cap: @BufferCap (oldest drop)</span>
+        @if (_historyLoaded > 0)
+        {
+            <span>&middot;</span>
+            <span>@_historyLoaded history rows loaded</span>
+        }
     </FluentStack>
 </FluentStack>
 
@@ -50,6 +57,8 @@
     private readonly LinkedList<LogEntry> _entries = new();
     private HubConnection? _hub;
     private bool AutoScroll { get; set; } = true;
+    private bool ShowHistory { get; set; } = true;
+    private int _historyLoaded;
 
     private string StatusText => _hub?.State switch
     {
@@ -66,6 +75,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (ShowHistory)
+            await LoadHistoryAsync();
+
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
         _hub = new HubConnectionBuilder()
             .WithUrl($"{baseUrl}/hubs/logs")
@@ -91,7 +103,28 @@
     private void ClearBuffer()
     {
         _entries.Clear();
+        _historyLoaded = 0;
         StateHasChanged();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        try
+        {
+            var history = await Api.GetSourceHistoryAsync(Source, BufferCap, CancellationToken.None);
+            foreach (var entry in history)
+            {
+                _entries.AddLast(entry);
+                while (_entries.Count > BufferCap)
+                    _entries.RemoveFirst();
+            }
+
+            _historyLoaded = history.Count;
+        }
+        catch
+        {
+            _historyLoaded = 0;
+        }
     }
 
     private static string LevelLabel(LogLevel level) => level switch

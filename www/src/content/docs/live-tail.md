@@ -29,6 +29,8 @@ Replace `demo` with whatever `source` name you use when ingesting.
 
 The on-screen buffer keeps the most recent **500** lines. Older lines drop from the view but remain in Postgres if persistence is enabled.
 
+Turn on **History** (default on) to preload the latest stored rows for that source from `GET /v1/sources/{source}/logs` before live SignalR events arrive.
+
 ## How it works
 
 The web app connects to the API SignalR hub and joins group `source:{name}`. Every successful `POST /v1/logs` for that source is pushed to your browser immediately.

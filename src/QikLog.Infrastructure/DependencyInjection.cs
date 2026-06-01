@@ -29,6 +29,7 @@ public static class DependencyInjection
                 options.UseInMemoryDatabase(testDbName));
 
             services.AddScoped<ILogEntryStore, EfLogEntryStore>();
+            services.AddScoped<ILogHistoryService, EfLogHistoryService>();
             services.AddScoped<IApiKeyService, ApiKeyService>();
             services.AddScoped<ISourceCatalog, SourceCatalogService>();
             return services;
@@ -38,6 +39,7 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddSingleton<ILogEntryStore, NullLogEntryStore>();
+            services.AddSingleton<ILogHistoryService, NullLogHistoryService>();
             services.AddSingleton<IApiKeyService, NullApiKeyService>();
             services.AddSingleton<ISourceCatalog, NullSourceCatalog>();
             return services;
@@ -47,6 +49,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ILogEntryStore, EfLogEntryStore>();
+        services.AddScoped<ILogHistoryService, EfLogHistoryService>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ISourceCatalog, SourceCatalogService>();
         return services;

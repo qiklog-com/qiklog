@@ -117,6 +117,23 @@ app.MapGet("/healthz", async (IServiceProvider sp, CancellationToken ct) =>
 })
 .WithName("Health");
 
+app.MapGet("/v1/sources/{source}/logs", async (
+    string source,
+    int? limit,
+    ILogHistoryService history,
+    CancellationToken ct) =>
+{
+    if (string.IsNullOrWhiteSpace(source))
+        return Results.BadRequest(new { error = "source is required" });
+
+    if (!history.IsEnabled)
+        return Results.Ok(Array.Empty<LogEntry>());
+
+    var entries = await history.GetRecentBySourceAsync(source.Trim(), limit ?? 100, ct);
+    return Results.Ok(entries);
+})
+.WithName("GetSourceLogs");
+
 app.MapHub<LogHub>("/hubs/logs");
 
 app.Run();

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using QikLog.Core;
 using QikLog.Core.Management;
 
 namespace QikLog.Web.Services;
@@ -27,6 +28,18 @@ public sealed class QikLogApiClient(HttpClient http)
             return null;
 
         return await response.Content.ReadFromJsonAsync<CreateApiKeyResponse>(JsonOptions, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<LogEntry>> GetSourceHistoryAsync(
+        string source,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var encoded = Uri.EscapeDataString(source);
+        return await http.GetFromJsonAsync<IReadOnlyList<LogEntry>>(
+            $"/v1/sources/{encoded}/logs?limit={limit}",
+            JsonOptions,
+            cancellationToken) ?? [];
     }
 
     public async Task<bool> RevokeApiKeyAsync(Guid id, CancellationToken cancellationToken)
