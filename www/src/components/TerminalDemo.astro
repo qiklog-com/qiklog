@@ -1,0 +1,27 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+}
+
+const { src, alt } = Astro.props;
+---
+<figure class="terminal-demo glass">
+  <img src={src} alt={alt} loading="lazy" width="900" height="480" />
+</figure>
+
+<style>
+  .terminal-demo {
+    margin: 1.5rem 0;
+    padding: 0.5rem;
+    overflow: hidden;
+    border-radius: var(--ql-radius-lg);
+  }
+
+  .terminal-demo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--ql-radius-md);
+  }
+</style>

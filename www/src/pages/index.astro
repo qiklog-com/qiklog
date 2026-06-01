@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteNav from '../components/SiteNav.astro';
+import TerminalDemo from '../components/TerminalDemo.astro';
 import Wordmark from '../components/Wordmark.astro';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
@@ -42,6 +43,12 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
 <span class="dim">14:02:14.881</span> <span class="lvl-warn">WARN</span>  cache miss on /api/v1/widgets
 <span class="dim">14:02:15.102</span> <span class="lvl-info">INFO</span>  retry succeeded</code></pre>
       </div>
+    </section>
+
+    <section class="demo-gif container">
+      <h2>See it work</h2>
+      <p class="demo-gif-lead">Recordings from VHS tapes in <code>tapes/</code> — re-run <code>make demos-record</code> when the CLI or curl story changes.</p>
+      <TerminalDemo src="/demos/quickstart.gif" alt="curl ingest demo returning 202 Accepted" />
     </section>
 
     <section class="features container" id="features">
@@ -201,6 +208,23 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
   .ok { color: #56d364; }
   .lvl-info { color: #56d364; font-weight: 600; }
   .lvl-warn { color: #d29922; font-weight: 600; }
+
+  .demo-gif {
+    padding: 1rem 0 2rem;
+    text-align: center;
+  }
+
+  .demo-gif h2 {
+    color: var(--ql-text-fg-strong);
+    margin-bottom: 0.5rem;
+  }
+
+  .demo-gif-lead {
+    color: var(--ql-text-fg-muted);
+    font-size: 0.9rem;
+    max-width: 52ch;
+    margin: 0 auto 1rem;
+  }
 
   .features {
     padding: 2rem 0 3rem;

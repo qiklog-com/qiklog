@@ -81,11 +81,26 @@ build: restore ## dotnet build
 	@dotnet build $(SLN) -c $(CONFIG) --no-restore
 	$(call ok,Build complete)
 
-test: build ## dotnet test
+test: build ## dotnet test (excludes E2E doc capture)
 	$(call banner,Test)
-	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build)
-	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal
+	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build --filter 'Category!=E2E')
+	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal --filter 'Category!=E2E'
 	$(call ok,Tests passed)
+
+test-all: build ## dotnet test including E2E
+	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal
+
+docs-capture: ## Playwright screenshots → www/public/docs/screenshots
+	$(call banner,Doc capture)
+	@QIKLOG_E2E=1 dotnet test $(ROOT)/tests/QikLog.DocGen.Tests -c $(CONFIG) --verbosity normal
+	$(call ok,Screenshots updated)
+
+demos-record: ## VHS terminal GIFs → www/public/demos (requires vhs)
+	$(call banner,VHS demos)
+	@command -v vhs >/dev/null || { $(fail) "Install vhs: brew install vhs"; exit 1; }
+	@mkdir -p $(ROOT)/www/public/demos
+	@cd $(ROOT)/tapes && for t in *.tape; do vhs "$$t"; done
+	$(call ok,Demos recorded)
 
 clean: ## Remove bin/obj and dotnet artifacts
 	$(call banner,Clean)

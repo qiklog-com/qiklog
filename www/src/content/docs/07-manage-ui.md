@@ -10,6 +10,8 @@ The dashboard includes a pre-alpha **Manage** console for sources and API keys.
 
 **Local:** [http://localhost:5081/manage](http://localhost:5081/manage)
 
+![Manage sources and API keys](/docs/screenshots/manage.png)
+
 From the home page, use **Manage sources & keys**, or the **Manage** link in the header.
 
 ## Sources tab

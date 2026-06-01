@@ -128,13 +128,15 @@ keyCreateCommand.SetAction(async (parseResult, ct) =>
     using var http = new HttpClient();
     var payload = new StringContent(JsonSerializer.Serialize(new { name }), Encoding.UTF8, "application/json");
     using var response = await http.PostAsync($"{api}/v1/keys", payload, ct);
-    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        response = await http.PostAsync($"{api}/v1/dev/keys", payload, ct);
+    using var fallback = response.StatusCode == System.Net.HttpStatusCode.NotFound
+        ? await http.PostAsync($"{api}/v1/dev/keys", payload, ct)
+        : null;
+    var effective = fallback ?? response;
 
-    var body = await response.Content.ReadAsStringAsync(ct);
-    if (!response.IsSuccessStatusCode)
+    var body = await effective.Content.ReadAsStringAsync(ct);
+    if (!effective.IsSuccessStatusCode)
     {
-        Console.Error.WriteLine($"failed: {(int)response.StatusCode} {body}");
+        Console.Error.WriteLine($"failed: {(int)effective.StatusCode} {body}");
         return 1;
     }
 
