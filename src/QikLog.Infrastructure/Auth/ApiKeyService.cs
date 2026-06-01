@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using QikLog.Core;
+using QikLog.Core.Management;
 using QikLog.Infrastructure.Data;
 
 namespace QikLog.Infrastructure.Auth;
@@ -17,6 +18,10 @@ public interface IApiKeyService
     Task<ApiKeyValidationResult?> ValidateAsync(string plaintextKey, CancellationToken cancellationToken);
 
     Task<bool> AnyActiveKeysAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ApiKeySummary>> ListAsync(CancellationToken cancellationToken);
+
+    Task<bool> RevokeAsync(Guid id, CancellationToken cancellationToken);
 }
 
 public sealed class ApiKeyService(
@@ -71,4 +76,35 @@ public sealed class ApiKeyService(
 
     public Task<bool> AnyActiveKeysAsync(CancellationToken cancellationToken) =>
         db.ApiKeys.AnyAsync(k => k.IsActive && k.RevokedAt == null, cancellationToken);
+
+    public async Task<IReadOnlyList<ApiKeySummary>> ListAsync(CancellationToken cancellationToken) =>
+        await db.ApiKeys
+            .AsNoTracking()
+            .OrderByDescending(k => k.CreatedAt)
+            .Select(k => new ApiKeySummary(
+                k.Id,
+                k.Name,
+                k.LookupPrefix,
+                k.IsActive && k.RevokedAt == null,
+                k.CreatedAt,
+                k.LastUsedAt,
+                k.RevokedAt,
+                k.RateLimitPerMinute))
+            .ToListAsync(cancellationToken);
+
+    public async Task<bool> RevokeAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var entity = await db.ApiKeys.FindAsync([id], cancellationToken);
+        if (entity is null)
+            return false;
+
+        if (entity.RevokedAt is not null)
+            return true;
+
+        entity.IsActive = false;
+        entity.RevokedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        log.LogInformation("Revoked API key {ApiKeyId}", id);
+        return true;
+    }
 }

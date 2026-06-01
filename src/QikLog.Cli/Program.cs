@@ -126,10 +126,10 @@ keyCreateCommand.SetAction(async (parseResult, ct) =>
     var api = parseResult.GetValue(apiOption)!.TrimEnd('/');
 
     using var http = new HttpClient();
-    using var response = await http.PostAsync(
-        $"{api}/v1/dev/keys",
-        new StringContent(JsonSerializer.Serialize(new { name }), Encoding.UTF8, "application/json"),
-        ct);
+    var payload = new StringContent(JsonSerializer.Serialize(new { name }), Encoding.UTF8, "application/json");
+    using var response = await http.PostAsync($"{api}/v1/keys", payload, ct);
+    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        response = await http.PostAsync($"{api}/v1/dev/keys", payload, ct);
 
     var body = await response.Content.ReadAsStringAsync(ct);
     if (!response.IsSuccessStatusCode)

@@ -25,7 +25,11 @@ ql_{8-char-prefix}_{secret}
 
 Example shape: `ql_a1b2c3d4_xYz9...` — the full secret is shown **once** at creation.
 
-## Create a key (local development)
+## Create a key (dashboard)
+
+Open **Manage → API keys** at `/manage` on the web app, click **Create API key**, and save the plaintext from the dialog.
+
+## Create a key (CLI / curl)
 
 With the API running in **Development**:
 

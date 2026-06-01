@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
+using QikLog.Infrastructure.Sources;
 
 namespace QikLog.Infrastructure;
 
@@ -15,17 +16,21 @@ public static class DependencyInjection
         IHostEnvironment environment)
     {
         services.Configure<IngestAuthOptions>(configuration.GetSection(IngestAuthOptions.SectionName));
+        services.Configure<ManagementOptions>(configuration.GetSection(ManagementOptions.SectionName));
         services.AddScoped<IIngestContext, IngestContext>();
         services.AddSingleton<ApiKeyHasher>();
         services.AddSingleton<ApiKeyRateLimiter>();
 
         if (environment.IsEnvironment("Testing"))
         {
+            // One in-memory store per test host (do not call Guid inside the options lambda).
+            var testDbName = $"QikLogTests_{Guid.NewGuid():N}";
             services.AddDbContext<QikLogDbContext>(options =>
-                options.UseInMemoryDatabase("QikLogTests"));
+                options.UseInMemoryDatabase(testDbName));
 
             services.AddScoped<ILogEntryStore, EfLogEntryStore>();
             services.AddScoped<IApiKeyService, ApiKeyService>();
+            services.AddScoped<ISourceCatalog, SourceCatalogService>();
             return services;
         }
 
@@ -34,6 +39,7 @@ public static class DependencyInjection
         {
             services.AddSingleton<ILogEntryStore, NullLogEntryStore>();
             services.AddSingleton<IApiKeyService, NullApiKeyService>();
+            services.AddSingleton<ISourceCatalog, NullSourceCatalog>();
             return services;
         }
 
@@ -42,6 +48,7 @@ public static class DependencyInjection
 
         services.AddScoped<ILogEntryStore, EfLogEntryStore>();
         services.AddScoped<IApiKeyService, ApiKeyService>();
+        services.AddScoped<ISourceCatalog, SourceCatalogService>();
         return services;
     }
 

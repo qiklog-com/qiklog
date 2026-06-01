@@ -28,7 +28,7 @@ Enough to sell **Pro \$9/mo** to indie devs (API keys + accounts + persistence).
 | 10 | Postgres schema + migrations | **Partial** — `log_entries` only; tenants/keys later |
 | 14 | Persist logs | **Done** — write on ingest; no history UI yet |
 | 12 | Identity (register/login) | Who owns the tenant |
-| 13 | Source management UI | Create/revoke sources and keys |
+| 13 | Source management UI | **Done** — `/manage` Blazor UI + `/v1/keys` and `/v1/sources` (dev/management enabled) |
 | 30–31 | Stripe Checkout + Portal | Actually collect money |
 | 33 | Usage limits (basic) | Cap free tier, upsell Pro |
 | 53 | ToS + Privacy (generator) | Required before taking payments |

@@ -1,3 +1,4 @@
+using QikLog.Api;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
@@ -71,7 +72,9 @@ app.MapPost("/v1/logs", async (
 })
 .WithName("IngestLog");
 
-// Development-only: create an API key (plaintext returned once).
+app.MapQikLogManagement();
+
+// Back-compat alias for CLI/scripts when management API is enabled.
 if (app.Environment.IsDevelopment())
 {
     app.MapPost("/v1/dev/keys", async (CreateApiKeyRequest request, IApiKeyService keys, CancellationToken ct) =>
@@ -80,7 +83,7 @@ if (app.Environment.IsDevelopment())
             return Results.BadRequest(new { error = "name is required" });
 
         var created = await keys.CreateAsync(request.Name, ct);
-        return Results.Created($"/v1/dev/keys/{created.Id}", new
+        return Results.Created($"/v1/keys/{created.Id}", new
         {
             id = created.Id,
             name = created.Name,

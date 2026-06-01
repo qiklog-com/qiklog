@@ -1,0 +1,262 @@
+@page "/manage"
+@rendermode InteractiveServer
+@inject QikLog.Web.Services.QikLogApiClient Api
+
+<PageTitle>Manage · QikLog</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="16" Style="padding: 1rem; max-width: 1100px; margin: 0 auto;">
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="12">
+        <h2 style="margin: 0;">Manage</h2>
+        <FluentSpacer />
+        <FluentButton Appearance="Appearance.Outline" OnClick="ReloadAsync" Disabled="@_loading">Refresh</FluentButton>
+    </FluentStack>
+
+    <p style="margin: 0; opacity: 0.75; font-size: 0.9rem;">
+        Pre-alpha console — no login yet. Do not expose management endpoints on the public internet until identity ships (#12).
+    </p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <FluentMessageBar Intent="MessageIntent.Error">@_error</FluentMessageBar>
+    }
+
+    <FluentTabs @bind-ActiveTabId="@_activeTab">
+        <FluentTab Id="sources" Label="Sources" />
+        <FluentTab Id="keys" Label="API keys" />
+    </FluentTabs>
+
+    @if (_activeTab == "sources")
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showNewSource = true)">New source</FluentButton>
+
+        <FluentCard Style="padding: 0; overflow: hidden;">
+            @if (_loading && _sources.Count == 0)
+            {
+                <p style="padding: 1rem; opacity: 0.7;">Loading sources…</p>
+            }
+            else if (_sources.Count == 0)
+            {
+                <p style="padding: 1rem; opacity: 0.7;">
+                    No sources yet. Ingest a log (curl or CLI) or create a source name to get started.
+                </p>
+            }
+            else
+            {
+                <FluentDataGrid TGridItem="SourceSummary" Items="@_sources.AsQueryable()" Style="width: 100%;">
+                    <PropertyColumn Title="Source" Property="@(s => s.Name)" />
+                    <TemplateColumn Title="Entries">
+                        @context.EntryCount.ToString("N0")
+                    </TemplateColumn>
+                    <TemplateColumn Title="Last seen">
+                        @(context.LastReceivedAt?.ToLocalTime().ToString("g") ?? "—")
+                    </TemplateColumn>
+                    <TemplateColumn Title="">
+                        <FluentButton Appearance="Appearance.Outline" Href="@($"/tail/{Uri.EscapeDataString(context.Name)}")">
+                            Tail
+                        </FluentButton>
+                    </TemplateColumn>
+                </FluentDataGrid>
+            }
+        </FluentCard>
+    }
+    else
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showCreateKey = true)">Create API key</FluentButton>
+
+        <FluentCard Style="padding: 0; overflow: hidden;">
+            @if (_loading && _keys.Count == 0)
+            {
+                <p style="padding: 1rem; opacity: 0.7;">Loading API keys…</p>
+            }
+            else if (_keys.Count == 0)
+            {
+                <p style="padding: 1rem; opacity: 0.7;">No API keys yet. Create one for authenticated ingest.</p>
+            }
+            else
+            {
+                <FluentDataGrid TGridItem="ApiKeySummary" Items="@_keys.AsQueryable()" Style="width: 100%;">
+                    <PropertyColumn Title="Name" Property="@(k => k.Name)" />
+                    <TemplateColumn Title="Prefix">
+                        <code>@($"ql_{context.LookupPrefix}_…")</code>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Status">
+                        @if (context.IsActive)
+                        {
+                            <FluentBadge Appearance="Appearance.Accent">active</FluentBadge>
+                        }
+                        else
+                        {
+                            <FluentBadge Appearance="Appearance.Neutral">revoked</FluentBadge>
+                        }
+                    </TemplateColumn>
+                    <TemplateColumn Title="Last used">
+                        @(context.LastUsedAt?.ToLocalTime().ToString("g") ?? "—")
+                    </TemplateColumn>
+                    <TemplateColumn Title="">
+                        @if (context.IsActive)
+                        {
+                            <FluentButton Appearance="Appearance.Outline"
+                                          OnClick="@(() => RevokeKeyAsync(context.Id))"
+                                          Disabled="@_revoking">
+                                Revoke
+                            </FluentButton>
+                        }
+                    </TemplateColumn>
+                </FluentDataGrid>
+            }
+        </FluentCard>
+    }
+</FluentStack>
+
+<FluentDialog @bind-Hidden="@_showNewSource" Modal="true" Style="--dialog-width: 480px;">
+    <FluentDialogHeader><h3>New source</h3></FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentTextField @bind-Value="@_newSourceName" Label="Source name" Placeholder="demo" Style="width: 100%;" />
+        <p style="opacity: 0.75; font-size: 0.85rem; margin-top: 0.75rem;">
+            Sources are created on first ingest — pick a stable name per app or environment.
+        </p>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showNewSource = false)">Cancel</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmNewSource">Continue</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<FluentDialog @bind-Hidden="@_showNewSourceHelp" Modal="true" Style="--dialog-width: 520px;">
+    <FluentDialogHeader><h3>Source ready</h3></FluentDialogHeader>
+    <FluentDialogBody>
+        <p>Use source <code>@_newSourceName</code> when ingesting, then open the tail page.</p>
+        <pre style="font-size: 0.8rem; overflow-x: auto; padding: 0.75rem; background: var(--neutral-fill-secondary-rest); border-radius: 4px;">curl -X POST http://localhost:5080/v1/logs \
+  -H "Content-Type: application/json" \
+  -d '{"source":"@_newSourceName","level":"info","message":"hello"}'</pre>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showNewSourceHelp = false)">Close</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Href="@($"/tail/{Uri.EscapeDataString(_newSourceName)}")">Open tail</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<FluentDialog @bind-Hidden="@_showCreateKey" Modal="true" Style="--dialog-width: 400px;">
+    <FluentDialogHeader><h3>Create API key</h3></FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentTextField @bind-Value="@_newKeyName" Label="Key label" Placeholder="my laptop" Style="width: 100%;" />
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showCreateKey = false)">Cancel</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="CreateKeyAsync" Disabled="@_creatingKey">Create</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+<FluentDialog @bind-Hidden="@_showCreatedKey" Modal="true" Style="--dialog-width: 560px;">
+    <FluentDialogHeader><h3>Save this key now</h3></FluentDialogHeader>
+    <FluentDialogBody>
+        <p><strong>@_createdKeyName</strong></p>
+        <pre style="font-size: 0.8rem; word-break: break-all; padding: 0.75rem; background: var(--neutral-fill-secondary-rest);">@_createdKeyPlaintext</pre>
+        <p style="opacity: 0.75; font-size: 0.85rem;">This key is shown once. Use <code>Authorization: Bearer …</code> on ingest.</p>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showCreatedKey = false)">Done</FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    private string _activeTab = "sources";
+    private bool _loading = true;
+    private bool _revoking;
+    private bool _creatingKey;
+    private string? _error;
+    private List<SourceSummary> _sources = [];
+    private List<ApiKeySummary> _keys = [];
+
+    private bool _showNewSource = true;
+    private bool _showNewSourceHelp = true;
+    private bool _showCreateKey = true;
+    private bool _showCreatedKey = true;
+    private string _newSourceName = "";
+    private string _newKeyName = "";
+    private string _createdKeyName = "";
+    private string _createdKeyPlaintext = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _showNewSource = false;
+        _showNewSourceHelp = false;
+        _showCreateKey = false;
+        _showCreatedKey = false;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _sources = (await Api.GetSourcesAsync(CancellationToken.None)).ToList();
+            _keys = (await Api.GetApiKeysAsync(CancellationToken.None)).ToList();
+        }
+        catch (HttpRequestException ex)
+        {
+            _error = $"Could not reach the API. Is it running with management enabled? ({ex.Message})";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ConfirmNewSource()
+    {
+        if (string.IsNullOrWhiteSpace(_newSourceName))
+            return;
+
+        _newSourceName = _newSourceName.Trim();
+        _showNewSource = false;
+        _showNewSourceHelp = true;
+    }
+
+    private async Task CreateKeyAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newKeyName))
+            return;
+
+        _creatingKey = true;
+        try
+        {
+            var created = await Api.CreateApiKeyAsync(_newKeyName.Trim(), CancellationToken.None);
+            if (created is null)
+            {
+                _error = "Could not create API key. Check API logs.";
+                return;
+            }
+
+            _createdKeyName = created.Name;
+            _createdKeyPlaintext = created.Key;
+            _showCreateKey = false;
+            _showCreatedKey = true;
+            _newKeyName = "";
+            await ReloadAsync();
+        }
+        finally
+        {
+            _creatingKey = false;
+        }
+    }
+
+    private async Task RevokeKeyAsync(Guid id)
+    {
+        _revoking = true;
+        try
+        {
+            var ok = await Api.RevokeApiKeyAsync(id, CancellationToken.None);
+            if (!ok)
+                _error = "Revoke failed.";
+            else
+                await ReloadAsync();
+        }
+        finally
+        {
+            _revoking = false;
+        }
+    }
+}

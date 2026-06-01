@@ -28,6 +28,12 @@ builder.Services.AddFluentUIComponents();
 // Override via appsettings or env var QIKLOG_API_BASE_URL in deployments.
 builder.Services.Configure<QikLogOptions>(builder.Configuration.GetSection("QikLog"));
 
+var apiBaseUrl = builder.Configuration["QikLog:ApiBaseUrl"] ?? "http://localhost:5080";
+builder.Services.AddHttpClient<QikLog.Web.Services.QikLogApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
