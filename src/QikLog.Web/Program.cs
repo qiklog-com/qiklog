@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.FluentUI.AspNetCore.Components;
+using QikLog.Infrastructure.Auth;
+using QikLog.Web;
 using QikLog.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddFluentUIComponents();
+builder.Services.AddQikLogWebAuth(builder.Configuration, builder.Environment);
 
 // Used by tail page to construct the SignalR hub URL.
 // Override via appsettings or env var QIKLOG_API_BASE_URL in deployments.
@@ -43,7 +46,18 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+var webAuth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<QikLogAuthOptions>>().Value;
+if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+
 app.UseAntiforgery();
+
+app.MapGet("/challenge", () => Results.Challenge(
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    [Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectDefaults.AuthenticationScheme]));
 
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();

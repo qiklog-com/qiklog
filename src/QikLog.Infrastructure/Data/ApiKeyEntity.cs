@@ -5,6 +5,10 @@ public sealed class ApiKeyEntity
 {
     public Guid Id { get; set; }
 
+    public Guid? TenantId { get; set; }
+
+    public TenantEntity? Tenant { get; set; }
+
     public required string Name { get; set; }
 
     /// <summary>First segment after <c>ql_</c> for indexed lookup.</summary>

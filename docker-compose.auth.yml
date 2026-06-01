@@ -1,0 +1,39 @@
+# Optional Zitadel for local OIDC: docker compose -f docker-compose.yml -f docker-compose.auth.yml --profile auth up
+# See docs/ZITADEL_LOCAL.md
+
+services:
+  zitadel:
+    profiles: ["auth"]
+    image: ghcr.io/zitadel/zitadel:v2.64.1
+    command: start-from-init --masterkeyFromEnv --tlsMode disabled
+    environment:
+      ZITADEL_MASTERKEY: MasterkeyNeedsToHave32Characters!
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: qiklog
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: qiklog_dev
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: qiklog
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: qiklog_dev
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_EXTERNALPORT: 8080
+      ZITADEL_EXTERNALDOMAIN: localhost
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    environment:
+      QikLog__Auth__Enabled: "true"
+      QikLog__Auth__Authority: "http://localhost:8080"
+      QikLog__Auth__ClientId: "qiklog-web@qiklog"
+      ConnectionStrings__Postgres: "Host=postgres;Database=qiklog;Username=qiklog;Password=qiklog_dev"
+
+  api:
+    environment:
+      QikLog__Auth__Enabled: "true"
+      QikLog__Auth__Authority: "http://localhost:8080"
