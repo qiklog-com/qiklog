@@ -1,17 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>QikLog.Api.Tests</RootNamespace>
-    <AssemblyName>QikLog.Api.Tests</AssemblyName>
+    <RootNamespace>QikLog.Infrastructure.Tests</RootNamespace>
+    <AssemblyName>QikLog.Infrastructure.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\QikLog.Api\QikLog.Api.csproj" />
+    <ProjectReference Include="..\..\src\QikLog.Infrastructure\QikLog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\QikLog.Core\QikLog.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />

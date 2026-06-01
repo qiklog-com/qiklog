@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using QikLog.Core;
 using QikLog.Core.Management;
 using QikLog.Infrastructure.Data;
+using QikLog.Infrastructure.Tenants;
 
 namespace QikLog.Infrastructure.Auth;
 
@@ -28,6 +29,7 @@ public sealed class ApiKeyService(
     QikLogDbContext db,
     ApiKeyHasher hasher,
     IOptions<IngestAuthOptions> options,
+    ITenantContext tenantContext,
     ILogger<ApiKeyService> log) : IApiKeyService
 {
     public async Task<ApiKeyCreateResult> CreateAsync(string name, CancellationToken cancellationToken)
@@ -41,7 +43,8 @@ public sealed class ApiKeyService(
             SecretHash = hasher.Hash(plaintext),
             IsActive = true,
             CreatedAt = DateTimeOffset.UtcNow,
-            RateLimitPerMinute = options.Value.RateLimitPerMinute
+            RateLimitPerMinute = options.Value.RateLimitPerMinute,
+            TenantId = tenantContext.TenantId
         };
 
         db.ApiKeys.Add(entity);
@@ -80,6 +83,7 @@ public sealed class ApiKeyService(
     public async Task<IReadOnlyList<ApiKeySummary>> ListAsync(CancellationToken cancellationToken) =>
         await db.ApiKeys
             .AsNoTracking()
+            .ForTenant(tenantContext.TenantId)
             .OrderByDescending(k => k.CreatedAt)
             .Select(k => new ApiKeySummary(
                 k.Id,
@@ -97,6 +101,16 @@ public sealed class ApiKeyService(
         var entity = await db.ApiKeys.FindAsync([id], cancellationToken);
         if (entity is null)
             return false;
+
+        if (tenantContext.TenantId is Guid tenantId && entity.TenantId != tenantId)
+        {
+            log.LogWarning(
+                "Revoke denied for API key {ApiKeyId}: belongs to tenant {KeyTenantId}, caller tenant {CallerTenantId}",
+                id,
+                entity.TenantId,
+                tenantId);
+            return false;
+        }
 
         if (entity.RevokedAt is not null)
             return true;

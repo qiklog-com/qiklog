@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using QikLog.Infrastructure.Data;
 using QikLog.Infrastructure.Tenants;
@@ -15,7 +16,8 @@ public sealed record UsageCheckResult(bool Allowed, string? Reason, long Count, 
 public sealed class UsageLimitService(
     QikLogDbContext db,
     ITenantContext tenantContext,
-    IOptions<UsageLimitOptions> options) : IUsageLimitService
+    IOptions<UsageLimitOptions> options,
+    ILogger<UsageLimitService> log) : IUsageLimitService
 {
     public async Task<UsageCheckResult> CheckIngestAllowedAsync(CancellationToken cancellationToken)
     {
@@ -32,13 +34,26 @@ public sealed class UsageLimitService(
         }
 
         var monthStart = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var count = await db.LogEntries.LongCountAsync(
-            e => e.ReceivedAt >= monthStart,
-            cancellationToken);
+        var entries = db.LogEntries.Where(e => e.ReceivedAt >= monthStart);
+        entries = entries.ForTenant(db, tenantContext.TenantId);
+        var count = await entries.LongCountAsync(cancellationToken);
 
-        return count >= limit
-            ? new UsageCheckResult(false, "monthly ingest limit exceeded — upgrade to Pro", count, limit)
-            : new UsageCheckResult(true, null, count, limit);
+        if (count >= limit)
+        {
+            log.LogWarning(
+                "Monthly ingest limit exceeded for tenant {TenantId}: {Count}/{Limit}",
+                tenantContext.TenantId,
+                count,
+                limit);
+            return new UsageCheckResult(false, "monthly ingest limit exceeded — upgrade to Pro", count, limit);
+        }
+
+        log.LogDebug(
+            "Ingest allowed for tenant {TenantId}: {Count}/{Limit}",
+            tenantContext.TenantId,
+            count,
+            limit);
+        return new UsageCheckResult(true, null, count, limit);
     }
 }
 
