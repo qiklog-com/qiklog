@@ -1,19 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
 import Wordmark from '../components/Wordmark.astro';
 
 const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
 const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
 ---
 <BaseLayout>
-  <header class="nav glass glass-sm container">
-    <Wordmark />
-    <nav class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#pricing">Pricing</a>
-      <a href={appUrl} class="btn btn-primary">Open app</a>
-    </nav>
-  </header>
+  <SiteNav appUrl={appUrl} />
 
   <main>
     <section class="hero container">
@@ -28,7 +22,8 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
           No Grafana ceremony. No six-figure observability bill.
         </p>
         <div class="hero-actions">
-          <a href={appUrl} class="btn btn-primary">Start tailing</a>
+          <a href="/docs/quickstart/" class="btn btn-primary">Get started</a>
+          <a href={appUrl} class="btn btn-ghost">Open app</a>
           <a href="#demo" class="btn btn-ghost">See the curl</a>
         </div>
       </div>
@@ -67,6 +62,21 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
       </div>
     </section>
 
+    <section class="docs-cta container">
+      <div class="glass docs-cta-card">
+        <div>
+          <h2>Documentation</h2>
+          <p class="docs-cta-lead">
+            Step-by-step guides for ingest, live tail, API keys, and the CLI — written for the person shipping logs, not the person selling observability.
+          </p>
+        </div>
+        <div class="docs-cta-actions">
+          <a href="/docs/" class="btn btn-primary">Read the docs</a>
+          <a href="/docs/quickstart/" class="btn btn-ghost">Quickstart →</a>
+        </div>
+      </div>
+    </section>
+
     <section class="pricing container" id="pricing">
       <div class="glass pricing-card">
         <h2>Simple pricing (coming soon)</h2>
@@ -83,30 +93,15 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
 
   <footer class="footer container">
     <Wordmark />
-    <p class="footer-note">© {new Date().getFullYear()} QikLog · <a href="https://github.com">GitHub</a> (soon)</p>
+    <p class="footer-note">
+      <a href="/docs/">Docs</a>
+      · © {new Date().getFullYear()} QikLog
+      · <a href="https://github.com/qiklog-com/qiklog">GitHub</a>
+    </p>
   </footer>
 </BaseLayout>
 
 <style>
-  .nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 1.25rem;
-    padding: 0.85rem 1.25rem;
-  }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    font-size: 0.9rem;
-  }
-
-  .nav-links a:not(.btn) {
-    color: var(--ql-text-fg-muted);
-  }
-
   .hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -248,6 +243,37 @@ const demoPayload = '{"source":"demo","level":"info","message":"shipped"}';
   .feature-card code {
     font-family: var(--ql-font-mono);
     font-size: 0.85em;
+  }
+
+  .docs-cta {
+    padding: 0 0 3rem;
+  }
+
+  .docs-cta-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2rem 2.25rem;
+  }
+
+  .docs-cta-card h2 {
+    margin: 0 0 0.5rem;
+    color: var(--ql-text-fg-strong);
+  }
+
+  .docs-cta-lead {
+    margin: 0;
+    color: var(--ql-text-fg-muted);
+    max-width: 52ch;
+    font-size: 0.95rem;
+  }
+
+  .docs-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .pricing {

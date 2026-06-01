@@ -1,0 +1,89 @@
+---
+interface DocLink {
+  slug: string;
+  title: string;
+}
+
+interface Props {
+  docs: DocLink[];
+  currentSlug: string;
+}
+
+const { docs, currentSlug } = Astro.props;
+
+function href(slug: string) {
+  return slug === 'getting-started' ? '/docs/' : `/docs/${slug}/`;
+}
+
+const idx = docs.findIndex((d) => d.slug === currentSlug);
+const prev = idx > 0 ? docs[idx - 1] : null;
+const next = idx >= 0 && idx < docs.length - 1 ? docs[idx + 1] : null;
+---
+{(prev || next) && (
+  <nav class="doc-pager" aria-label="Continue reading">
+    {prev ? (
+      <a class="pager-prev" href={href(prev.slug)}>
+        <span class="pager-label">Previous</span>
+        <span class="pager-title">{prev.title}</span>
+      </a>
+    ) : (
+      <span />
+    )}
+    {next ? (
+      <a class="pager-next" href={href(next.slug)}>
+        <span class="pager-label">Next</span>
+        <span class="pager-title">{next.title}</span>
+      </a>
+    ) : (
+      <span />
+    )}
+  </nav>
+)}
+
+<style>
+  .doc-pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .pager-prev,
+  .pager-next {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--ql-radius-lg);
+    border: 1px solid var(--glass-border);
+    text-decoration: none;
+    background: rgba(0, 0, 0, 0.15);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .pager-prev:hover,
+  .pager-next:hover {
+    border-color: var(--ql-accent-teal);
+    background: rgba(45, 212, 191, 0.06);
+  }
+
+  .pager-next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  .pager-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ql-accent-teal);
+    font-weight: 600;
+  }
+
+  .pager-title {
+    color: var(--ql-text-fg-strong);
+    font-size: 0.95rem;
+  }
+</style>

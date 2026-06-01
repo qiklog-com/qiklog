@@ -31,6 +31,7 @@ A lightweight log-tailing SaaS for developers who want to see what their app is 
 - `src/QikLog.Api/` — minimal API + SignalR `LogHub`. Stateless except for in-memory state during MVP.
 - `src/QikLog.Web/` — Blazor Server dashboard. Uses SignalR client to subscribe to `LogHub`.
 - `src/QikLog.Cli/` — `qiklog send`, `qiklog tail-file`, more later.
+- `www/src/content/docs/` — **end-user** guides (marketing site `/docs/`). Update when user-visible behavior changes; see `.cursor/rules/user-docs.mdc`.
 - `tests/QikLog.Core.Tests/` — unit tests; add API/Web test projects as those grow.
 
 ## Coding conventions

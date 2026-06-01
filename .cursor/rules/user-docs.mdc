@@ -1,0 +1,59 @@
+---
+description: Update end-user documentation in www when product behavior changes
+alwaysApply: true
+---
+
+# End-user documentation (www)
+
+**Audience:** developers using QikLog (ingest, tail, CLI, keys) — not contributors.
+
+**Location:** `www/src/content/docs/*.md` (Astro content collection). Renders at `/docs/` on the marketing site.
+
+**Not the same as** `docs/` at repo root — that is internal (architecture, deploy, ship checklist). Do not put end-user how-tos only in `docs/`.
+
+## When to update
+
+Update or add a doc page when the change affects something a user would **do**, **configure**, or **see**:
+
+- New or changed HTTP endpoints, request/response shapes, status codes
+- CLI commands, flags, env vars (`QIKLOG_*`, `QikLog__*`)
+- Dashboard URLs, tail behavior, limits (buffer size, rate limits)
+- Auth requirements (API keys, headers)
+- Local quickstart steps (Docker, ports, curl examples)
+
+Skip www docs for:
+
+- Pure refactors with no behavior change
+- Internal tests, CI, Azure scripts, contributor-only notes
+- Features explicitly deferred in project rules (billing, Zitadel UI, etc.) — mention in docs only if already shipped or document “coming soon” honestly on getting-started
+
+If unsure: **default to a small doc update** (one paragraph + link) rather than leaving users to discover behavior from code.
+
+## How to update
+
+1. Pick the right page (or add `NN-slug.md` — use clean slug, set `order` in frontmatter):
+
+   | Topic | File |
+   |-------|------|
+   | Concepts / scope | `getting-started.md` |
+   | Local run | `quickstart.md` |
+   | `POST /v1/logs` | `ingest-api.md` |
+   | `/tail/{source}` | `live-tail.md` |
+   | Keys & auth | `api-keys.md` |
+   | `qiklog` CLI | `cli.md` |
+
+2. Frontmatter required: `title`, `description`, `order` (integer, sort order).
+
+3. Match existing tone: imperative steps, curl examples, tables for fields/status codes, **Pre-alpha honesty** when UI or accounts are not ready.
+
+4. Cross-link: add a **Next steps** section with links to `/docs/{slug}/` (trailing slash). Sidebar and prev/next pager are automatic from `order`.
+
+5. Verify: `make www-build` (or `make www-dev` for spot-check).
+
+6. Commits: use scope `www` or `docs(www)` — e.g. `docs(www): document ingest rate limit header`.
+
+## Same PR as the feature
+
+Prefer updating user docs **in the same change** as the feature, not a follow-up ticket — unless the user asked for code-only.
+
+Do not update the landing page (`www/src/pages/index.astro`) for every small API tweak; reserve marketing copy for positioning, not reference detail.

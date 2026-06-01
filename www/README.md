@@ -1,6 +1,6 @@
 # QikLog marketing site (www.qiklog.com)
 
-Static landing page — **separate from** the Blazor app (`app.qiklog.com` / local `:5081`).
+Static landing page and **end-user documentation** — separate from the Blazor app (`app.qiklog.com` / local `:5081`).
 
 ## Stack
 
@@ -21,6 +21,21 @@ From repo root: `make www-dev` / `make www-build`.
 ## Environment
 
 Copy `.env.example` → `.env` and set `PUBLIC_APP_URL` to your dashboard URL.
+
+## Documentation
+
+User-facing guides live in `src/content/docs/` as Markdown (Astro content collection). Pages render at `/docs/` with sidebar navigation and prev/next links.
+
+| File | Topic |
+|------|--------|
+| `getting-started.md` | Concepts and learning path |
+| `quickstart.md` | Docker local run |
+| `ingest-api.md` | `POST /v1/logs` |
+| `live-tail.md` | Browser tail viewer |
+| `api-keys.md` | Auth and rate limits |
+| `cli.md` | `qiklog` commands |
+
+Add a doc: create a new `.md` with `title`, `description`, and `order` in frontmatter.
 
 ## Deploy
 

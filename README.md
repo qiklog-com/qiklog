@@ -44,10 +44,10 @@ Docker Compose keeps `QikLog__Ingest__RequireApiKey=false` so the README curl st
 
 ## Marketing site (www.qiklog.com)
 
-Static landing page in [`www/`](www/) — Astro + frosted-glass CSS. Not the Blazor dashboard.
+Static landing page and **end-user docs** in [`www/`](www/) — Astro + frosted-glass CSS. Not the Blazor dashboard. Guides live at `/docs/` (quickstart, ingest API, live tail, API keys, CLI).
 
 ```bash
-make www-dev       # http://localhost:4321
+make www-dev       # http://localhost:4321  →  /docs/quickstart/
 ```
 
 Deploy `www/dist/` to your static host; point `app.qiklog.com` at the Web container when ready.
