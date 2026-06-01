@@ -7,7 +7,7 @@
 - Test count and pass rate: **64/64 passing** (24 Core + 35 Api + 5 Infrastructure; `Category!=E2E`)
 - Coverage: **43.7% blended** (was ~43% pre-auth; target 60% by Tier 2 complete)
 - E2E last verified: not run this session (`make test` only)
-- Last commit hash and date: _(see `git log -1` after push)_
+- Last commit hash and date: `4730ffb` — 2026-06-01 — `feat(auth): enforce tenant-scoped JWT and API key auth on all protected routes`
 - GitHub: https://github.com/qiklog-com/qiklog
 
 ## Last Session Summary
