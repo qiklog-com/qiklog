@@ -128,6 +128,12 @@ build-images: ## Build API and Web images only
 	$(call ok,Images built)
 
 # ── Quick checks ──────────────────────────────────────────────────────────────
+.PHONY: verify health demo open-tail db-migrate
+db-migrate: ## Apply EF migrations to local Postgres
+	$(call banner,Database migrate)
+	@dotnet ef database update --project $(ROOT)/src/QikLog.Infrastructure
+	$(call ok,Migrations applied)
+
 .PHONY: verify health demo open-tail
 verify: build test health ## Local Phase 1 gate: build, test, HTTP smoke
 	$(call ok,Verify passed — open $(WEB_URL)/tail/demo for live SignalR check)

@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\QikLog.Core\QikLog.Core.csproj" />
+    <ProjectReference Include="..\QikLog.Infrastructure\QikLog.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- SignalR is built into ASP.NET Core; no extra package needed for server side -->

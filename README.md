@@ -6,7 +6,7 @@
 
 Lightweight log tailing for developers who want to see what their app is doing right now — without setting up Datadog.
 
-**Status:** pre-alpha. Hello World works locally; paid product not yet available.
+**Status:** pre-alpha. Hello World + Postgres ingest persistence locally; paid product not yet available.
 
 ## Quickstart (local dev)
 
@@ -25,7 +25,9 @@ curl -X POST http://localhost:5080/v1/logs \
   -d '{"source":"demo","level":"info","message":"hello from curl"}'
 ```
 
-You should see the log line appear in the browser in real time.
+You should see the log line appear in the browser in real time. Ingested lines are stored in Postgres (`log_entries` table).
+
+`GET /healthz` reports `postgres: ok` when the database is reachable.
 
 ## Marketing site (www.qiklog.com)
 

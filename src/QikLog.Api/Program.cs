@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
 using QikLog.Core;
+using QikLog.Infrastructure;
+using QikLog.Infrastructure.Data;
 using CoreLogLevel = QikLog.Core.LogLevel;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
+builder.Services.AddQikLogPersistence(builder.Configuration, builder.Environment);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new LogLevelJsonConverter()));
 builder.Services.AddEndpointsApiExplorer();
@@ -24,6 +28,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+await app.Services.MigrateQikLogDatabaseAsync();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -36,6 +42,7 @@ app.UseCors();
 app.MapPost("/v1/logs", async (
     LogEntryDto dto,
     IHubContext<LogHub> hub,
+    ILogEntryStore store,
     CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(dto.Source))
@@ -51,6 +58,8 @@ app.MapPost("/v1/logs", async (
         Properties: dto.Properties
     );
 
+    await store.SaveAsync(entry, ct);
+
     // Broadcast to anyone subscribed to this source.
     // Group name convention: "source:{name}". Keep it grep-able.
     await hub.Clients
@@ -62,8 +71,27 @@ app.MapPost("/v1/logs", async (
 .WithName("IngestLog");
 
 // GET /healthz - for container orchestrators
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
-   .WithName("Health");
+app.MapGet("/healthz", async (IServiceProvider sp, CancellationToken ct) =>
+{
+    var store = sp.GetRequiredService<ILogEntryStore>();
+    if (!store.IsEnabled)
+        return Results.Ok(new { status = "ok", postgres = "skipped" });
+
+    try
+    {
+        await using var scope = sp.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<QikLogDbContext>();
+        var canConnect = await db.Database.CanConnectAsync(ct);
+        return canConnect
+            ? Results.Ok(new { status = "ok", postgres = "ok" })
+            : Results.Json(new { status = "degraded", postgres = "unreachable" }, statusCode: 503);
+    }
+    catch
+    {
+        return Results.Json(new { status = "degraded", postgres = "error" }, statusCode: 503);
+    }
+})
+.WithName("Health");
 
 app.MapHub<LogHub>("/hubs/logs");
 

@@ -25,8 +25,8 @@ Enough to sell **Pro \$9/mo** to indie devs (API keys + accounts + persistence).
 | # | Ticket | Why it blocks revenue |
 |---|--------|------------------------|
 | 11 | API key auth on ingest | Otherwise anyone can spam your API |
-| 10 | Postgres schema + migrations | Foundation for keys, users, logs |
-| 14 | Persist logs | Paying customers expect history, not just live tail |
+| 10 | Postgres schema + migrations | **Partial** — `log_entries` only; tenants/keys later |
+| 14 | Persist logs | **Done** — write on ingest; no history UI yet |
 | 12 | Identity (register/login) | Who owns the tenant |
 | 13 | Source management UI | Create/revoke sources and keys |
 | 30–31 | Stripe Checkout + Portal | Actually collect money |
