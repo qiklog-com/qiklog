@@ -12,24 +12,14 @@
 
 ## Last Session Summary
 **Date:** 2026-06-01  
-**Prompt received from PO:** Tier 2A — auth enforcement on management, ingest, and history; remove global tenant fallback; OpenAPI security; ~15 new tests; tag `v0.9.0-auth-enforcement`.  
+**Prompt received from PO:** Adopt Project Gate protocol — verify repo before executing Homer prompts; document in HOMER.md.  
 **Work completed:**
-- Added `TenantAuthMiddleware` — JWT for `/v1/keys`, `/v1/sources`, billing; `X-QikLog-API-Key` for ingest; JWT or API key for history
-- `TenantResolver` resolves JWT `tenant_id` (or Zitadel org claim via `TenantProvisioner`)
-- API keys must have `TenantId`; missing/invalid → 401/403 per PO spec
-- `AuthEnforcementOptions` (`QikLog:AuthEnforcement:Enabled`); skipped only when persistence disabled
-- Test auth handler (`Test` scheme) for integration tests; seeded primary tenant in test host
-- 11 new tests in `AuthEnforcementTests`; updated all API tests for auth headers
-- OpenAPI: `ApiKeyHeader` + `OidcBearer` schemes; Scalar Authorize support
-- Removed superseded `IngestApiKeyMiddleware`
+- Recorded Project Gate convention in Session History (🖖 Garfield / 🍩 Homer)
+- Developer will check gate block first; stop with "Wrong window" if repo mismatch
 **Decisions made (and why):**
-- API key → tenant via `ApiKeyEntity.TenantId` (no source FK on keys yet; PO “source→tenant” modeled as key belongs to tenant)
-- Management still gated by `QikLog:Management:Enabled`; auth enforced when routes are mapped
-- Testing environment always uses `Test` JWT scheme (no Zitadel required in CI)
-**Issues encountered:**
-- Homer initially could not see hardening — was already on `main`; addressed in prior session with verification checklist
-- `FindFirstValue` not in Infrastructure — used `FindFirst()?.Value`
-**Files changed:** `TenantAuthMiddleware`, `TenantResolver`, `AuthEnforcementOptions`, `ApiKeyService`, `TestAuthHandler`, `ProtectedApiRoutes`, OpenAPI transformers, all `QikLog.Api.Tests/*`, `appsettings.json`, removed `IngestApiKeyMiddleware.cs`
+- Documentation-only change; no code impact
+**Issues encountered:** None.  
+**Files changed:** `HOMER.md`
 
 ## PO protocol answers (recorded)
 1. **Session boundaries:** Update HOMER.md after any committed+pushed unit of work between Homer prompts.
@@ -48,6 +38,9 @@
 3. **Persistence hardening (Redis #16)** or **Azure deploy** — auth work surfaced need for configured OIDC in deployed environments.
 
 ## Session History
+
+### 2026-06-01 — Project Gate protocol adopted. Signatures: 🖖 (Garfield), 🍩 (Homer).
+Homer prompts include a PROJECT GATE block naming expected repo; Garfield stops on mismatch before executing.
 
 ### 2026-06-01 — Tier 2A auth enforcement (`v0.9.0-auth-enforcement`)
 Mandatory tenant context on management (OIDC JWT), ingest (`X-QikLog-API-Key`), history (JWT or API key). 64/64 tests. Coverage 43.7% blended.
