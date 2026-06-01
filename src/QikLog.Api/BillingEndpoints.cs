@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using QikLog.Api.OpenApi;
 using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Tenants;
 using Stripe;
@@ -48,8 +49,19 @@ internal static class BillingEndpoints
                 }
             }, cancellationToken: ct);
 
-            return Results.Ok(new { url = session.Url });
+            return Results.Ok(new CheckoutSessionResponse(session.Url));
         })
-        .WithName("CreateCheckoutSession");
+        .WithName("CreateCheckoutSession")
+        .WithOpenApiMetadata(
+            OpenApiTags.Billing,
+            "Create Stripe Checkout session",
+            "Starts a Stripe Checkout session for the Pro plan. Requires `QikLog:Stripe:Enabled` and an authenticated tenant (OIDC JWT).")
+        .WithTags(OpenApiTags.Tenants)
+        .Produces<CheckoutSessionResponse>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
     }
 }
+
+/// <summary>Stripe Checkout redirect URL.</summary>
+internal sealed record CheckoutSessionResponse(string? Url);

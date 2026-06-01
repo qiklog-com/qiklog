@@ -22,8 +22,6 @@ public static class DependencyInjection
         services.Configure<QikLogAuthOptions>(configuration.GetSection(QikLogAuthOptions.SectionName));
         services.Configure<UsageLimitOptions>(configuration.GetSection(UsageLimitOptions.SectionName));
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
-        services.AddScoped<ITenantContext, TenantContext>();
-        services.AddScoped<TenantProvisioner>();
         services.AddScoped<IIngestContext, IngestContext>();
         services.AddSingleton<ApiKeyHasher>();
         services.AddSingleton<ApiKeyRateLimiter>();
@@ -40,6 +38,7 @@ public static class DependencyInjection
             services.AddScoped<IApiKeyService, ApiKeyService>();
             services.AddScoped<ISourceCatalog, SourceCatalogService>();
             services.AddScoped<IUsageLimitService, UsageLimitService>();
+            RegisterTenantServices(services);
             return services;
         }
 
@@ -62,7 +61,14 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ISourceCatalog, SourceCatalogService>();
         services.AddScoped<IUsageLimitService, UsageLimitService>();
+        RegisterTenantServices(services);
         return services;
+    }
+
+    private static void RegisterTenantServices(IServiceCollection services)
+    {
+        services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<TenantProvisioner>();
     }
 
     public static async Task MigrateQikLogDatabaseAsync(this IServiceProvider services, CancellationToken cancellationToken = default)

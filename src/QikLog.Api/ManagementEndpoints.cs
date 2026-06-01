@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Options;
+using QikLog.Api.OpenApi;
+using QikLog.Core.Management;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Sources;
 
@@ -19,7 +21,12 @@ internal static class ManagementEndpoints
             var list = await keys.ListAsync(ct);
             return Results.Ok(list);
         })
-        .WithName("ListApiKeys");
+        .WithName("ListApiKeys")
+        .WithOpenApiMetadata(
+            OpenApiTags.Auth,
+            "List API keys",
+            "Returns API key metadata (never includes secrets). Requires `QikLog:Management:Enabled`.")
+        .Produces<IReadOnlyList<ApiKeySummary>>(StatusCodes.Status200OK);
 
         group.MapPost("/keys", async (CreateApiKeyRequest request, IApiKeyService keys, CancellationToken ct) =>
         {
@@ -35,20 +42,38 @@ internal static class ManagementEndpoints
                 hint = "Save this key now. It will not be shown again. Use: Authorization: Bearer <key>"
             });
         })
-        .WithName("CreateApiKey");
+        .WithName("CreateApiKey")
+        .WithOpenApiMetadata(
+            OpenApiTags.Auth,
+            "Create API key",
+            "Creates a new ingest API key. The plaintext `key` is returned once in the response body.")
+        .Accepts<CreateApiKeyRequest>("application/json")
+        .Produces<CreateApiKeyResponse>(StatusCodes.Status201Created)
+        .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/keys/{id:guid}/revoke", async (Guid id, IApiKeyService keys, CancellationToken ct) =>
         {
             var revoked = await keys.RevokeAsync(id, ct);
             return revoked ? Results.NoContent() : Results.NotFound();
         })
-        .WithName("RevokeApiKey");
+        .WithName("RevokeApiKey")
+        .WithOpenApiMetadata(
+            OpenApiTags.Auth,
+            "Revoke API key",
+            "Deactivates an API key. Ingest with that key returns 401 afterward.")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/sources", async (ISourceCatalog sources, CancellationToken ct) =>
         {
             var list = await sources.ListAsync(ct);
             return Results.Ok(list);
         })
-        .WithName("ListSources");
+        .WithName("ListSources")
+        .WithOpenApiMetadata(
+            OpenApiTags.Sources,
+            "List sources",
+            "Lists distinct source names seen in persisted `log_entries` with counts and last-seen timestamps.")
+        .Produces<IReadOnlyList<SourceSummary>>(StatusCodes.Status200OK);
     }
 }

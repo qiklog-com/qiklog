@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using QikLog.Core;
 using QikLog.Infrastructure.Auth;
@@ -10,7 +11,6 @@ public sealed class IngestApiKeyMiddleware(
     IOptions<IngestAuthOptions> options,
     IApiKeyService apiKeys,
     ApiKeyRateLimiter rateLimiter,
-    IIngestContext ingestContext,
     ILogger<IngestApiKeyMiddleware> log)
 {
     public async Task InvokeAsync(HttpContext context)
@@ -46,7 +46,7 @@ public sealed class IngestApiKeyMiddleware(
             return;
         }
 
-        ingestContext.ApiKeyId = validation.Id;
+        context.RequestServices.GetRequiredService<IIngestContext>().ApiKeyId = validation.Id;
         log.LogDebug("Ingest authorized for API key {ApiKeyId}", validation.Id);
         await next(context);
     }

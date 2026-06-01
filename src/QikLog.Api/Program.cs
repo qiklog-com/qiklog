@@ -1,4 +1,5 @@
 using QikLog.Api;
+using QikLog.Api.OpenApi;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
@@ -18,8 +19,7 @@ builder.Services.AddQikLogPersistence(builder.Configuration, builder.Environment
 builder.Services.AddQikLogJwtAuth(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new LogLevelJsonConverter()));
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddQikLogOpenApi(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -36,11 +36,7 @@ var app = builder.Build();
 
 await app.Services.MigrateQikLogDatabaseAsync();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseQikLogOpenApi();
 
 app.UseCors();
 var authOptions = app.Services.GetRequiredService<IOptions<QikLogAuthOptions>>().Value;
@@ -86,7 +82,18 @@ app.MapPost("/v1/logs", async (
 
     return Results.Accepted();
 })
-.WithName("IngestLog");
+.WithName("IngestLog")
+.WithOpenApiMetadata(
+    OpenApiTags.Logs,
+    "Ingest a log entry",
+    "Accepts a JSON log line, persists it when Postgres is configured, and broadcasts to live tail subscribers via SignalR. " +
+    "Requires an API key when `QikLog:Ingest:RequireApiKey` is true.")
+.Accepts<LogEntryDto>("application/json")
+.Produces(StatusCodes.Status202Accepted)
+.ProducesProblem(StatusCodes.Status400BadRequest)
+.ProducesProblem(StatusCodes.Status401Unauthorized)
+.ProducesProblem(StatusCodes.Status402PaymentRequired)
+.ProducesProblem(StatusCodes.Status429TooManyRequests);
 
 app.MapQikLogManagement();
 app.MapQikLogBilling();
@@ -108,7 +115,14 @@ if (app.Environment.IsDevelopment())
             hint = "Save this key now. It will not be shown again. Use: Authorization: Bearer <key>"
         });
     })
-    .WithName("CreateDevApiKey");
+    .WithName("CreateDevApiKey")
+    .WithOpenApiMetadata(
+        OpenApiTags.Auth,
+        "Create API key (development alias)",
+        "Development-only alias for `POST /v1/keys`. Returns the plaintext key once.")
+    .Accepts<CreateApiKeyRequest>("application/json")
+    .Produces<CreateApiKeyResponse>(StatusCodes.Status201Created)
+    .ProducesProblem(StatusCodes.Status400BadRequest);
 }
 
 // GET /healthz - for container orchestrators
@@ -132,7 +146,9 @@ app.MapGet("/healthz", async (IServiceProvider sp, CancellationToken ct) =>
         return Results.Json(new { status = "degraded", postgres = "error" }, statusCode: 503);
     }
 })
-.WithName("Health");
+.WithName("Health")
+.WithSummary("Health check")
+.WithDescription("Container orchestrator probe. Reports Postgres connectivity when persistence is enabled.");
 
 app.MapGet("/v1/sources/{source}/logs", async (
     string source,
@@ -149,13 +165,26 @@ app.MapGet("/v1/sources/{source}/logs", async (
     var entries = await history.GetRecentBySourceAsync(source.Trim(), limit ?? 100, ct);
     return Results.Ok(entries);
 })
-.WithName("GetSourceLogs");
+.WithName("GetSourceLogs")
+.WithOpenApiMetadata(
+    OpenApiTags.Logs,
+    "Get recent logs for a source",
+    "Returns persisted log entries for the source, oldest-first, up to `limit` (max 500). Empty array when persistence is disabled.")
+.Produces<IReadOnlyList<LogEntry>>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status400BadRequest);
 
 app.MapHub<LogHub>("/hubs/logs");
 
 app.Run();
 
 public sealed record CreateApiKeyRequest(string Name);
+
+/// <summary>Response body when an API key is created (plaintext shown once).</summary>
+public sealed record CreateApiKeyResponse(
+    Guid Id,
+    string Name,
+    string Key,
+    string Hint);
 
 /// <summary>
 /// Wire shape for POST /v1/logs. Looser than <see cref="LogEntry"/> because we
