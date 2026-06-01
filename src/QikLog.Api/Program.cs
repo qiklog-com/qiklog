@@ -1,4 +1,5 @@
 using QikLog.Api;
+using QikLog.Api.Observability;
 using QikLog.Api.OpenApi;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ var app = builder.Build();
 await app.Services.MigrateQikLogDatabaseAsync();
 
 app.UseQikLogOpenApi();
+app.UseQikLogObservability();
 
 app.UseCors();
 var authOptions = app.Services.GetRequiredService<IOptions<QikLogAuthOptions>>().Value;
@@ -53,18 +55,38 @@ app.MapPost("/v1/logs", async (
     LogEntryDto dto,
     IHubContext<LogHub> hub,
     ILogEntryStore store,
-    IServiceProvider sp,
+    IUsageLimitService usage,
+    ILogger<IngestEndpoint> log,
     CancellationToken ct) =>
 {
     if (string.IsNullOrWhiteSpace(dto.Source))
+    {
+        log.LogWarning("Ingest rejected: missing source");
         return Results.BadRequest(new { error = "source is required" });
-    if (string.IsNullOrWhiteSpace(dto.Message))
-        return Results.BadRequest(new { error = "message is required" });
+    }
 
-    var usage = sp.GetRequiredService<IUsageLimitService>();
+    if (string.IsNullOrWhiteSpace(dto.Message))
+    {
+        log.LogWarning("Ingest rejected: missing message for source {Source}", dto.Source);
+        return Results.BadRequest(new { error = "message is required" });
+    }
+
     var usageCheck = await usage.CheckIngestAllowedAsync(ct);
     if (!usageCheck.Allowed)
-        return Results.Json(new { error = usageCheck.Reason, usage = usageCheck.Count, limit = usageCheck.Limit }, statusCode: 402);
+    {
+        QikLogMetrics.UsageLimitChecks.WithLabels("denied").Inc();
+        log.LogWarning(
+            "Ingest blocked for source {Source}: {Reason} ({Count}/{Limit})",
+            dto.Source,
+            usageCheck.Reason,
+            usageCheck.Count,
+            usageCheck.Limit);
+        return Results.Json(
+            new { error = usageCheck.Reason, usage = usageCheck.Count, limit = usageCheck.Limit },
+            statusCode: 402);
+    }
+
+    QikLogMetrics.UsageLimitChecks.WithLabels("allowed").Inc();
 
     var entry = new LogEntry(
         Source: dto.Source.Trim(),
@@ -75,11 +97,13 @@ app.MapPost("/v1/logs", async (
     );
 
     await store.SaveAsync(entry, ct);
+    QikLogMetrics.LogsIngested.Inc();
 
     await hub.Clients
         .Group($"source:{entry.Source}")
         .SendAsync("LogReceived", entry, ct);
 
+    log.LogInformation("Ingested log for source {Source} level {Level}", entry.Source, entry.Level);
     return Results.Accepted();
 })
 .WithName("IngestLog")
@@ -174,8 +198,12 @@ app.MapGet("/v1/sources/{source}/logs", async (
 .ProducesProblem(StatusCodes.Status400BadRequest);
 
 app.MapHub<LogHub>("/hubs/logs");
+app.MapQikLogObservability();
 
 app.Run();
+
+/// <summary>Logger category for POST /v1/logs.</summary>
+internal sealed class IngestEndpoint;
 
 public sealed record CreateApiKeyRequest(string Name);
 

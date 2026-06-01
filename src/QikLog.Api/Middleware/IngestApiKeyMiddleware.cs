@@ -29,6 +29,7 @@ public sealed class IngestApiKeyMiddleware(
 
         if (!TryGetApiKeyFromRequest(context.Request, out var plaintext))
         {
+            log.LogWarning("Ingest rejected: missing or invalid API key header");
             await WriteErrorAsync(context, StatusCodes.Status401Unauthorized, "missing or invalid Authorization header (Bearer ql_...)");
             return;
         }
@@ -36,12 +37,14 @@ public sealed class IngestApiKeyMiddleware(
         var validation = await apiKeys.ValidateAsync(plaintext, context.RequestAborted);
         if (validation is null)
         {
+            log.LogWarning("Ingest rejected: invalid API key");
             await WriteErrorAsync(context, StatusCodes.Status401Unauthorized, "invalid API key");
             return;
         }
 
         if (!rateLimiter.TryAcquire(validation.Id, validation.RateLimitPerMinute))
         {
+            log.LogWarning("Ingest rate limit exceeded for API key {ApiKeyId}", validation.Id);
             await WriteErrorAsync(context, StatusCodes.Status429TooManyRequests, "rate limit exceeded");
             return;
         }

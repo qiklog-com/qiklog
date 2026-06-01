@@ -16,9 +16,10 @@ internal static class ManagementEndpoints
 
         var group = app.MapGroup("/v1");
 
-        group.MapGet("/keys", async (IApiKeyService keys, CancellationToken ct) =>
+        group.MapGet("/keys", async (IApiKeyService keys, ILogger<ManagementLog> log, CancellationToken ct) =>
         {
             var list = await keys.ListAsync(ct);
+            log.LogInformation("Listed {Count} API keys", list.Count);
             return Results.Ok(list);
         })
         .WithName("ListApiKeys")
@@ -28,12 +29,20 @@ internal static class ManagementEndpoints
             "Returns API key metadata (never includes secrets). Requires `QikLog:Management:Enabled`.")
         .Produces<IReadOnlyList<ApiKeySummary>>(StatusCodes.Status200OK);
 
-        group.MapPost("/keys", async (CreateApiKeyRequest request, IApiKeyService keys, CancellationToken ct) =>
+        group.MapPost("/keys", async (
+            CreateApiKeyRequest request,
+            IApiKeyService keys,
+            ILogger<ManagementLog> log,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                log.LogWarning("Create API key rejected: missing name");
                 return Results.BadRequest(new { error = "name is required" });
+            }
 
             var created = await keys.CreateAsync(request.Name, ct);
+            log.LogInformation("Created API key {ApiKeyId} named {Name}", created.Id, created.Name);
             return Results.Created($"/v1/keys/{created.Id}", new
             {
                 id = created.Id,
@@ -51,9 +60,18 @@ internal static class ManagementEndpoints
         .Produces<CreateApiKeyResponse>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
-        group.MapPost("/keys/{id:guid}/revoke", async (Guid id, IApiKeyService keys, CancellationToken ct) =>
+        group.MapPost("/keys/{id:guid}/revoke", async (
+            Guid id,
+            IApiKeyService keys,
+            ILogger<ManagementLog> log,
+            CancellationToken ct) =>
         {
             var revoked = await keys.RevokeAsync(id, ct);
+            if (revoked)
+                log.LogInformation("Revoked API key {ApiKeyId}", id);
+            else
+                log.LogWarning("Revoke failed for API key {ApiKeyId}", id);
+
             return revoked ? Results.NoContent() : Results.NotFound();
         })
         .WithName("RevokeApiKey")
@@ -64,9 +82,10 @@ internal static class ManagementEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapGet("/sources", async (ISourceCatalog sources, CancellationToken ct) =>
+        group.MapGet("/sources", async (ISourceCatalog sources, ILogger<ManagementLog> log, CancellationToken ct) =>
         {
             var list = await sources.ListAsync(ct);
+            log.LogInformation("Listed {Count} sources", list.Count);
             return Results.Ok(list);
         })
         .WithName("ListSources")
@@ -77,3 +96,5 @@ internal static class ManagementEndpoints
         .Produces<IReadOnlyList<SourceSummary>>(StatusCodes.Status200OK);
     }
 }
+
+internal sealed class ManagementLog;

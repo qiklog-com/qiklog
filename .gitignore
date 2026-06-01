@@ -10,6 +10,7 @@ obj/
 # Build output
 publish/
 out/
+artifacts/
 
 # ASP.NET DataProtection keys (local dev)
 dataprotection-keys/

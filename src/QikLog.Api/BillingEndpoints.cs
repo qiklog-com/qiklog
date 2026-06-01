@@ -20,14 +20,21 @@ internal static class BillingEndpoints
         app.MapPost("/v1/billing/checkout", async (
             ITenantContext tenant,
             IOptions<StripeOptions> options,
+            ILogger<BillingLog> log,
             CancellationToken ct) =>
         {
             if (tenant.TenantId is null)
+            {
+                log.LogWarning("Checkout rejected: missing tenant context");
                 return Results.Unauthorized();
+            }
 
             var cfg = options.Value;
             if (string.IsNullOrWhiteSpace(cfg.ProPriceId))
+            {
+                log.LogWarning("Checkout rejected: Stripe Pro price not configured");
                 return Results.BadRequest(new { error = "Stripe Pro price is not configured" });
+            }
 
             var service = new SessionService();
             var session = await service.CreateAsync(new SessionCreateOptions
@@ -49,6 +56,7 @@ internal static class BillingEndpoints
                 }
             }, cancellationToken: ct);
 
+            log.LogInformation("Created Stripe checkout session for tenant {TenantId}", tenant.TenantId);
             return Results.Ok(new CheckoutSessionResponse(session.Url));
         })
         .WithName("CreateCheckoutSession")
@@ -65,3 +73,5 @@ internal static class BillingEndpoints
 
 /// <summary>Stripe Checkout redirect URL.</summary>
 internal sealed record CheckoutSessionResponse(string? Url);
+
+internal sealed class BillingLog;
