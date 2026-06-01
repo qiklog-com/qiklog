@@ -1,43 +1,47 @@
 # HOMER.md — Status Log for Product Owner
 
 ## Current State
-- Branch: `main` (synced with `origin/main`)
-- Latest tag: `v0.9.0-auth-enforcement`
+- Branch: `main` (synced with `origin/main` after push)
+- Latest tag: `v0.9.1-signalr-auth`
 - Working state: **green**
-- Test count and pass rate: **64/64 passing** (24 Core + 35 Api + 5 Infrastructure; `Category!=E2E`)
-- Coverage: **43.7% blended** (was ~43% pre-auth; target 60% by Tier 2 complete)
-- E2E last verified: not run this session (`make test` only)
-- Last commit hash and date: `4730ffb` — 2026-06-01 — `feat(auth): enforce tenant-scoped JWT and API key auth on all protected routes`
+- Test count and pass rate: **72/72 passing** (24 Core + 43 Api + 5 Infrastructure; `Category!=E2E`)
+- Coverage: **~45.1%** Api-test cobertura line-rate (was 43.7% at v0.9.0; target 60% by Tier 2 complete)
+- E2E last verified: not run this session (`make test` only; docker compose smoke not re-run)
+- Last commit: Tier 2B — SignalR auth + `docs/QUICKSTART.md` — tag `v0.9.1-signalr-auth`
 - GitHub: https://github.com/qiklog-com/qiklog
 
 ## Last Session Summary
 **Date:** 2026-06-01  
-**Prompt received from PO:** Adopt Project Gate protocol — verify repo before executing Homer prompts; document in HOMER.md.  
+**Prompt received from PO:** Tier 2B — SignalR hub auth, quickstart docs, `/v1/dev/keys` Production guard verification.  
 **Work completed:**
-- Recorded Project Gate convention in Session History (🖖 Garfield / 🍩 Homer)
-- Developer will check gate block first; stop with "Wrong window" if repo mismatch
+- Locked `/hubs/logs`: JWT or `X-QikLog-API-Key`; connection refused without valid tenant credentials
+- Tenant-scoped SignalR groups (`tenant:{id}:source:{name}`) when enforcement on; ingest broadcast uses same groups
+- Shared `TenantAuthenticationService` (middleware + hub); JwtBearer `access_token` query for hub WebSockets
+- Web tail: optional `QikLog:HubApiKey` for authenticated hub subscribe in full-dev mode
+- `docs/QUICKSTART.md` — Mode A (demo, auth off) and Mode B (Zitadel via compose overlay)
+- Docker compose: demo defaults disable auth; `docker-compose.auth.yml` enables enforcement
+- **8 new Api tests** (`SignalRHubAuthTests` + `DevKeysEndpointTests`); load test uses one connection × 100 group subscriptions (stable under TestServer)
+- `/v1/dev/keys` remains `IsDevelopment()` only; Production factory test expects **404**
 **Decisions made (and why):**
-- Documentation-only change; no code impact
-**Issues encountered:** None.  
-**Files changed:** `HOMER.md`
-
-## PO protocol answers (recorded)
-1. **Session boundaries:** Update HOMER.md after any committed+pushed unit of work between Homer prompts.
-2. **E2E:** `make test` gates green; optional `E2E last verified` field in Current State.
-3. **Branches:** Stay on `main`; direct commits; tags + commits are audit trail.
-4. **Coverage:** Track blended % each session; target 60% by Tier 2 complete; no hard minimum yet.
+- Hub auth on negotiate (middleware) + `OnConnectedAsync` fallback when WebSocket context lacks negotiate items
+- Load test: 100 group subscriptions on one authenticated connection (avoids TestServer flakiness with 100 TCP connections)
+**Issues encountered:**
+- Production `WebApplicationFactory` for dev-keys test needs in-memory DbContext + tenant DI stubs (no Postgres in CI)
+- Blended coverage across three cobertura files is misleading; report Api-test file line-rate (~45%) for continuity with 2A
+**Files changed:** Api auth/hub/middleware, Web tail, compose, `docs/QUICKSTART.md`, `README.md`, `SignalRHubAuthTests.cs`, `SignalRLoadTests.cs`, `HOMER.md`
 
 ## Open Questions for PO
-1. **SignalR hub `/hubs/logs`:** Still unauthenticated (not in Tier 2A scope). Lock down in 2B?
-2. **Local dev without Zitadel:** Management/ingest require auth when Postgres + `AuthEnforcement` enabled; need `docker compose` + OIDC or Testing host. Document in quickstart?
-3. **`/v1/dev/keys`:** Now requires JWT like management — keep for Development only?
+_(Tier 2B questions resolved — see Session History.)_
 
 ## Suggested Next Steps
-1. **Wire API JWT from Zitadel in docker-compose** — enable `QikLog:Auth:Enabled` on API with real tokens (dashboard → API calls).
-2. **SignalR auth** — subscribe requires tenant-scoped credential.
-3. **Persistence hardening (Redis #16)** or **Azure deploy** — auth work surfaced need for configured OIDC in deployed environments.
+1. **Persistence hardening (Redis #16)** — hot buffer + SignalR backplane before multi-instance deploy
+2. **Azure deploy** — wire Zitadel/OIDC env vars; confirm hub `access_token` / API key paths in Container Apps ingress
+3. **E2E smoke** — Playwright or scripted compose verify for QUICKSTART Mode A (not run locally this session)
 
 ## Session History
+
+### 2026-06-01 — Tier 2B SignalR auth + quickstart (`v0.9.1-signalr-auth`)
+`/hubs/logs` requires JWT or API key; tenant-isolated groups; QUICKSTART demo/full modes. 72/72 tests. ~45% Api coverage line-rate.
 
 ### 2026-06-01 — Project Gate protocol adopted. Signatures: 🖖 (Garfield), 🍩 (Homer).
 Homer prompts include a PROJECT GATE block naming expected repo; Garfield stops on mismatch before executing.

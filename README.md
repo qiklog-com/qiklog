@@ -10,8 +10,10 @@ Lightweight log tailing for developers who want to see what their app is doing r
 
 ## Quickstart (local dev)
 
+See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for demo mode (auth off) and full dev mode (Zitadel OIDC).
+
 ```bash
-make up-d          # or: docker compose up -d
+make up-d          # or: docker compose up -d  (demo mode — auth disabled in compose)
 make verify        # build, test, health + demo POST
 make demo          # send a test log
 open http://localhost:5081/tail/demo

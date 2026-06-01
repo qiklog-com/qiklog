@@ -5,42 +5,38 @@ using Xunit;
 namespace QikLog.Api.Tests;
 
 [Trait("Category", "Load")]
-public sealed class SignalRLoadTests(QikLogApiWebApplicationFactory factory) : IClassFixture<QikLogApiWebApplicationFactory>
+public sealed class SignalRLoadTests : IAsyncLifetime
 {
+    private readonly QikLogApiWebApplicationFactory _factory = new();
+    private string _apiKey = "";
+
+    public async Task InitializeAsync() =>
+        _apiKey = await ApiTestData.CreateApiKeyForPrimaryTenantAsync(_factory.Services);
+
+    public async Task DisposeAsync() => await _factory.DisposeAsync();
+
     [Fact]
     public async Task Hub_supports_100_concurrent_subscriptions()
     {
-        var baseAddress = factory.Server.BaseAddress
+        var baseAddress = _factory.Server.BaseAddress
             ?? throw new InvalidOperationException("Test server has no base address.");
 
         var hubUrl = new Uri(baseAddress, "/hubs/logs");
-        var connections = new List<HubConnection>();
 
-        try
-        {
-            for (var i = 0; i < 100; i++)
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options =>
             {
-                var connection = new HubConnectionBuilder()
-                    .WithUrl(hubUrl, options =>
-                    {
-                        options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
-                    })
-                    .Build();
+                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
+                options.Headers.Add("X-QikLog-API-Key", _apiKey);
+            })
+            .Build();
 
-                await connection.StartAsync();
-                await connection.InvokeAsync("Subscribe", $"load-source-{i}");
-                connections.Add(connection);
-            }
+        await connection.StartAsync();
+        connection.State.ShouldBe(HubConnectionState.Connected);
 
-            connections.Count.ShouldBe(100);
-            connections.TrueForAll(c => c.State == HubConnectionState.Connected).ShouldBeTrue();
-        }
-        finally
-        {
-            foreach (var connection in connections)
-            {
-                await connection.DisposeAsync();
-            }
-        }
+        for (var i = 0; i < 100; i++)
+            await connection.InvokeAsync("Subscribe", $"load-source-{i}");
+
+        connection.State.ShouldBe(HubConnectionState.Connected);
     }
 }

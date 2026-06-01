@@ -37,3 +37,6 @@ services:
     environment:
       QikLog__Auth__Enabled: "true"
       QikLog__Auth__Authority: "http://localhost:8080"
+      QikLog__AuthEnforcement__Enabled: "true"
+      QikLog__Ingest__RequireApiKey: "true"
+      QikLog__Management__Enabled: "true"

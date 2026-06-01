@@ -32,9 +32,12 @@ builder.Services.AddQikLogWebAuth(builder.Configuration, builder.Environment);
 builder.Services.Configure<QikLogOptions>(builder.Configuration.GetSection("QikLog"));
 
 var apiBaseUrl = builder.Configuration["QikLog:ApiBaseUrl"] ?? "http://localhost:5080";
+var hubApiKey = builder.Configuration["QikLog:HubApiKey"];
 builder.Services.AddHttpClient<QikLog.Web.Services.QikLogApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+    if (!string.IsNullOrWhiteSpace(hubApiKey))
+        client.DefaultRequestHeaders.Add("X-QikLog-API-Key", hubApiKey);
 });
 
 var app = builder.Build();
@@ -67,4 +70,7 @@ app.Run();
 public sealed class QikLogOptions
 {
     public string ApiBaseUrl { get; set; } = "http://localhost:5080";
+
+    /// <summary>Optional API key for SignalR hub + history when API auth enforcement is enabled.</summary>
+    public string? HubApiKey { get; set; }
 }

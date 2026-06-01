@@ -4,6 +4,7 @@ using QikLog.Api.OpenApi;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
+using QikLog.Infrastructure.Tenants;
 using QikLog.Api.Middleware;
 using QikLog.Core;
 using QikLog.Infrastructure;
@@ -57,6 +58,7 @@ app.MapPost("/v1/logs", async (
     IHubContext<LogHub> hub,
     ILogEntryStore store,
     IUsageLimitService usage,
+    ITenantContext tenantContext,
     ILogger<IngestEndpoint> log,
     CancellationToken ct) =>
 {
@@ -100,8 +102,12 @@ app.MapPost("/v1/logs", async (
     await store.SaveAsync(entry, ct);
     QikLogMetrics.LogsIngested.Inc();
 
+    var group = tenantContext.TenantId is Guid tenantId
+        ? LogHubGroups.ForTenantSource(tenantId, entry.Source)
+        : LogHubGroups.ForSource(entry.Source);
+
     await hub.Clients
-        .Group($"source:{entry.Source}")
+        .Group(group)
         .SendAsync("LogReceived", entry, ct);
 
     log.LogInformation("Ingested log for source {Source} level {Level}", entry.Source, entry.Level);

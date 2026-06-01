@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using QikLog.Api.Auth;
 using QikLog.Api.Auth.Testing;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Tenants;
@@ -17,6 +18,7 @@ internal static class ApiAuthExtensions
     {
         services.Configure<AuthEnforcementOptions>(configuration.GetSection(AuthEnforcementOptions.SectionName));
         services.AddScoped<TenantResolver>();
+        services.AddScoped<TenantAuthenticationService>();
 
         if (environment.IsEnvironment("Testing"))
         {
@@ -47,6 +49,19 @@ internal static class ApiAuthExtensions
                     ValidateAudience = true,
                     ValidateIssuer = true,
                     NameClaimType = "name"
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && path.StartsWithSegments("/hubs/logs"))
+                            context.Token = accessToken;
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

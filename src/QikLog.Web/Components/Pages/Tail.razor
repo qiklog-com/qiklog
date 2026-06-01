@@ -79,8 +79,13 @@
             await LoadHistoryAsync();
 
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
+        var hubApiKey = Options.Value.HubApiKey;
         _hub = new HubConnectionBuilder()
-            .WithUrl($"{baseUrl}/hubs/logs")
+            .WithUrl($"{baseUrl}/hubs/logs", options =>
+            {
+                if (!string.IsNullOrWhiteSpace(hubApiKey))
+                    options.Headers.Add("X-QikLog-API-Key", hubApiKey);
+            })
             .WithAutomaticReconnect()
             .Build();
 

@@ -1,7 +1,7 @@
 namespace QikLog.Api.Auth;
 
 [Flags]
-internal enum AuthMode
+public enum AuthMode
 {
     None = 0,
     ApiKey = 1,
@@ -51,6 +51,12 @@ internal static class ProtectedApiRoutes
             return true;
         }
 
+        if (path.StartsWithSegments("/hubs/logs", StringComparison.OrdinalIgnoreCase))
+        {
+            mode = AuthMode.JwtOrApiKey;
+            return true;
+        }
+
         return false;
     }
 
@@ -59,6 +65,5 @@ internal static class ProtectedApiRoutes
         || path.StartsWithSegments("/healthz", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/metrics", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase);
+        || path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase);
 }
