@@ -27,12 +27,13 @@ Enough to sell **Pro \$9/mo** to indie devs (API keys + accounts + persistence).
 | 11 | API key auth on ingest | **Done** — Argon2id, Bearer / X-Api-Key, per-key rate limit |
 | 10 | Postgres schema + migrations | **Partial** — `log_entries` only; tenants/keys later |
 | 14 | Persist logs | **Done** — write on ingest; no history UI yet |
-| 12 | Identity (register/login) | Who owns the tenant |
+| 12 | Identity (register/login) | **Done** — optional Zitadel OIDC (`docker-compose.auth.yml`, `QikLog:Auth`) |
 | 13 | Source management UI | **Done** — `/manage` Blazor UI + `/v1/keys` and `/v1/sources` (dev/management enabled) |
-| 30–31 | Stripe Checkout + Portal | Actually collect money |
-| 33 | Usage limits (basic) | Cap free tier, upsell Pro |
-| 53 | ToS + Privacy (generator) | Required before taking payments |
-| 34 | Landing page (qiklog.com) | Conversion; can be static HTML |
+| 14 | History UI | **Done** — tail preloads `GET /v1/sources/{source}/logs` |
+| 30–31 | Stripe Checkout + Portal | **Done** — `POST /v1/billing/checkout` + `/billing` (config-gated) |
+| 33 | Usage limits (basic) | **Done** — monthly ingest cap, HTTP 402 when exceeded |
+| 53 | ToS + Privacy (generator) | **Done** — draft pages on www (`/terms`, `/privacy`) |
+| 34 | Landing page (qiklog.com) | **Done** — `www/` + VHS demo slot |
 
 **Defer for v1.1:** #15 search, #16 Redis buffer, #17 public OpenAPI polish, Phase 3 alerts.
 

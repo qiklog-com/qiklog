@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
+---
+<BaseLayout title="Privacy Policy · QikLog" description="QikLog privacy policy (pre-launch draft).">
+  <SiteNav appUrl={appUrl} />
+  <main class="legal container glass" style="margin: 2rem auto; padding: 2rem; max-width: 720px;">
+    <h1>Privacy Policy</h1>
+    <p><em>Last updated: May 2026 — pre-revenue draft. Replace with lawyer-reviewed text before accepting payments.</em></p>
+    <h2>What we collect</h2>
+    <p>Account email and name via our identity provider (Zitadel). Log payloads you ingest. Usage metadata (counts, timestamps).</p>
+    <h2>How we use it</h2>
+    <p>To operate the service, enforce limits, billing, and support. We do not sell your log data.</p>
+    <h2>Retention</h2>
+    <p>Stored logs are retained per your plan. You may request deletion by contacting support.</p>
+    <h2>Contact</h2>
+    <p>Privacy: privacy@qiklog.com (placeholder).</p>
+    <p><a href="/">← Home</a></p>
+  </main>
+</BaseLayout>

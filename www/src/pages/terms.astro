@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
+---
+<BaseLayout title="Terms of Service · QikLog" description="QikLog terms of service (pre-launch draft).">
+  <SiteNav appUrl={appUrl} />
+  <main class="legal container glass" style="margin: 2rem auto; padding: 2rem; max-width: 720px;">
+    <h1>Terms of Service</h1>
+    <p><em>Last updated: May 2026 — pre-revenue draft. Replace with lawyer-reviewed text before accepting payments.</em></p>
+    <h2>Service</h2>
+    <p>QikLog provides real-time log ingestion and tailing for developers. The service is offered as-is during pre-alpha.</p>
+    <h2>Acceptable use</h2>
+    <p>Do not ingest secrets, PCI data, or unlawful content. You are responsible for what you ship to your sources.</p>
+    <h2>Availability</h2>
+    <p>We target best-effort uptime with no SLA on the free tier. Paid tiers may include stated limits in product docs.</p>
+    <h2>Contact</h2>
+    <p>Questions: hello@qiklog.com (placeholder).</p>
+    <p><a href="/">← Home</a></p>
+  </main>
+</BaseLayout>
