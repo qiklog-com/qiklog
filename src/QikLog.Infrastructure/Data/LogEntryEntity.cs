@@ -22,4 +22,8 @@ public sealed class LogEntryEntity
 
     /// <summary>Flat string properties as JSON object, or null.</summary>
     public string? PropertiesJson { get; set; }
+
+    public Guid? ApiKeyId { get; set; }
+
+    public ApiKeyEntity? ApiKey { get; set; }
 }

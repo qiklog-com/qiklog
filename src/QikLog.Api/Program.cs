@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
+using QikLog.Api.Middleware;
 using QikLog.Core;
 using QikLog.Infrastructure;
+using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
 using CoreLogLevel = QikLog.Core.LogLevel;
 
@@ -37,6 +39,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseMiddleware<IngestApiKeyMiddleware>();
 
 // POST /v1/logs - ingest endpoint
 app.MapPost("/v1/logs", async (
@@ -60,8 +63,6 @@ app.MapPost("/v1/logs", async (
 
     await store.SaveAsync(entry, ct);
 
-    // Broadcast to anyone subscribed to this source.
-    // Group name convention: "source:{name}". Keep it grep-able.
     await hub.Clients
         .Group($"source:{entry.Source}")
         .SendAsync("LogReceived", entry, ct);
@@ -69,6 +70,26 @@ app.MapPost("/v1/logs", async (
     return Results.Accepted();
 })
 .WithName("IngestLog");
+
+// Development-only: create an API key (plaintext returned once).
+if (app.Environment.IsDevelopment())
+{
+    app.MapPost("/v1/dev/keys", async (CreateApiKeyRequest request, IApiKeyService keys, CancellationToken ct) =>
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Results.BadRequest(new { error = "name is required" });
+
+        var created = await keys.CreateAsync(request.Name, ct);
+        return Results.Created($"/v1/dev/keys/{created.Id}", new
+        {
+            id = created.Id,
+            name = created.Name,
+            key = created.Plaintext,
+            hint = "Save this key now. It will not be shown again. Use: Authorization: Bearer <key>"
+        });
+    })
+    .WithName("CreateDevApiKey");
+}
 
 // GET /healthz - for container orchestrators
 app.MapGet("/healthz", async (IServiceProvider sp, CancellationToken ct) =>
@@ -96,6 +117,8 @@ app.MapGet("/healthz", async (IServiceProvider sp, CancellationToken ct) =>
 app.MapHub<LogHub>("/hubs/logs");
 
 app.Run();
+
+public sealed record CreateApiKeyRequest(string Name);
 
 /// <summary>
 /// Wire shape for POST /v1/logs. Looser than <see cref="LogEntry"/> because we

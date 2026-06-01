@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using QikLog.Core;
+using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
 
 namespace QikLog.Infrastructure;
@@ -25,6 +26,7 @@ public sealed class NullLogEntryStore : ILogEntryStore
 
 public sealed class EfLogEntryStore(
     QikLogDbContext db,
+    IIngestContext ingestContext,
     ILogger<EfLogEntryStore> log) : ILogEntryStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
@@ -43,7 +45,8 @@ public sealed class EfLogEntryStore(
             ReceivedAt = receivedAt,
             PropertiesJson = entry.Properties is null or { Count: 0 }
                 ? null
-                : JsonSerializer.Serialize(entry.Properties, JsonOptions)
+                : JsonSerializer.Serialize(entry.Properties, JsonOptions),
+            ApiKeyId = ingestContext.ApiKeyId
         };
 
         db.LogEntries.Add(entity);

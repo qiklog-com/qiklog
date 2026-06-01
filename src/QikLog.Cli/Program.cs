@@ -1,18 +1,31 @@
 using System.CommandLine;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using QikLog.Core;
+
+var apiOption = new Option<string>("--api") { Description = "API base URL", DefaultValueFactory = _ => "http://localhost:5080" };
+var keyOption = new Option<string?>("--key", "-k") { Description = "API key (ql_...) or set QIKLOG_API_KEY" };
+
+static void ApplyApiKey(HttpClient http, string? key)
+{
+    var value = key ?? Environment.GetEnvironmentVariable("QIKLOG_API_KEY");
+    if (!string.IsNullOrWhiteSpace(value))
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", value.Trim());
+}
 
 // `qiklog send --source api --message "hello" --level info`
 var sourceOption = new Option<string>("--source", "-s") { Description = "Source name", Required = true };
 var messageOption = new Option<string>("--message", "-m") { Description = "Log message", Required = true };
 var levelOption = new Option<LogLevel>("--level", "-l") { Description = "Log level", DefaultValueFactory = _ => LogLevel.Info };
-var apiOption = new Option<string>("--api") { Description = "API base URL", DefaultValueFactory = _ => "http://localhost:5080" };
 
 var sendCommand = new Command("send", "Send a single log entry to a QikLog API");
 sendCommand.Options.Add(sourceOption);
 sendCommand.Options.Add(messageOption);
 sendCommand.Options.Add(levelOption);
 sendCommand.Options.Add(apiOption);
+sendCommand.Options.Add(keyOption);
 sendCommand.SetAction(async (parseResult, ct) =>
 {
     var source = parseResult.GetValue(sourceOption)!;
@@ -21,6 +34,8 @@ sendCommand.SetAction(async (parseResult, ct) =>
     var api = parseResult.GetValue(apiOption)!.TrimEnd('/');
 
     using var http = new HttpClient();
+    ApplyApiKey(http, parseResult.GetValue(keyOption));
+
     var payload = new
     {
         source,
@@ -36,7 +51,8 @@ sendCommand.SetAction(async (parseResult, ct) =>
         return 0;
     }
 
-    Console.Error.WriteLine($"failed: {(int)response.StatusCode} {response.ReasonPhrase}");
+    var body = await response.Content.ReadAsStringAsync(ct);
+    Console.Error.WriteLine($"failed: {(int)response.StatusCode} {response.ReasonPhrase} {body}");
     return 1;
 });
 
@@ -46,6 +62,7 @@ var tailCommand = new Command("tail-file", "Tail a local file and ship lines to 
 tailCommand.Arguments.Add(fileArgument);
 tailCommand.Options.Add(sourceOption);
 tailCommand.Options.Add(apiOption);
+tailCommand.Options.Add(keyOption);
 tailCommand.SetAction(async (parseResult, ct) =>
 {
     var file = parseResult.GetValue(fileArgument)!;
@@ -59,10 +76,11 @@ tailCommand.SetAction(async (parseResult, ct) =>
     }
 
     using var http = new HttpClient();
+    ApplyApiKey(http, parseResult.GetValue(keyOption));
+
     using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
     using var reader = new StreamReader(stream);
 
-    // Seek to end - we only care about new lines
     stream.Seek(0, SeekOrigin.End);
 
     Console.WriteLine($"tailing {file.FullName} → source={source} api={api}");
@@ -95,10 +113,40 @@ tailCommand.SetAction(async (parseResult, ct) =>
     return 0;
 });
 
+// `qiklog key create --name "local dev"`
+var keyNameOption = new Option<string>("--name", "-n") { Description = "Key label", Required = true };
+var keyCreateCommand = new Command("create", "Create an API key via the dev endpoint (Development API only)");
+keyCreateCommand.Options.Add(keyNameOption);
+keyCreateCommand.Options.Add(apiOption);
+var keyCommand = new Command("key", "Manage API keys");
+keyCommand.Subcommands.Add(keyCreateCommand);
+keyCreateCommand.SetAction(async (parseResult, ct) =>
+{
+    var name = parseResult.GetValue(keyNameOption)!;
+    var api = parseResult.GetValue(apiOption)!.TrimEnd('/');
+
+    using var http = new HttpClient();
+    using var response = await http.PostAsync(
+        $"{api}/v1/dev/keys",
+        new StringContent(JsonSerializer.Serialize(new { name }), Encoding.UTF8, "application/json"),
+        ct);
+
+    var body = await response.Content.ReadAsStringAsync(ct);
+    if (!response.IsSuccessStatusCode)
+    {
+        Console.Error.WriteLine($"failed: {(int)response.StatusCode} {body}");
+        return 1;
+    }
+
+    Console.WriteLine(body);
+    return 0;
+});
+
 var root = new RootCommand("QikLog CLI — send and tail logs from the terminal")
 {
     sendCommand,
-    tailCommand
+    tailCommand,
+    keyCommand
 };
 
 return await root.Parse(args).InvokeAsync();

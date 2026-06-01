@@ -42,6 +42,7 @@ services:
       ASPNETCORE_HTTPS_PORTS: ""
       ConnectionStrings__Postgres: "Host=postgres;Database=qiklog;Username=qiklog;Password=qiklog_dev"
       ConnectionStrings__Redis: "redis:6379"
+      QikLog__Ingest__RequireApiKey: "false"
     depends_on:
       postgres:
         condition: service_healthy

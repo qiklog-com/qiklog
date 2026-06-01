@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
 
 namespace QikLog.Infrastructure;
@@ -13,12 +14,18 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
+        services.Configure<IngestAuthOptions>(configuration.GetSection(IngestAuthOptions.SectionName));
+        services.AddScoped<IIngestContext, IngestContext>();
+        services.AddSingleton<ApiKeyHasher>();
+        services.AddSingleton<ApiKeyRateLimiter>();
+
         if (environment.IsEnvironment("Testing"))
         {
             services.AddDbContext<QikLogDbContext>(options =>
                 options.UseInMemoryDatabase("QikLogTests"));
 
             services.AddScoped<ILogEntryStore, EfLogEntryStore>();
+            services.AddScoped<IApiKeyService, ApiKeyService>();
             return services;
         }
 
@@ -26,6 +33,7 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddSingleton<ILogEntryStore, NullLogEntryStore>();
+            services.AddSingleton<IApiKeyService, NullApiKeyService>();
             return services;
         }
 
@@ -33,6 +41,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ILogEntryStore, EfLogEntryStore>();
+        services.AddScoped<IApiKeyService, ApiKeyService>();
         return services;
     }
 

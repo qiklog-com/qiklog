@@ -29,6 +29,19 @@ You should see the log line appear in the browser in real time. Ingested lines a
 
 `GET /healthz` reports `postgres: ok` when the database is reachable.
 
+### API keys (optional locally, required in Production)
+
+```bash
+# Create a dev key (API must be running in Development)
+dotnet run --project src/QikLog.Cli -- key create --name "local"
+
+# Send with key
+export QIKLOG_API_KEY=ql_...
+dotnet run --project src/QikLog.Cli -- send -s demo -m "hello" --key "$QIKLOG_API_KEY"
+```
+
+Docker Compose keeps `QikLog__Ingest__RequireApiKey=false` so the README curl still works without a key.
+
 ## Marketing site (www.qiklog.com)
 
 Static landing page in [`www/`](www/) — Astro + frosted-glass CSS. Not the Blazor dashboard.
