@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.FluentUI.AspNetCore.Components;
 using QikLog.Infrastructure.Auth;
 using QikLog.Web;
@@ -41,6 +42,17 @@ builder.Services.AddHttpClient<QikLog.Web.Services.QikLogApiClient>(client =>
 });
 
 var app = builder.Build();
+
+// Behind TLS-terminating proxies (Railway, most PaaS) the container receives plain
+// HTTP; without honoring X-Forwarded-Proto the OIDC redirect_uri is built as
+// http:// and Zitadel refuses the callback. Must run before auth middleware.
+// KnownNetworks/KnownProxies cleared because the platform proxy IP is not static.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
+    KnownNetworks = { },
+    KnownProxies = { }
+});
 
 if (!app.Environment.IsDevelopment())
 {
