@@ -30,7 +30,7 @@ jobs:
         run: dotnet build QikLog.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test QikLog.sln --configuration Release --no-build --verbosity normal --filter "Category!=E2E"
+        run: dotnet test QikLog.sln --configuration Release --no-build --verbosity normal --filter "Category!=E2E&Category!=Smoke"
 
   docker-build:
     runs-on: ubuntu-latest

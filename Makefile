@@ -13,6 +13,10 @@ CONFIG       ?= Release
 API_URL      := http://localhost:5080
 WEB_URL      := http://localhost:5081
 
+# Live deployment targeted by `make smoke`. Override per environment.
+SMOKE_WEB_URL ?= https://qiklog.up.railway.app
+SMOKE_API_URL ?= https://qiklog-api.up.railway.app
+
 # ── Color (disabled when NO_COLOR is set) ─────────────────────────────────────
 ifeq ($(NO_COLOR),)
   BOLD  := \033[1m
@@ -68,7 +72,7 @@ help: ## Show this help
 	@printf '  make azure         $(DIM)# setup + deploy$(RESET)\n\n'
 
 # ── .NET ──────────────────────────────────────────────────────────────────────
-.PHONY: restore build test clean
+.PHONY: restore build test test-all smoke smoke-local clean
 restore: ## dotnet restore
 	$(call banner,Restore)
 	$(call step,dotnet restore $(SLN))
@@ -81,14 +85,25 @@ build: restore ## dotnet build
 	@dotnet build $(SLN) -c $(CONFIG) --no-restore
 	$(call ok,Build complete)
 
-test: build ## dotnet test (excludes E2E doc capture)
+test: build ## dotnet test (excludes E2E doc capture and live smoke)
 	$(call banner,Test)
-	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build --filter 'Category!=E2E')
-	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal --filter 'Category!=E2E'
+	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build --filter 'Category!=E2E&Category!=Smoke')
+	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal --filter 'Category!=E2E&Category!=Smoke'
 	$(call ok,Tests passed)
 
 test-all: build ## dotnet test including E2E
 	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal
+
+smoke: ## Smoke-test a live deployment (SMOKE_WEB_URL / SMOKE_API_URL to override)
+	$(call banner,Smoke — $(SMOKE_WEB_URL))
+	@QIKLOG_SMOKE=1 \
+	 QIKLOG_SMOKE_WEB_URL=$(SMOKE_WEB_URL) \
+	 QIKLOG_SMOKE_API_URL=$(SMOKE_API_URL) \
+	 dotnet test $(ROOT)/tests/QikLog.Smoke.Tests -c $(CONFIG) --verbosity normal
+	$(call ok,Smoke passed — $(SMOKE_WEB_URL))
+
+smoke-local: ## Smoke-test the local docker compose stack
+	@$(MAKE) smoke SMOKE_WEB_URL=$(WEB_URL) SMOKE_API_URL=$(API_URL)
 
 docs-capture: ## Playwright screenshots → www/public/docs/screenshots
 	$(call banner,Doc capture)
