@@ -2,13 +2,14 @@
 
 ## Current State
 - Branch: `main` (synced with `origin/main` after push)
-- Latest tag: `v0.9.3-prod-smoke`
-- Working state: **green** — deployed to Railway production
-- Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure) · **18/18 production smoke**
+- Latest tag: `v0.9.4-live-tail`
+- Working state: **green** — live tail streaming end-to-end in Railway production
+- Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure) · **20/20 production smoke**
 - Coverage: **~45.1%** Api-test cobertura line-rate (target 60% by Tier 2 complete)
 - Live URLs: web https://qiklog.up.railway.app · api https://qiklog-api.up.railway.app
-- Last commit: production 500 fixes + smoke suite — tag `v0.9.3-prod-smoke`
+- Last commit: live tail working in production — tag `v0.9.4-live-tail`
 - GitHub: https://github.com/qiklog-com/qiklog
+- **Known gap:** `/manage` and `/billing` still cannot load data. Those endpoints are JWT-only by design and Zitadel is not yet issuing JWT access tokens with audience `qiklog-api`. Live tail is unaffected (hub + history accept API keys).
 
 ## Last Session Summary
 **Date:** 2026-07-25 (ship day)  
@@ -26,7 +27,19 @@
 - Did **not** add `[Authorize]` to `/manage`, `/billing`, `/tail` — needs `AuthorizeRouteView` in `Routes.razor`; behavior change, PO call
 **Issues encountered:**
 - Smoke tests were red against production first (2 tail 500s + missing `/Error`), which confirmed they catch the real defects before the fix deployed
-**Files changed:** `Tail.razor`, `Error.razor` (new), `tests/QikLog.Smoke.Tests/*` (new), `Makefile`, `.github/workflows/ci.yml`, `QikLog.sln`, `www/src/content/docs/live-tail.md`, `HOMER.md`
+- **Made live tail actually work.** Bootstrapped tenant `QikLog Bootstrap` + API key `web dashboard (hub)` (prefix `l6qrq16m`) directly in production Postgres — both tables were empty — and set `QikLog__HubApiKey` on the web service. Hub negotiate went 401 → 200.
+- Found and fixed a third defect: `QikLogApiClient` deserialised without `LogLevelJsonConverter`, so `"level":"info"` threw and **every** history read looked like an empty source despite a 200 response. The bare `catch` in `LoadHistoryAsync` hid it; it now logs and shows a "History unavailable" bar.
+- Verified in a real browser: badge `connected`, a `curl` ingest appeared on the open page with no refresh, buffer went 1 → 2 entries.
+**Decisions made (and why):**
+- Hub connect moved to `OnAfterRenderAsync(firstRender)` — only runs on the interactive circuit, so a rejected hub degrades to a status badge instead of a 500
+- Smoke tests are opt-in via `QIKLOG_SMOKE=1` so the PR gate stays hermetic and offline
+- Used a **shared API key** for the dashboard rather than forwarding user OIDC tokens. Fastest correct-enough path for a single-tenant pre-alpha; it does not scale past one tenant. See Open Questions.
+- Did **not** loosen `/v1/keys` and `/v1/sources` to accept API keys — those are JWT-only deliberately; weakening them would turn an ingest credential into a management credential.
+- Did **not** add `[Authorize]` to `/manage`, `/billing`, `/tail` — needs `AuthorizeRouteView` in `Routes.razor`; behavior change, PO call
+**Issues encountered:**
+- Smoke tests were red against production first (2 tail 500s + missing `/Error`), which confirmed they catch the real defects before the fix deployed
+- The bootstrap tenant has `ZitadelOrgId = NULL`. When someone first logs in via Zitadel, `TenantProvisioner` will create a *separate* tenant for their org, so `/manage` and the tail page would then disagree about which tenant's data they show. Unify by setting `ZitadelOrgId` on the bootstrap tenant once the real org id is known.
+**Files changed:** `Tail.razor`, `Error.razor` (new), `QikLogApiClient.cs`, `tests/QikLog.Smoke.Tests/*` (new), `Makefile`, `.github/workflows/ci.yml`, `QikLog.sln`, `www/src/content/docs/live-tail.md`, `HOMER.md`
 
 ### Earlier session
 **Date:** 2026-06-01  
@@ -49,17 +62,16 @@
 **Files changed:** Api auth/hub/middleware, Web tail, compose, `docs/QUICKSTART.md`, `README.md`, `SignalRHubAuthTests.cs`, `SignalRLoadTests.cs`, `HOMER.md`
 
 ## Open Questions for PO
-1. **How should the web app authenticate to the API?** Live tail and `/manage` both fail in production because `QikLog.Web` never presents a credential. Two options:
-   - **(a) Shared key** — set `QikLog__HubApiKey` on the web service. Fast, but one key means one tenant; it breaks the moment a second customer signs up.
-   - **(b) Forward the signed-in user's OIDC token** — correct multi-tenant answer, more work (token capture across the Blazor Server prerender/circuit boundary, no token in page HTML).
-   Recommendation: **(b)**, with (a) only as a deliberate single-tenant demo stopgap.
-2. **Should `/manage`, `/billing`, `/tail` require login?** They currently render for anonymous users and show API errors. Locking them needs `AuthorizeRouteView` in `Routes.razor`.
+1. **Zitadel token config for `/manage` and `/billing`.** Those endpoints require a JWT with audience `qiklog-api`. Zitadel issues opaque access tokens by default, and `QikLog__Auth__ApiAudience` is unset on the API service. Needs Zitadel console work (set the app's token type to JWT, add the API audience), which I can't do from the repo.
+2. **Multi-tenancy on the dashboard.** The shared `QikLog__HubApiKey` pins the tail page to one tenant. Forwarding the signed-in user's token is the real fix before customer #2.
+3. **Should `/manage`, `/billing`, `/tail` require login?** They currently render for anonymous users. Locking them needs `AuthorizeRouteView` in `Routes.razor`.
 
 ## Suggested Next Steps
-1. **Web → API auth** (blocks "the product actually works" — see Open Question 1)
-2. **Route authorization** on management pages (Open Question 2)
+1. **Zitadel JWT + audience** so management pages load (Open Question 1)
+2. **Set `ZitadelOrgId` on the bootstrap tenant** so key-auth and JWT-auth resolve to the same tenant
 3. **Wire `make smoke` into deploy** so a bad ship fails loudly instead of silently 500ing
-4. **Persistence hardening (Redis #16)** — hot buffer + SignalR backplane before multi-instance deploy
+4. **Route authorization** on management pages (Open Question 3)
+5. **Persistence hardening (Redis #16)** — hot buffer + SignalR backplane before multi-instance deploy
 
 ## Session History
 
