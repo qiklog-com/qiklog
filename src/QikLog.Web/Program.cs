@@ -47,12 +47,13 @@ var app = builder.Build();
 // HTTP; without honoring X-Forwarded-Proto the OIDC redirect_uri is built as
 // http:// and Zitadel refuses the callback. Must run before auth middleware.
 // KnownNetworks/KnownProxies cleared because the platform proxy IP is not static.
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor,
-    KnownNetworks = { },
-    KnownProxies = { }
-});
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
 {
