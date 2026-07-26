@@ -3,6 +3,7 @@
 @implements IAsyncDisposable
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 @inject QikLog.Web.Services.QikLogApiClient Api
+@inject ILogger<Tail> Log
 
 <PageTitle>tail @Source &middot; QikLog</PageTitle>
 
@@ -20,6 +21,13 @@
     {
         <FluentMessageBar Intent="MessageIntent.Warning" Title="Live tail unavailable">
             @_connectionError
+        </FluentMessageBar>
+    }
+
+    @if (!string.IsNullOrEmpty(_historyError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Warning" Title="History unavailable">
+            @_historyError
         </FluentMessageBar>
     }
 
@@ -67,6 +75,7 @@
     private bool ShowHistory { get; set; } = true;
     private int _historyLoaded;
     private string? _connectionError;
+    private string? _historyError;
 
     private string StatusText => _hub?.State switch
     {
@@ -166,9 +175,15 @@
 
             _historyLoaded = history.Count;
         }
-        catch
+        catch (Exception ex)
         {
+            // Surfaced rather than swallowed: a silent catch here hid a JSON binding
+            // failure that made every history load look like an empty source.
             _historyLoaded = 0;
+            _historyError = ex is HttpRequestException
+                ? "Could not load stored history from the API."
+                : $"Stored history could not be read: {ex.Message}";
+            Log.LogWarning(ex, "History load failed for source {Source}", Source);
         }
     }
 
