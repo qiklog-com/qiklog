@@ -86,12 +86,23 @@ public sealed class ApiSmokeTests
 
         ingest.StatusCode.ShouldBe(HttpStatusCode.Accepted);
 
-        using var history = await SmokeClient.GetAsync($"{Api}/v1/sources/{source}/logs?limit=50", key);
+        // The first write to a new source can lag slightly behind the 202, so poll
+        // briefly rather than asserting on a single read.
+        var body = "";
+        for (var attempt = 1; attempt <= 5; attempt++)
+        {
+            using var history = await SmokeClient.GetAsync($"{Api}/v1/sources/{source}/logs?limit=50", key);
+            history.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        history.StatusCode.ShouldBe(HttpStatusCode.OK);
+            body = await history.Content.ReadAsStringAsync();
+            if (body.Contains(marker, StringComparison.Ordinal))
+                return;
 
-        var body = await history.Content.ReadAsStringAsync();
-        body.ShouldContain(marker);
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        throw new Xunit.Sdk.XunitException(
+            $"Ingested entry '{marker}' never appeared in history for source '{source}'. Last body: {body}");
     }
 
     [AuthenticatedSmokeFact]
