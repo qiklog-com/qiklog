@@ -16,6 +16,13 @@
         <FluentButton OnClick="ClearBuffer">Clear</FluentButton>
     </FluentStack>
 
+    @if (!string.IsNullOrEmpty(_connectionError))
+    {
+        <FluentMessageBar Intent="MessageIntent.Warning" Title="Live tail unavailable">
+            @_connectionError
+        </FluentMessageBar>
+    }
+
     <FluentCard Style="padding: 0; background: var(--ql-surface-ink); color: var(--ql-text-fg); border: 1px solid var(--ql-surface-border);">
         <div id="tail-viewport" style="height: 70vh; overflow-y: auto; padding: 1rem; font-family: var(--ql-font-mono); font-size: 0.85rem; line-height: 1.5;">
             @if (_entries.Count == 0)
@@ -59,6 +66,7 @@
     private bool AutoScroll { get; set; } = true;
     private bool ShowHistory { get; set; } = true;
     private int _historyLoaded;
+    private string? _connectionError;
 
     private string StatusText => _hub?.State switch
     {
@@ -66,7 +74,7 @@
         HubConnectionState.Connecting => "connecting",
         HubConnectionState.Reconnecting => "reconnecting",
         HubConnectionState.Disconnected => "disconnected",
-        _ => "unknown"
+        _ => _connectionError is null ? "connecting" : "disconnected"
     };
 
     private Appearance StatusAppearance => _hub?.State == HubConnectionState.Connected
@@ -77,7 +85,22 @@
     {
         if (ShowHistory)
             await LoadHistoryAsync();
+    }
 
+    // The hub is connected here rather than in OnInitializedAsync because this runs
+    // only on the interactive circuit. Connecting during prerender would make an
+    // outbound handshake part of the HTTP response, so a rejected or unreachable hub
+    // would fail the whole page render instead of degrading to a status badge.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await ConnectAsync();
+    }
+
+    private async Task ConnectAsync()
+    {
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
         var hubApiKey = Options.Value.HubApiKey;
         _hub = new HubConnectionBuilder()
@@ -101,9 +124,26 @@
         _hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
         _hub.Closed += _ => InvokeAsync(StateHasChanged);
 
-        await _hub.StartAsync();
-        await _hub.InvokeAsync("Subscribe", Source);
+        try
+        {
+            await _hub.StartAsync();
+            await _hub.InvokeAsync("Subscribe", Source);
+            _connectionError = null;
+        }
+        catch (Exception ex)
+        {
+            _connectionError = DescribeFailure(ex);
+            await _hub.DisposeAsync();
+            _hub = null;
+        }
+
+        StateHasChanged();
     }
+
+    private static string DescribeFailure(Exception ex) =>
+        ex.Message.Contains("401", StringComparison.Ordinal)
+            ? "The API rejected this connection. Live tail needs a signed-in session or a configured hub API key; history above is still shown when available."
+            : $"Could not reach the log stream: {ex.Message}";
 
     private void ClearBuffer()
     {
