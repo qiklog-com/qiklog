@@ -8,9 +8,12 @@ namespace QikLog.Web.Services;
 
 public sealed class QikLogApiClient(HttpClient http)
 {
+    // The API serialises LogLevel with LogLevelJsonConverter, so the client needs the
+    // same converter; without it "level":"info" fails to bind and history reads throw.
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters = { new LogLevelJsonConverter() }
     };
 
     public async Task<IReadOnlyList<SourceSummary>> GetSourcesAsync(CancellationToken cancellationToken) =>
