@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY ["Directory.Build.props", "./"]
 COPY ["src/QikLog.Core/QikLog.Core.csproj", "src/QikLog.Core/"]
+COPY ["src/QikLog.Infrastructure/QikLog.Infrastructure.csproj", "src/QikLog.Infrastructure/"]
 COPY ["src/QikLog.Web/QikLog.Web.csproj", "src/QikLog.Web/"]
 RUN dotnet restore "src/QikLog.Web/QikLog.Web.csproj"
 COPY src/ src/
