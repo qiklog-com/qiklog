@@ -46,6 +46,8 @@ Whether the tail page needs credentials depends on how the API is configured:
 
 When enforcement is on and no credential is available, the hub handshake is rejected. The page still renders: the status badge shows `disconnected` and a **Live tail unavailable** notice appears above the viewport. Stored history still loads if the web app can reach `GET /v1/sources/{source}/logs`.
 
+To give the dashboard a credential, set `QikLog__HubApiKey` on the web container to an active API key. The same key is used for the hub and for reading stored history, so both the live stream and the preloaded rows work.
+
 ## Tips
 
 - Use one source per service or environment so tabs stay focused.
