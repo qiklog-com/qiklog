@@ -1,0 +1,33 @@
+@page "/Error"
+@using System.Diagnostics
+
+@* Static SSR on purpose: this page is the last line of defence, so it must not
+   depend on a circuit, the API, or anything else that can itself fail. *@
+
+<PageTitle>Error &middot; QikLog</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Style="padding: 1rem; max-width: 720px;">
+    <h2 style="margin: 0;">Something went wrong</h2>
+
+    <p style="margin: 0; opacity: 0.8;">
+        An unexpected error occurred while handling this request. The failure has been logged.
+    </p>
+
+    @if (!string.IsNullOrEmpty(RequestId))
+    {
+        <p style="margin: 0; font-size: 0.9rem;">
+            <strong>Request ID:</strong> <code>@RequestId</code>
+        </p>
+    }
+
+    <FluentAnchor Href="/" Appearance="Appearance.Accent">Back to dashboard</FluentAnchor>
+</FluentStack>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}
