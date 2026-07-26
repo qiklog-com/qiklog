@@ -25,6 +25,19 @@ public static class SmokeEnvironment
     public static string ApiUrl => Normalize(
         Environment.GetEnvironmentVariable("QIKLOG_SMOKE_API_URL"), DefaultApiUrl);
 
+    /// <summary>
+    /// Optional API key enabling the authenticated round-trip check. Without it those
+    /// tests skip, because minting a key is a manual step against a real deployment.
+    /// </summary>
+    public static string? ApiKey
+    {
+        get
+        {
+            var key = Environment.GetEnvironmentVariable("QIKLOG_SMOKE_API_KEY");
+            return string.IsNullOrWhiteSpace(key) ? null : key.Trim();
+        }
+    }
+
     private static string Normalize(string? value, string fallback) =>
         (string.IsNullOrWhiteSpace(value) ? fallback : value).TrimEnd('/');
 }

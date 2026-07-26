@@ -67,6 +67,45 @@ public sealed class ApiSmokeTests
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>
+    /// End-to-end proof that a real credential can write and read back. A silent
+    /// deserialisation failure in the dashboard's API client made history look empty
+    /// even though this path returned 200, so the assertion checks the payload.
+    /// </summary>
+    [AuthenticatedSmokeFact]
+    public async Task Authenticated_ingest_round_trips_through_history()
+    {
+        var key = SmokeEnvironment.ApiKey;
+        var source = "smoke-roundtrip";
+        var marker = $"smoke round trip {Guid.NewGuid():N}";
+
+        using var ingest = await SmokeClient.PostJsonAsync(
+            $"{Api}/v1/logs",
+            $$"""{"source":"{{source}}","level":"info","message":"{{marker}}"}""",
+            key);
+
+        ingest.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        using var history = await SmokeClient.GetAsync($"{Api}/v1/sources/{source}/logs?limit=50", key);
+
+        history.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var body = await history.Content.ReadAsStringAsync();
+        body.ShouldContain(marker);
+    }
+
+    [AuthenticatedSmokeFact]
+    public async Task Authenticated_hub_negotiate_succeeds()
+    {
+        using var response = await SmokeClient.PostJsonAsync(
+            $"{Api}/hubs/logs/negotiate?negotiateVersion=1",
+            apiKey: SmokeEnvironment.ApiKey);
+
+        response.StatusCode.ShouldBe(
+            HttpStatusCode.OK,
+            "the dashboard uses this credential to stream live tail");
+    }
+
     [SmokeFact]
     public async Task Dev_key_endpoint_is_not_exposed_in_production()
     {
