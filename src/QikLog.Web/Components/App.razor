@@ -5,6 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    @* Order matters: Fluent's reboot and the scoped-CSS bundle first, brand tokens
+       and app.css last so ours win. Without the bundle, every Fluent component
+       renders unstyled — that is what made the layout collapse. *@
+    <link rel="stylesheet" href="_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" />
+    <link rel="stylesheet" href="QikLog.Web.styles.css" />
     <link rel="stylesheet" href="brand/brand.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
