@@ -16,6 +16,34 @@ code {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
+/* Standing demo warning. Sits under the header on every page, so it has to stay
+   readable without competing with page content for attention. */
+.ql-notice {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    background: var(--ql-notice-bg);
+    color: var(--ql-notice-fg);
+    border-bottom: 1px solid var(--ql-notice-border);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.ql-notice::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-top: 0.35em;
+    border-radius: 50%;
+    background: var(--ql-notice-mark);
+}
+
+.ql-notice strong {
+    font-weight: 600;
+}
+
 a {
     color: var(--accent-foreground-rest);
     text-decoration: none;

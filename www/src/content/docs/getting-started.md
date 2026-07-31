@@ -34,3 +34,5 @@ QikLog is real-time log tailing for developers: send a line, watch it appear in 
 ## Pre-alpha honesty
 
 Accounts, billing, and source management UI are still on the roadmap. Today you can ingest, tail live, persist to Postgres, and authenticate ingest with API keys.
+
+The hosted dashboard is a demo environment and says so on every page: sample data only, and authentication is still in active development. Treat anything you send there as public and throwaway.

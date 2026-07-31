@@ -36,6 +36,13 @@
   --ql-paper-elev1:        #f6f8fa;
   --ql-paper-border:       #d0d7de;
 
+  /* Notice banner — amber wash for standing warnings (demo/pre-alpha state).
+     Tuned to read as "pay attention once" rather than "something is broken". */
+  --ql-notice-bg:          #fdf6e3;
+  --ql-notice-border:      #e6cf8f;
+  --ql-notice-fg:          #6b5116;
+  --ql-notice-mark:        #d29922;
+
   /* Log level colors (used by Tail.razor) */
   --ql-level-trace:        #6e7681;
   --ql-level-debug:        #79c0ff;
