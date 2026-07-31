@@ -20,8 +20,13 @@
             <span class="ql-tag">pre-alpha</span>
         </nav>
     </FluentHeader>
+    @* Dismissed with plain JS, not @onclick: the layout renders as static SSR
+       even when the page inside it is interactive, so there is no circuit here
+       to handle the event. Deliberately not persisted — it comes back on load. *@
     <div class="ql-notice" role="note">
-        <span><strong>Demo environment</strong>, sample data only, auth in active development.</span>
+        <span class="ql-notice-text"><strong>Demo environment</strong>, sample data only, auth in active development.</span>
+        <button type="button" class="ql-notice-dismiss" aria-label="Dismiss this notice"
+                onclick="this.closest('.ql-notice').remove()">&times;</button>
     </div>
     <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
         <FluentBodyContent Class="body-content">

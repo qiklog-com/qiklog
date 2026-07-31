@@ -36,12 +36,13 @@
   --ql-paper-elev1:        #f6f8fa;
   --ql-paper-border:       #d0d7de;
 
-  /* Notice banner — amber wash for standing warnings (demo/pre-alpha state).
+  /* Notice banner — yellow card for standing warnings (demo/pre-alpha state).
      Tuned to read as "pay attention once" rather than "something is broken". */
-  --ql-notice-bg:          #fdf6e3;
-  --ql-notice-border:      #e6cf8f;
-  --ql-notice-fg:          #6b5116;
-  --ql-notice-mark:        #d29922;
+  --ql-notice-bg:          #fff6c2;
+  --ql-notice-border:      #e8cf5c;
+  --ql-notice-fg:          #4a3a06;
+  --ql-notice-mark:        #c8920a;
+  --ql-notice-shadow:      rgba(74, 58, 6, 0.18);
 
   /* Log level colors (used by Tail.razor) */
   --ql-level-trace:        #6e7681;
