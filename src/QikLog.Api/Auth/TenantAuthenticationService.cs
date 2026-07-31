@@ -47,6 +47,13 @@ public sealed class TenantAuthenticationService(
         HttpContext context,
         CancellationToken cancellationToken)
     {
+        // Enforcement can be on while OIDC is off (invite-only / API-key-only). In that
+        // case AddAuthentication was never called; AuthenticateAsync would throw and
+        // turn every JwtOrApiKey route (history, hub) into a 500 instead of falling
+        // through to the API-key path.
+        if (context.RequestServices.GetService<IAuthenticationService>() is null)
+            return (null, TenantAuthFailure.MissingCredentials);
+
         var authenticate = await context.AuthenticateAsync();
         if (!authenticate.Succeeded || authenticate.Principal is null)
             return (null, TenantAuthFailure.MissingCredentials);
