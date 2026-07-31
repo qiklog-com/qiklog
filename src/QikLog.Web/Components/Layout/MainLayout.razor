@@ -1,20 +1,24 @@
 @inherits LayoutComponentBase
 
 <FluentLayout>
-    <FluentHeader>
-        <img src="brand/icon.svg" alt="" width="28" height="28" style="margin-right: 0.6rem;" />
-        <span class="ql-wordmark" style="font-size: 1.15rem;">qik<span class="ql-wordmark-accent">log</span></span>
+    <FluentHeader Class="ql-header ql-on-dark">
+        <a class="ql-lockup" href="/" aria-label="QikLog home">
+            <img src="brand/icon.svg" alt="" width="26" height="26" />
+            <span class="ql-wordmark">qik<span class="ql-wordmark-accent">log</span><span class="ql-cursor" aria-hidden="true"></span></span>
+        </a>
         <FluentSpacer />
-        <AuthorizeView>
-            <Authorized>
-                <FluentAnchor Href="/billing" Appearance="Appearance.Hypertext" Style="font-size: 0.9rem; margin-right: 0.75rem;">Billing</FluentAnchor>
-            </Authorized>
-            <NotAuthorized>
-                <FluentAnchor Href="/login" Appearance="Appearance.Hypertext" Style="font-size: 0.9rem; margin-right: 0.75rem;">Sign in</FluentAnchor>
-            </NotAuthorized>
-        </AuthorizeView>
-        <FluentAnchor Href="/manage" Appearance="Appearance.Hypertext" Style="font-size: 0.9rem;">Manage</FluentAnchor>
-        <span style="opacity: 0.7; font-size: 0.85rem;">pre-alpha</span>
+        <nav class="ql-nav">
+            <AuthorizeView>
+                <Authorized>
+                    <a class="ql-nav-link" href="/billing">Billing</a>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="ql-nav-link" href="/login">Sign in</a>
+                </NotAuthorized>
+            </AuthorizeView>
+            <a class="ql-nav-link" href="/manage">Manage</a>
+            <span class="ql-tag">pre-alpha</span>
+        </nav>
     </FluentHeader>
     <div class="ql-notice" role="note">
         <span><strong>Demo environment</strong>, sample data only, auth in active development.</span>
@@ -26,7 +30,7 @@
             </div>
         </FluentBodyContent>
     </FluentStack>
-    <FluentFooter>
+    <FluentFooter Class="ql-footer">
         <span>QikLog &middot; <a href="https://qiklog.com">qiklog.com</a></span>
     </FluentFooter>
 </FluentLayout>

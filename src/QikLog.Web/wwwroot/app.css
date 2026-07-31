@@ -1,4 +1,7 @@
 html, body {
+    /* height:100% lets the layout flex column push the footer down without a
+       hardcoded viewport calculation. */
+    height: 100%;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -9,15 +12,91 @@ html, body {
 }
 
 .main {
-    min-height: calc(100vh - 100px);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.content {
+    width: 100%;
 }
 
 code {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: var(--ql-font-mono);
 }
 
-/* Standing demo warning. Sits under the header on every page, so it has to stay
-   readable without competing with page content for attention. */
+a {
+    color: var(--accent-foreground-rest);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ── Shell: header and footer ───────────────────────────────────────────────
+   The Fluent header defaults to the accent blue, which the teal wordmark cannot
+   sit on legibly. Terminal ink is both readable and the actual brand surface.
+   Selector doubles up on .header to match Fluent's scoped specificity; app.css
+   is linked last, so the tie resolves here. */
+
+.header.ql-header {
+    background-color: var(--ql-surface-ink);
+    border-bottom: 1px solid var(--ql-surface-border);
+}
+
+.ql-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+}
+
+.ql-lockup:hover {
+    text-decoration: none;
+}
+
+.ql-lockup .ql-wordmark {
+    font-size: 1.2rem;
+}
+
+.ql-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.ql-nav-link {
+    color: var(--ql-text-fg);
+    font-size: 0.875rem;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.ql-nav-link:hover {
+    color: var(--ql-accent-teal);
+    text-decoration: none;
+}
+
+.ql-tag {
+    font-family: var(--ql-font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
+    color: var(--ql-text-fg-muted);
+    border: 1px solid var(--ql-surface-border);
+    border-radius: var(--ql-radius-sm);
+    padding: 0.1rem 0.4rem;
+}
+
+.footer.ql-footer {
+    border-top: 1px solid var(--ql-paper-border);
+    color: var(--ql-text-ink-muted);
+    font-size: 0.8rem;
+}
+
+/* ── Standing demo warning ──────────────────────────────────────────────────
+   Sits under the header on every page, so it has to stay readable without
+   competing with page content for attention. */
+
 .ql-notice {
     display: flex;
     align-items: baseline;
@@ -44,11 +123,73 @@ code {
     font-weight: 600;
 }
 
-a {
-    color: var(--accent-foreground-rest);
-    text-decoration: none;
+/* ── Page scaffolding ───────────────────────────────────────────────────────
+   One container owns horizontal rhythm so pages stop inventing their own
+   inline margins. */
+
+.ql-page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
 }
 
-a:hover {
-    text-decoration: underline;
+.ql-hero-title {
+    margin: 0 0 1rem;
+    font-size: 2.5rem;
+}
+
+.ql-lede {
+    margin: 0 0 0.75rem;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--ql-text-ink);
+    max-width: 34rem;
+}
+
+.ql-muted {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--ql-text-ink-muted);
+    max-width: 34rem;
+}
+
+.ql-section {
+    margin-top: 2.5rem;
+}
+
+.ql-section-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ql-text-ink-muted);
+}
+
+/* Terminal block: same ink surface as the tail viewport, so the snippet reads
+   as "this is the thing you will see" rather than generic sample code. */
+.ql-terminal {
+    margin: 0;
+    padding: 1rem 1.125rem;
+    background: var(--ql-surface-ink);
+    color: var(--ql-text-fg);
+    border: 1px solid var(--ql-surface-border);
+    border-radius: var(--ql-radius-md);
+    font-family: var(--ql-font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    overflow-x: auto;
+}
+
+.ql-terminal-prompt {
+    color: var(--ql-accent-teal);
+    user-select: none;
+}
+
+.ql-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
 }
