@@ -20,8 +20,17 @@ internal static class WebAuthExtensions
         services.Configure<QikLogAuthOptions>(configuration.GetSection(QikLogAuthOptions.SectionName));
         var auth = configuration.GetSection(QikLogAuthOptions.SectionName).Get<QikLogAuthOptions>() ?? new();
 
+        // AuthorizeView in layouts/pages always needs cascading auth state, even when OIDC is off.
+        services.AddAuthorization();
+        services.AddCascadingAuthenticationState();
+
         if (!auth.Enabled || string.IsNullOrWhiteSpace(auth.Authority))
+        {
+            // Anonymous-only: satisfies AuthenticationStateProvider for AuthorizeView NotAuthorized paths.
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
             return services;
+        }
 
         var connectionString = configuration.GetConnectionString("Postgres");
         if (!string.IsNullOrWhiteSpace(connectionString))
@@ -74,8 +83,6 @@ internal static class WebAuthExtensions
                 };
             });
 
-        services.AddAuthorization();
-        services.AddCascadingAuthenticationState();
         return services;
     }
 }
