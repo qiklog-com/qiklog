@@ -2,16 +2,34 @@
 
 ## Current State
 - Branch: `main` (synced with `origin/main` after push)
-- Latest tag: `v0.9.4-live-tail`
+- Latest tag: `v0.9.7-brand-polish`
 - Working state: **green** — live tail streaming end-to-end in Railway production
 - Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure) · **20/20 production smoke**
 - Coverage: **~45.1%** Api-test cobertura line-rate (target 60% by Tier 2 complete)
 - Live URLs: web https://qiklog.up.railway.app · api https://qiklog-api.up.railway.app
-- Last commit: live tail working in production — tag `v0.9.4-live-tail`
+- Last commit: dashboard brand layout pass — tag `v0.9.7-brand-polish`
 - GitHub: https://github.com/qiklog-com/qiklog
 - **Known gap:** `/manage` and `/billing` still cannot load data. Those endpoints are JWT-only by design and Zitadel is not yet issuing JWT access tokens with audience `qiklog-api`. Live tail is unaffected (hub + history accept API keys).
 
 ## Last Session Summary
+**Date:** 2026-07-31
+**Prompt received from PO:** Add a demo warning banner to every page, fix the dead home page buttons, clean up the wonky home page margins and the logo. Tag, push, and merge after each step.
+**Work completed:**
+- `v0.9.5-auth-state-fix` — `AuthorizeView` in `MainLayout` had no `AuthenticationStateProvider` when OIDC was off, because auth registration returned early. Also fixed `make test`, which exited 127 before running anything.
+- `v0.9.6-demo-notice` — standing demo notice on every route, working navigation, and Fluent component styles that actually load.
+- `v0.9.7-brand-polish` — dashboard shell and home page rebuilt on brand tokens.
+**Decisions made (and why):**
+- **Root cause of "buttons do not work":** `FluentButton` has no `Href` parameter, so the value fell through `CaptureUnmatchedValues` and rendered a dead `href` on `<fluent-button>`. Six controls across four pages looked clickable and did nothing. Swapped to `FluentAnchor`, which is the component that navigates.
+- **Root cause of "margins are wonky":** `App.razor` never linked `QikLog.Web.styles.css`. The bundle was served (200 in production) but unreferenced, so *every* Fluent component rendered unstyled. Added it plus Fluent's `reboot.css`, ours linked last so brand tokens win.
+- Banner lives in `MainLayout` rather than per page, and is tinted with new `--ql-notice-*` tokens instead of a hardcoded amber.
+- Header moved from Fluent's accent blue to `--ql-surface-ink`: the teal wordmark was illegible on blue. Header nav uses plain anchors, not `FluentAnchor`, because shadow DOM blocked styling links on a dark surface.
+- Replaced `.main { min-height: calc(100vh - 100px) }` with flex so the banner's height does not break the footer.
+**Issues encountered:**
+- Verifying locally is misleading unless `ASPNETCORE_ENVIRONMENT=Development` is set: `UseStaticWebAssets` only runs in Development, so `_content/**` and the scoped CSS bundle 404 and the app looks broken for a reason that does not exist in production.
+- `getting-started.md` renders at `/docs/` (the docs landing page) and is deliberately filtered out of `[...slug].astro`; it is not a missing route.
+**Files changed:** `App.razor`, `MainLayout.razor`, `Home.razor`, `Manage.razor`, `Login.razor`, `Billing.razor`, `WebAuthExtensions.cs`, `app.css`, `brand/brand.css`, `Makefile`, `www/src/content/docs/getting-started.md`, `HOMER.md`
+
+### Earlier session — 2026-07-25 (ship day)
 **Date:** 2026-07-25 (ship day)  
 **Prompt received from PO:** Deploy was blocked; fix it, write tests against production, make the production site work.  
 **Work completed:**
@@ -74,6 +92,9 @@
 5. **Persistence hardening (Redis #16)** — hot buffer + SignalR backplane before multi-instance deploy
 
 ## Session History
+
+### 2026-07-31 — Demo notice + UI repair (`v0.9.5` … `v0.9.7`)
+Standing demo banner on every route. Fixed dead nav buttons (`FluentButton` has no `Href`) and the missing scoped-CSS link that left every Fluent component unstyled. Brand lockup on an ink header. 72/72 tests.
 
 ### 2026-06-01 — Tier 2B SignalR auth + quickstart (`v0.9.1-signalr-auth`)
 `/hubs/logs` requires JWT or API key; tenant-isolated groups; QUICKSTART demo/full modes. 72/72 tests. ~45% Api coverage line-rate.
