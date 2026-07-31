@@ -10,6 +10,10 @@ SLN          := $(ROOT)/QikLog.sln
 COMPOSE      := docker compose -f $(ROOT)/docker-compose.yml
 CONFIG       ?= Release
 
+# Kept unquoted in a variable: inlining the quoted filter into $(call step,…) ends
+# the macro's own single quotes and leaves `&` for the shell to background on.
+TEST_FILTER  := Category!=E2E&Category!=Smoke
+
 API_URL      := http://localhost:5080
 WEB_URL      := http://localhost:5081
 
@@ -87,8 +91,8 @@ build: restore ## dotnet build
 
 test: build ## dotnet test (excludes E2E doc capture and live smoke)
 	$(call banner,Test)
-	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build --filter 'Category!=E2E&Category!=Smoke')
-	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal --filter 'Category!=E2E&Category!=Smoke'
+	$(call step,dotnet test $(SLN) -c $(CONFIG) --no-build --filter $(TEST_FILTER))
+	@dotnet test $(SLN) -c $(CONFIG) --no-build --verbosity normal --filter '$(TEST_FILTER)'
 	$(call ok,Tests passed)
 
 test-all: build ## dotnet test including E2E
