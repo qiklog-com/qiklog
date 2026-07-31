@@ -2,17 +2,31 @@
 
 ## Current State
 - Branch: `main` (synced with `origin/main` after push)
-- Latest tag: `v0.9.7-brand-polish`
-- Working state: **green** — live tail streaming end-to-end in Railway production
-- Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure) · **20/20 production smoke**
-- Coverage: **~45.1%** Api-test cobertura line-rate (target 60% by Tier 2 complete)
+- Latest tag: `v0.9.9-api-key-only`
+- Working state: **green** — invite-only live on Railway; ingest requires API key
+- Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure)
 - Live URLs: web https://qiklog.up.railway.app · api https://qiklog-api.up.railway.app
-- Last commit: dashboard brand layout pass — tag `v0.9.7-brand-polish`
+- Last commit: API-key-only enforcement safe when OIDC is off — tag `v0.9.9-api-key-only`
 - GitHub: https://github.com/qiklog-com/qiklog
-- **Known gap:** `/manage` and `/billing` still cannot load data. Those endpoints are JWT-only by design and Zitadel is not yet issuing JWT access tokens with audience `qiklog-api`. Live tail is unaffected (hub + history accept API keys).
+- **Ship posture:** OIDC off, AuthEnforcement on. CLI + hub + history use tenant API keys on bootstrap tenant `QikLog Bootstrap`. Stripe stays TEST. Deferred work: `POST_LAUNCH.md`.
+- **Known gap:** `/manage` JWT-only UI still cannot create keys without OIDC; keys for invite beta are created via API while enforcement was briefly open, or by ops. Dashboard hub key remains `QikLog__HubApiKey`.
 
 ## Last Session Summary
-**Date:** 2026-07-31
+**Date:** 2026-07-31 (CLI auth & ship)
+**Prompt received from PO:** Push/tag/deploy, then CLI auth & go live. Tail already fixed — skip amputate path. OpenTelemetry tabled.
+**Work completed:**
+- Tagged `v0.9.8-tail-circuit` (banner + circuit race) and deployed **web**
+- Created CLI key `cli ship-day 2026-07-31`, bound to bootstrap tenant; enabled `AuthEnforcement` + `RequireApiKey`
+- Fixed JwtOrApiKey 500 when OIDC off (`v0.9.9-api-key-only`); redeployed **api**
+- Verified: anon 401, CLI send 202, history shows line, hub negotiate 200, home intentional
+- Added `POST_LAUNCH.md` for deferred OAuth device flow, OTEL, etc.
+**Decisions made (and why):**
+- Invite-only beta: no OIDC, API keys only — matches Datadog-style agent auth and DoD without Zitadel JWT work
+- Did not build OAuth device flow (POST_LAUNCH)
+- Did not replace Tail with static HTML — circuit race already fixed
+**Files changed:** Tail.razor, TenantAuthenticationService, UI banner/gutters, POST_LAUNCH.md, www cli.md, HOMER.md
+
+### Earlier session — 2026-07-31 (demo notice + UI)
 **Prompt received from PO:** Add a demo warning banner to every page, fix the dead home page buttons, clean up the wonky home page margins and the logo. Tag, push, and merge after each step.
 **Work completed:**
 - `v0.9.5-auth-state-fix` — `AuthorizeView` in `MainLayout` had no `AuthenticationStateProvider` when OIDC was off, because auth registration returned early. Also fixed `make test`, which exited 127 before running anything.

@@ -40,7 +40,16 @@ dotnet run --project src/QikLog.Cli -- send \
   --key "$QIKLOG_API_KEY"
 ```
 
-**Levels:** `trace`, `debug`, `info`, `warning`, `error`, `critical` (same as the HTTP API).
+Against the hosted API (invite beta):
+
+```bash
+export QIKLOG_API_KEY='ql_…'   # from Manage or an invite
+dotnet run --project src/QikLog.Cli -- send \
+  --api https://qiklog-api.up.railway.app \
+  -s demo -m "hello from the CLI" -l info
+```
+
+The CLI sends `Authorization: Bearer <key>` (same credential the API also accepts as `X-QikLog-API-Key`). There is no interactive OAuth login for `send` / `tail-file` — that is intentional for agent-style ingest.
 
 Exit code `0` on **202 Accepted**; non-zero on failure with stderr details.
 
