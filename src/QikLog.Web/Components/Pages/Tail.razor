@@ -1,13 +1,14 @@
 @page "/tail/{Source}"
 @rendermode InteractiveServer
 @implements IAsyncDisposable
+@using System.Collections.Concurrent
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 @inject QikLog.Web.Services.QikLogApiClient Api
 @inject ILogger<Tail> Log
 
 <PageTitle>tail @Source &middot; QikLog</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Style="padding: 1rem;">
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="12" Class="ql-page-wide">
     <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center">
         <h2 style="margin: 0;">tail <code>@Source</code></h2>
         <FluentSpacer />
@@ -41,12 +42,14 @@
             }
             else
             {
-                @foreach (var entry in _entries)
+                @* Keyed by sequence so rolling the buffer diffs as "drop from the top,
+                   append at the bottom" instead of rewriting all 500 rows each time. *@
+                @foreach (var row in _entries)
                 {
-                    <div style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
-                        <span style="opacity: 0.5; white-space: nowrap;">@entry.Timestamp.ToString("HH:mm:ss.fff")</span>
-                        <span style="@LevelStyle(entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(entry.Level)</span>
-                        <span style="white-space: pre-wrap; word-break: break-word;">@entry.Message</span>
+                    <div @key="row.Sequence" style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
+                        <span style="opacity: 0.5; white-space: nowrap;">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
+                        <span style="@LevelStyle(row.Entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(row.Entry.Level)</span>
+                        <span style="white-space: pre-wrap; word-break: break-word;">@row.Entry.Message</span>
                     </div>
                 }
             }
@@ -69,7 +72,24 @@
     [Parameter] public string Source { get; set; } = "";
 
     private const int BufferCap = 500;
-    private readonly LinkedList<LogEntry> _entries = new();
+
+    // A busy source pushes far more messages than a browser can paint. Arrivals are
+    // parked in _incoming (hub thread) and drained into _entries (renderer thread)
+    // on this cadence, so render cost is bounded by time rather than ingest rate.
+    private const int FlushIntervalMs = 100;
+
+    /// <summary>A buffered entry plus the arrival order used as its render key.</summary>
+    private sealed record LogRow(long Sequence, LogEntry Entry);
+
+    // _entries is touched only on the renderer's synchronization context. Mutating it
+    // from the hub callback raced BuildRenderTree and killed the circuit with
+    // "Collection was modified after the enumerator was instantiated".
+    private readonly List<LogRow> _entries = [];
+    private readonly ConcurrentQueue<LogEntry> _incoming = new();
+    private readonly CancellationTokenSource _cts = new();
+    private Task? _flushLoop;
+    private long _sequence;
+
     private HubConnection? _hub;
     private bool AutoScroll { get; set; } = true;
     private bool ShowHistory { get; set; } = true;
@@ -105,7 +125,50 @@
         if (!firstRender)
             return;
 
+        _flushLoop = RunFlushLoopAsync();
         await ConnectAsync();
+    }
+
+    private async Task RunFlushLoopAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(FlushIntervalMs));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_cts.Token))
+                await FlushAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Page navigated away.
+        }
+    }
+
+    private async Task FlushAsync()
+    {
+        if (_incoming.IsEmpty)
+            return;
+
+        await InvokeAsync(() =>
+        {
+            var appended = 0;
+            while (_incoming.TryDequeue(out var entry))
+            {
+                _entries.Add(new LogRow(++_sequence, entry));
+                appended++;
+            }
+
+            if (appended == 0)
+                return;
+
+            TrimToCap();
+            StateHasChanged();
+        });
+    }
+
+    private void TrimToCap()
+    {
+        if (_entries.Count > BufferCap)
+            _entries.RemoveRange(0, _entries.Count - BufferCap);
     }
 
     private async Task ConnectAsync()
@@ -121,13 +184,8 @@
             .WithAutomaticReconnect()
             .Build();
 
-        _hub.On<LogEntry>("LogReceived", entry =>
-        {
-            _entries.AddLast(entry);
-            while (_entries.Count > BufferCap)
-                _entries.RemoveFirst();
-            InvokeAsync(StateHasChanged);
-        });
+        // Enqueue only. The flush loop owns appending and rendering.
+        _hub.On<LogEntry>("LogReceived", _incoming.Enqueue);
 
         _hub.Reconnected += _ => InvokeAsync(StateHasChanged);
         _hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
@@ -156,6 +214,11 @@
 
     private void ClearBuffer()
     {
+        while (_incoming.TryDequeue(out _))
+        {
+            // Drop what is already in flight too, or it reappears on the next flush.
+        }
+
         _entries.Clear();
         _historyLoaded = 0;
         StateHasChanged();
@@ -166,13 +229,13 @@
         try
         {
             var history = await Api.GetSourceHistoryAsync(Source, BufferCap, CancellationToken.None);
-            foreach (var entry in history)
-            {
-                _entries.AddLast(entry);
-                while (_entries.Count > BufferCap)
-                    _entries.RemoveFirst();
-            }
 
+            // Runs on the renderer's context during OnInitializedAsync, so appending
+            // directly is safe here.
+            foreach (var entry in history)
+                _entries.Add(new LogRow(++_sequence, entry));
+
+            TrimToCap();
             _historyLoaded = history.Count;
         }
         catch (Exception ex)
@@ -211,10 +274,19 @@
 
     public async ValueTask DisposeAsync()
     {
+        await _cts.CancelAsync();
+
+        if (_flushLoop is not null)
+        {
+            try { await _flushLoop; } catch (OperationCanceledException) { /* expected */ }
+        }
+
         if (_hub is not null)
         {
             try { await _hub.InvokeAsync("Unsubscribe", Source); } catch { /* connection may be gone */ }
             await _hub.DisposeAsync();
         }
+
+        _cts.Dispose();
     }
 }
