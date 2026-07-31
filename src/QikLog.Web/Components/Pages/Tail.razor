@@ -145,11 +145,14 @@
 
     private async Task FlushAsync()
     {
-        if (_incoming.IsEmpty)
+        if (_incoming.IsEmpty || _cts.IsCancellationRequested)
             return;
 
         await InvokeAsync(() =>
         {
+            if (_cts.IsCancellationRequested)
+                return;
+
             var appended = 0;
             while (_incoming.TryDequeue(out var entry))
             {
@@ -276,10 +279,9 @@
     {
         await _cts.CancelAsync();
 
-        if (_flushLoop is not null)
-        {
-            try { await _flushLoop; } catch (OperationCanceledException) { /* expected */ }
-        }
+        // Do not await _flushLoop here. It may be blocked inside InvokeAsync waiting
+        // for this circuit, while DisposeAsync already owns the circuit — awaiting
+        // it deadlocks and Chrome shows "Page Unresponsive" on navigate-away.
 
         if (_hub is not null)
         {

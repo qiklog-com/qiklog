@@ -12,7 +12,8 @@
     </FluentStack>
 
     <p style="margin: 0; opacity: 0.75; font-size: 0.9rem;">
-        Pre-alpha console — no login yet. Do not expose management endpoints on the public internet until identity ships (#12).
+        Invite beta — source and key management need OIDC sign-in (coming soon). Ship logs with
+        <code>QIKLOG_API_KEY</code> and watch them on <code>/tail/{source}</code>.
     </p>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -27,7 +28,7 @@
 
     @if (_activeTab == "sources")
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showNewSource = true)">New source</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _newSourceHidden = false)">New source</FluentButton>
 
         <FluentCard Style="padding: 0; overflow: hidden;">
             @if (_loading && _sources.Count == 0)
@@ -61,7 +62,7 @@
     }
     else
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showCreateKey = true)">Create API key</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _createKeyHidden = false)">Create API key</FluentButton>
 
         <FluentCard Style="padding: 0; overflow: hidden;">
             @if (_loading && _keys.Count == 0)
@@ -108,7 +109,7 @@
     }
 </FluentStack>
 
-<FluentDialog @bind-Hidden="@_showNewSource" Modal="true" Style="--dialog-width: 480px;">
+<FluentDialog @bind-Hidden="@_newSourceHidden" Modal="true" Style="--dialog-width: 480px;">
     <FluentDialogHeader><h3>New source</h3></FluentDialogHeader>
     <FluentDialogBody>
         <FluentTextField @bind-Value="@_newSourceName" Label="Source name" Placeholder="demo" Style="width: 100%;" />
@@ -117,12 +118,12 @@
         </p>
     </FluentDialogBody>
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showNewSource = false)">Cancel</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _newSourceHidden = true)">Cancel</FluentButton>
         <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmNewSource">Continue</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
 
-<FluentDialog @bind-Hidden="@_showNewSourceHelp" Modal="true" Style="--dialog-width: 520px;">
+<FluentDialog @bind-Hidden="@_newSourceHelpHidden" Modal="true" Style="--dialog-width: 520px;">
     <FluentDialogHeader><h3>Source ready</h3></FluentDialogHeader>
     <FluentDialogBody>
         <p>Use source <code>@_newSourceName</code> when ingesting, then open the tail page.</p>
@@ -131,23 +132,23 @@
   -d '{"source":"@_newSourceName","level":"info","message":"hello"}'</pre>
     </FluentDialogBody>
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showNewSourceHelp = false)">Close</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _newSourceHelpHidden = true)">Close</FluentButton>
         <FluentAnchor Appearance="Appearance.Accent" Href="@($"/tail/{Uri.EscapeDataString(_newSourceName)}")">Open tail</FluentAnchor>
     </FluentDialogFooter>
 </FluentDialog>
 
-<FluentDialog @bind-Hidden="@_showCreateKey" Modal="true" Style="--dialog-width: 400px;">
+<FluentDialog @bind-Hidden="@_createKeyHidden" Modal="true" Style="--dialog-width: 400px;">
     <FluentDialogHeader><h3>Create API key</h3></FluentDialogHeader>
     <FluentDialogBody>
         <FluentTextField @bind-Value="@_newKeyName" Label="Key label" Placeholder="my laptop" Style="width: 100%;" />
     </FluentDialogBody>
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showCreateKey = false)">Cancel</FluentButton>
+        <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _createKeyHidden = true)">Cancel</FluentButton>
         <FluentButton Appearance="Appearance.Accent" OnClick="CreateKeyAsync" Disabled="@_creatingKey">Create</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
 
-<FluentDialog @bind-Hidden="@_showCreatedKey" Modal="true" Style="--dialog-width: 560px;">
+<FluentDialog @bind-Hidden="@_createdKeyHidden" Modal="true" Style="--dialog-width: 560px;">
     <FluentDialogHeader><h3>Save this key now</h3></FluentDialogHeader>
     <FluentDialogBody>
         <p><strong>@_createdKeyName</strong></p>
@@ -155,7 +156,7 @@
         <p style="opacity: 0.75; font-size: 0.85rem;">This key is shown once. Use <code>Authorization: Bearer …</code> on ingest.</p>
     </FluentDialogBody>
     <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _showCreatedKey = false)">Done</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => _createdKeyHidden = true)">Done</FluentButton>
     </FluentDialogFooter>
 </FluentDialog>
 
@@ -168,23 +169,19 @@
     private List<SourceSummary> _sources = [];
     private List<ApiKeySummary> _keys = [];
 
-    private bool _showNewSource = true;
-    private bool _showNewSourceHelp = true;
-    private bool _showCreateKey = true;
-    private bool _showCreatedKey = true;
+    // FluentDialog @bind-Hidden: true = closed. Misnaming these as _show* and setting
+    // them false in OnInitialized opened all four modals at once (focus-trap fight →
+    // Chrome "Page Unresponsive").
+    private bool _newSourceHidden = true;
+    private bool _newSourceHelpHidden = true;
+    private bool _createKeyHidden = true;
+    private bool _createdKeyHidden = true;
     private string _newSourceName = "";
     private string _newKeyName = "";
     private string _createdKeyName = "";
     private string _createdKeyPlaintext = "";
 
-    protected override async Task OnInitializedAsync()
-    {
-        _showNewSource = false;
-        _showNewSourceHelp = false;
-        _showCreateKey = false;
-        _showCreatedKey = false;
-        await ReloadAsync();
-    }
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
 
     private async Task ReloadAsync()
     {
@@ -195,9 +192,13 @@
             _sources = (await Api.GetSourcesAsync(CancellationToken.None)).ToList();
             _keys = (await Api.GetApiKeysAsync(CancellationToken.None)).ToList();
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException)
         {
-            _error = $"Could not reach the API. Is it running with management enabled? ({ex.Message})";
+            // Invite beta: management routes are JWT-only while OIDC is off, so these
+            // calls 401. Surface that instead of leaving the page spinning.
+            _error = "Sources and API keys need a signed-in session (OIDC). Ingest still works with QIKLOG_API_KEY — see the docs.";
+            _sources = [];
+            _keys = [];
         }
         finally
         {
@@ -211,8 +212,8 @@
             return;
 
         _newSourceName = _newSourceName.Trim();
-        _showNewSource = false;
-        _showNewSourceHelp = true;
+        _newSourceHidden = true;
+        _newSourceHelpHidden = false;
     }
 
     private async Task CreateKeyAsync()
@@ -232,8 +233,8 @@
 
             _createdKeyName = created.Name;
             _createdKeyPlaintext = created.Key;
-            _showCreateKey = false;
-            _showCreatedKey = true;
+            _createKeyHidden = true;
+            _createdKeyHidden = false;
             _newKeyName = "";
             await ReloadAsync();
         }
