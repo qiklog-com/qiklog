@@ -51,9 +51,9 @@
                         @(context.LastReceivedAt?.ToLocalTime().ToString("g") ?? "—")
                     </TemplateColumn>
                     <TemplateColumn Title="">
-                        <FluentButton Appearance="Appearance.Outline" Href="@($"/tail/{Uri.EscapeDataString(context.Name)}")">
+                        <FluentAnchor Appearance="Appearance.Outline" Href="@($"/tail/{Uri.EscapeDataString(context.Name)}")">
                             Tail
-                        </FluentButton>
+                        </FluentAnchor>
                     </TemplateColumn>
                 </FluentDataGrid>
             }
@@ -132,7 +132,7 @@
     </FluentDialogBody>
     <FluentDialogFooter>
         <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _showNewSourceHelp = false)">Close</FluentButton>
-        <FluentButton Appearance="Appearance.Accent" Href="@($"/tail/{Uri.EscapeDataString(_newSourceName)}")">Open tail</FluentButton>
+        <FluentAnchor Appearance="Appearance.Accent" Href="@($"/tail/{Uri.EscapeDataString(_newSourceName)}")">Open tail</FluentAnchor>
     </FluentDialogFooter>
 </FluentDialog>
 
