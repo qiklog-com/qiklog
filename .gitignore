@@ -52,3 +52,12 @@ www/node_modules/
 www/dist/
 www/.env
 www/.astro/
+
+# Native console shells
+clients/desktop/node_modules/
+clients/desktop/dist/
+clients/android/.gradle/
+clients/android/**/build/
+clients/android/local.properties
+clients/ios/**/xcuserdata/
+clients/ios/**/DerivedData/

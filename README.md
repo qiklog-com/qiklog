@@ -8,6 +8,11 @@ Lightweight log tailing for developers who want to see what their app is doing r
 
 **Status:** pre-alpha. Hello World + Postgres ingest persistence locally; paid product not yet available.
 
+## Console apps (WebView shells)
+
+Native wrappers around the hosted dashboard live in [`clients/`](clients/README.md)
+(iOS · Android · desktop). Same admin UI in a `WKWebView` / `WebView` / Electron window.
+
 ## Quickstart (local dev)
 
 See **[docs/QUICKSTART.md](docs/QUICKSTART.md)** for demo mode (auth off) and full dev mode (Zitadel OIDC).

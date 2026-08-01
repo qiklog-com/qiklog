@@ -1,0 +1,245 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1EDFF2D928474D2EAC98C385 /* QikLogConsoleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9B632AA1CB4617B300CF2F /* QikLogConsoleApp.swift */; };
+		4C7977AED090483DA4ED4137 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55C3CD5A8F547DF999D9DBA /* ContentView.swift */; };
+		F35A2D78E00242C6B2C41B59 /* ConsoleWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8C6FEEEB234278B512FE83 /* ConsoleWebView.swift */; };
+		7385D68E1FD64DEC824ED46B /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D346AB63A746D5A1E68EB2 /* AppConfig.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		614FC61BC2FC4AB8A8AEE8F0 /* QikLogConsole.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QikLogConsole.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F9B632AA1CB4617B300CF2F /* QikLogConsoleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QikLogConsoleApp.swift; sourceTree = "<group>"; };
+		D55C3CD5A8F547DF999D9DBA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0D8C6FEEEB234278B512FE83 /* ConsoleWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleWebView.swift; sourceTree = "<group>"; };
+		03D346AB63A746D5A1E68EB2 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		25AF66C14B00412B874473D3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		ABB5BFA8824D4F969D953376 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FE98987B07C9429081D28671 = {
+			isa = PBXGroup;
+			children = (
+				E33D406B9FBB44CC9F71565B /* QikLogConsole */,
+				4281836D76EC49E492CCB44E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4281836D76EC49E492CCB44E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				614FC61BC2FC4AB8A8AEE8F0 /* QikLogConsole.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E33D406B9FBB44CC9F71565B /* QikLogConsole */ = {
+			isa = PBXGroup;
+			children = (
+				8F9B632AA1CB4617B300CF2F /* QikLogConsoleApp.swift */,
+				D55C3CD5A8F547DF999D9DBA /* ContentView.swift */,
+				0D8C6FEEEB234278B512FE83 /* ConsoleWebView.swift */,
+				03D346AB63A746D5A1E68EB2 /* AppConfig.swift */,
+				25AF66C14B00412B874473D3 /* Info.plist */,
+			);
+			path = QikLogConsole;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		664E9874BEF440E98624A721 /* QikLogConsole */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58C1AEAFBAFF4B098758D3DA /* Build configuration list for PBXNativeTarget "QikLogConsole" */;
+			buildPhases = (
+				6EAF066975FF4CD4991CBD6D /* Sources */,
+				ABB5BFA8824D4F969D953376 /* Frameworks */,
+				4441E173EB1A459697AB2E97 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QikLogConsole;
+			productName = QikLogConsole;
+			productReference = 614FC61BC2FC4AB8A8AEE8F0 /* QikLogConsole.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E58C9EC33B2B4CAF9DBD277A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					664E9874BEF440E98624A721 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 04B22E4BC89F418C976C69FF /* Build configuration list for PBXProject "QikLogConsole" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FE98987B07C9429081D28671;
+			productRefGroup = 4281836D76EC49E492CCB44E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				664E9874BEF440E98624A721 /* QikLogConsole */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4441E173EB1A459697AB2E97 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6EAF066975FF4CD4991CBD6D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1EDFF2D928474D2EAC98C385 /* QikLogConsoleApp.swift in Sources */,
+				4C7977AED090483DA4ED4137 /* ContentView.swift in Sources */,
+				F35A2D78E00242C6B2C41B59 /* ConsoleWebView.swift in Sources */,
+				7385D68E1FD64DEC824ED46B /* AppConfig.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E928D35C6685474AB6193DAC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		7AAFFC7B677C429BBB144C7A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		15E53907B85A4DD7A10D67E4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QikLogConsole/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qiklog.console;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2A1E394835F8474DADB15947 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = QikLogConsole/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qiklog.console;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		04B22E4BC89F418C976C69FF /* Build configuration list for PBXProject "QikLogConsole" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E928D35C6685474AB6193DAC /* Debug */,
+				7AAFFC7B677C429BBB144C7A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		58C1AEAFBAFF4B098758D3DA /* Build configuration list for PBXNativeTarget "QikLogConsole" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15E53907B85A4DD7A10D67E4 /* Debug */,
+				2A1E394835F8474DADB15947 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E58C9EC33B2B4CAF9DBD277A /* Project object */;
+}

@@ -1,0 +1,37 @@
+{
+  "name": "qiklog-console",
+  "productName": "QikLog Console",
+  "version": "1.0.0",
+  "description": "Desktop WebView shell for the QikLog dashboard",
+  "main": "main.js",
+  "author": "QikLog",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.qiklog.console",
+    "productName": "QikLog Console",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Development"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  }
+}
