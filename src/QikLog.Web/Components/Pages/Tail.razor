@@ -2,8 +2,10 @@
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 @using System.Collections.Concurrent
+@using Microsoft.AspNetCore.Authentication
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 @inject QikLog.Web.Services.QikLogApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
 @inject ILogger<Tail> Log
 
 <PageTitle>tail @Source &middot; QikLog</PageTitle>
@@ -178,11 +180,23 @@
     {
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
         var hubApiKey = Options.Value.HubApiKey;
+        var accessToken = HttpContextAccessor.HttpContext is { } http
+            ? await http.GetTokenAsync("access_token")
+            : null;
+
         _hub = new HubConnectionBuilder()
             .WithUrl($"{baseUrl}/hubs/logs", options =>
             {
-                if (!string.IsNullOrWhiteSpace(hubApiKey))
+                // Prefer the signed-in user's JWT (query access_token via AccessTokenProvider).
+                // Fall back to the shared hub key for the anonymous invite-beta demo.
+                if (!string.IsNullOrWhiteSpace(accessToken))
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(accessToken)!;
+                }
+                else if (!string.IsNullOrWhiteSpace(hubApiKey))
+                {
                     options.Headers.Add("X-QikLog-API-Key", hubApiKey);
+                }
             })
             .WithAutomaticReconnect()
             .Build();

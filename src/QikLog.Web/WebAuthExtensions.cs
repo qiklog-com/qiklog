@@ -1,9 +1,9 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Data;
 using QikLog.Infrastructure.Tenants;
@@ -52,22 +52,40 @@ internal static class WebAuthExtensions
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(options =>
+            {
+                options.Cookie.Name = "qiklog.auth";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.SlidingExpiration = true;
+            })
             .AddOpenIdConnect(options =>
             {
                 options.Authority = auth.Authority.TrimEnd('/');
                 options.ClientId = auth.ClientId;
                 options.ClientSecret = auth.ClientSecret;
-                options.ResponseType = "code";
+                options.ResponseType = OpenIdConnectResponseType.Code;
+                options.UsePkce = true;
                 options.SaveTokens = true;
+                options.GetClaimsFromUserInfoEndpoint = true;
+                // Keep Zitadel claim URIs (org id) instead of remapping to long ClaimTypes.* URIs.
+                options.MapInboundClaims = false;
+                options.Scope.Clear();
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
+                options.Scope.Add("offline_access");
+
+                options.TokenValidationParameters.NameClaimType = "name";
+                options.TokenValidationParameters.RoleClaimType = "roles";
 
                 options.Events.OnTokenValidated = async context =>
                 {
-                    var orgId = context.Principal?.FindFirstValue(auth.OrganizationClaim);
+                    var orgId = context.Principal?.FindFirstValue(auth.OrganizationClaim)
+                        ?? context.Principal?.FindFirstValue("urn:zitadel:iam:user:resourceowner:id");
                     var name = context.Principal?.FindFirstValue("name")
+                        ?? context.Principal?.FindFirstValue("email")
                         ?? context.Principal?.FindFirstValue(ClaimTypes.Email)
                         ?? "Tenant";
 
@@ -79,7 +97,8 @@ internal static class WebAuthExtensions
                         context.HttpContext.RequestAborted);
 
                     var identity = (ClaimsIdentity)context.Principal!.Identity!;
-                    identity.AddClaim(new Claim("tenant_id", tenantId.ToString()));
+                    if (identity.FindFirst("tenant_id") is null)
+                        identity.AddClaim(new Claim("tenant_id", tenantId.ToString()));
                 };
             });
 

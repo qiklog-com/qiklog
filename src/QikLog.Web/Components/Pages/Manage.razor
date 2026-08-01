@@ -196,7 +196,7 @@
         {
             // Invite beta: management routes are JWT-only while OIDC is off, so these
             // calls 401. Surface that instead of leaving the page spinning.
-            _error = "Sources and API keys need a signed-in session (OIDC). Ingest still works with QIKLOG_API_KEY — see the docs.";
+            _error = "Sources and API keys need a signed-in session. Use Sign in, then Refresh. Ingest still works with QIKLOG_API_KEY.";
             _sources = [];
             _keys = [];
         }

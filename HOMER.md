@@ -2,14 +2,14 @@
 
 ## Current State
 - Branch: `main` (synced with `origin/main` after push)
-- Latest tag: `v0.9.9-api-key-only`
-- Working state: **green** — invite-only live on Railway; ingest requires API key
-- Test count and pass rate: **72/72 offline** (24 Core + 43 Api + 5 Infrastructure)
+- Latest tag: (see `git tag` — Path B #1 code in progress on main)
+- Working state: **green** — invite-only live; AuthEnforcement on; OIDC still **off** until ClientSecret + Zitadel JWT
+- Test count: **75/75 offline** (24 Core + 43 Api + 8 Infrastructure)
 - Live URLs: web https://qiklog.up.railway.app · api https://qiklog-api.up.railway.app
-- Last commit: API-key-only enforcement safe when OIDC is off — tag `v0.9.9-api-key-only`
 - GitHub: https://github.com/qiklog-com/qiklog
-- **Ship posture:** OIDC off, AuthEnforcement on. CLI + hub + history use tenant API keys on bootstrap tenant `QikLog Bootstrap`. Stripe stays TEST. Deferred work: `POST_LAUNCH.md`.
-- **Known gap:** `/manage` JWT-only UI still cannot create keys without OIDC; keys for invite beta are created via API while enforcement was briefly open, or by ops. Dashboard hub key remains `QikLog__HubApiKey`.
+- **Launch checklist:** `docs/LAUNCH_CHECKLIST.md`
+- **Path B #1 code:** token forward, bootstrap tenant claim, PKCE/OIDC hardening. Flip `QikLog__Auth__Enabled=true` only after Zitadel JWT + Web `ClientSecret` (see checklist).
+- **Known gap:** OIDC not enabled in Railway yet; `/manage` still JWT-gated.
 
 ## Last Session Summary
 **Date:** 2026-07-31 (CLI auth & ship)

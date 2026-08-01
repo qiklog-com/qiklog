@@ -1,9 +1,13 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.FluentUI.AspNetCore.Components;
 using QikLog.Infrastructure.Auth;
 using QikLog.Web;
 using QikLog.Web.Components;
+using QikLog.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +30,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddFluentUIComponents();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddQikLogWebAuth(builder.Configuration, builder.Environment);
 
 // Used by tail page to construct the SignalR hub URL.
@@ -33,13 +38,11 @@ builder.Services.AddQikLogWebAuth(builder.Configuration, builder.Environment);
 builder.Services.Configure<QikLogOptions>(builder.Configuration.GetSection("QikLog"));
 
 var apiBaseUrl = builder.Configuration["QikLog:ApiBaseUrl"] ?? "http://localhost:5080";
-var hubApiKey = builder.Configuration["QikLog:HubApiKey"];
-builder.Services.AddHttpClient<QikLog.Web.Services.QikLogApiClient>(client =>
+builder.Services.AddTransient<AccessTokenOrApiKeyHandler>();
+builder.Services.AddHttpClient<QikLogApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
-    if (!string.IsNullOrWhiteSpace(hubApiKey))
-        client.DefaultRequestHeaders.Add("X-QikLog-API-Key", hubApiKey);
-});
+}).AddHttpMessageHandler<AccessTokenOrApiKeyHandler>();
 
 var app = builder.Build();
 
@@ -71,9 +74,19 @@ if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
 
 app.UseAntiforgery();
 
-app.MapGet("/challenge", () => Results.Challenge(
-    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
-    [Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectDefaults.AuthenticationScheme]));
+if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
+{
+    app.MapGet("/challenge", () => Results.Challenge(
+        new AuthenticationProperties { RedirectUri = "/" },
+        [OpenIdConnectDefaults.AuthenticationScheme]));
+
+    app.MapGet("/logout", async (HttpContext httpContext) =>
+    {
+        await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await httpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
+            new AuthenticationProperties { RedirectUri = "/" });
+    });
+}
 
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
