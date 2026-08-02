@@ -16,19 +16,27 @@ public sealed class ApiKeyRateLimiter
         var windowStart = new DateTimeOffset(
             now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, TimeSpan.Zero);
 
-        var window = _windows.AddOrUpdate(
-            apiKeyId,
-            _ => new Window(windowStart, 1),
-            (_, existing) =>
-            {
-                if (existing.Start != windowStart)
-                    return new Window(windowStart, 1);
-                if (existing.Count >= limitPerMinute)
-                    return existing;
-                return new Window(windowStart, existing.Count + 1);
-            });
+        while (true)
+        {
+            var current = _windows.GetOrAdd(apiKeyId, _ => new Window(windowStart, 0));
 
-        return window.Start == windowStart && window.Count <= limitPerMinute;
+            Window next;
+            if (current.Start != windowStart)
+            {
+                next = new Window(windowStart, 1);
+            }
+            else if (current.Count >= limitPerMinute)
+            {
+                return false;
+            }
+            else
+            {
+                next = new Window(windowStart, current.Count + 1);
+            }
+
+            if (_windows.TryUpdate(apiKeyId, next, current))
+                return true;
+        }
     }
 
     private sealed record Window(DateTimeOffset Start, int Count);

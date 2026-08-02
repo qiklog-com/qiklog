@@ -22,6 +22,9 @@ public sealed class ApiKeyHasher
 
     public bool Verify(string plaintext, string stored)
     {
+        if (string.IsNullOrEmpty(plaintext) || string.IsNullOrEmpty(stored))
+            return false;
+
         var parts = stored.Split('.', 2);
         if (parts.Length != 2)
             return false;
