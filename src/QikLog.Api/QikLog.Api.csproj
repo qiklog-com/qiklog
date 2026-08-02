@@ -6,6 +6,9 @@
     <Version>0.8.1</Version>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="QikLog.Api.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\QikLog.Core\QikLog.Core.csproj" />
     <ProjectReference Include="..\QikLog.Infrastructure\QikLog.Infrastructure.csproj" />
   </ItemGroup>
