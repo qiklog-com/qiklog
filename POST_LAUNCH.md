@@ -125,7 +125,7 @@ Worth doing when you are already in the file — none of these block B.
    one full Sign-in → key → CLI → tail loop on a *second* browser profile.
 2. **Same week:** Authorize Manage/Billing; stop anonymous hub-key tail (or
    clearly label a single demo source).
-3. **Next:** `app.qiklog.com` + post-deploy smoke.
+3. **Next:** paste GoDaddy DNS from `docs/LAUNCH_CHECKLIST.md` §5 (platform side already wired), then post-deploy smoke.
 4. **Only then:** talk about Stripe live and “launch” tweets.
 
 If carnival / interviews only need a clickable wow: you already have it. Link

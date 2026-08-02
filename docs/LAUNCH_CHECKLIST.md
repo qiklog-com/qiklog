@@ -57,10 +57,41 @@ From `POST_LAUNCH.md` (Garfield 2026-08-01).
 - [ ] Create / list / revoke on `/manage` end-to-end after OIDC
 - [ ] Live API URL + key header in home / Manage snippets (not localhost)
 
-### 5. Custom domain
+### 5. Custom domain (GoDaddy DNS — do this next)
 
-- [ ] `app.qiklog.com` (or similar) → Railway web
-- [ ] Update Zitadel redirect URIs + CORS + `QikLog__ApiBaseUrl` / docs
+**Done on platform side (2026-08-01):**
+- [x] Marketing Astro → Vercel project `qiklog-www` (`https://qiklog-www.vercel.app`)
+- [x] Vercel domains attached: `qiklog.com`, `www.qiklog.com`
+- [x] Railway custom domains created: `app.qiklog.com` (web), `api.qiklog.com` (api)
+- [x] Web `QikLog__ApiBaseUrl=https://api.qiklog.com`
+- [x] API CORS: `https://app.qiklog.com` + legacy Railway origin
+
+**Broken today:** apex/`www` A/CNAME fall through to dead Amazon IP `184.72.232.223` (hangs). `app`/`api` have no DNS yet. NS stay on GoDaddy (`ns41/42.domaincontrol.com`) — keep them so MX (`secureserver.net`) keeps working.
+
+**GoDaddy → DNS → Manage DNS — delete then add**
+
+Delete (fall-through killers):
+- Any **A** on `@` pointing at `184.72.232.223` (or any non-Vercel A)
+- Any **CNAME** on `www` → `qiklog.com` / `@`
+- **Domain Forwarding** / **Masked Forwarding** / parking page for `qiklog.com` or `www` (if present)
+
+Add (TTL 600):
+
+| Type | Name | Value | Notes |
+|------|------|-------|-------|
+| A | `@` | `76.76.21.21` | Vercel apex |
+| A | `www` | `76.76.21.21` | Vercel www (or CNAME `www` → `cname.vercel-dns.com`) |
+| CNAME | `app` | `m04szyb0.up.railway.app` | Railway web — exact target from Railway |
+| CNAME | `api` | `0umysld7.up.railway.app` | Railway api — exact target from Railway |
+
+Do **not** point NS at Vercel unless you also move MX; email is on GoDaddy today.
+
+**After DNS propagates (~5–30 min):**
+- [ ] `curl -I https://www.qiklog.com` → Vercel 200
+- [ ] `curl -I https://app.qiklog.com` → Railway web
+- [ ] `curl -I https://api.qiklog.com/health` (or `/`) → Railway api
+- [ ] Zitadel redirect URIs: `https://app.qiklog.com/signin-oidc` + post-logout `https://app.qiklog.com/` (when enabling OIDC)
+- [ ] `signin.qiklog.com` deferred — keep using `*.zitadel.cloud` until Zitadel custom domain is configured
 
 ### 6. Deploy safety net
 
