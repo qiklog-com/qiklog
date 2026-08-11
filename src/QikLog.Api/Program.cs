@@ -1,6 +1,7 @@
 using QikLog.Api;
 using QikLog.Api.Observability;
 using QikLog.Api.OpenApi;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
@@ -37,6 +38,18 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 await app.Services.MigrateQikLogDatabaseAsync();
+
+// Behind TLS-terminating proxies (Railway) the container sees plain HTTP.
+// Honor X-Forwarded-Proto / X-Forwarded-For so SignalR negotiate and any
+// absolute URLs use https. Must run before authentication middleware.
+// KnownNetworks/KnownProxies cleared: Railway edge IPs are not static.
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseQikLogOpenApi();
 app.UseQikLogObservability();
