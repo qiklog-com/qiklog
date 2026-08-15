@@ -13,7 +13,7 @@ order: 8
 
 Limits return **HTTP 402** when exceeded.
 
-The marketing site lists **QikLog Pro** at **$9/month** with an **Upgrade** link to `/manage`. Stripe Checkout is not wired yet.
+The marketing site lists **QikLog Pro** at **$9/month** on [/pricing/](/pricing/). **Upgrade** opens `/manage`. Stripe Checkout is not wired yet. The home page only notes `$9/mo, cancel anytime.`
 
 ## Upgrade (dashboard)
 
@@ -29,5 +29,5 @@ Requires API configuration:
 
 ## Next steps
 
-- [API keys](/docs/api-keys/) — secure ingest
-- [Terms](/terms/) — service terms (draft)
+- [API keys](/docs/api-keys/): secure ingest
+- [Terms](/terms/): service terms (draft)

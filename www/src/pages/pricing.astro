@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteNav from '../components/SiteNav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import PricingCard from '../components/PricingCard.astro';
+
+const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
+const tryUrl = `${appUrl}/`;
+const manageUrl = `${appUrl}/manage`;
+---
+<BaseLayout title="Pricing · QikLog" description="QikLog Pro is $9/month. Unlimited sources, real time streaming, API keys.">
+  <SiteNav appUrl={tryUrl} />
+  <main class="wrap container">
+    <PricingCard manageUrl={manageUrl} />
+  </main>
+  <SiteFooter />
+</BaseLayout>
+
+<style>
+  .wrap {
+    padding: 3rem 0 4rem;
+  }
+</style>

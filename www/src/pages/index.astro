@@ -1,55 +1,43 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Lockup from '../components/Lockup.astro';
+import TailPreview from '../components/TailPreview.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 
-const appUrl = import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081';
-const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
+const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
+const tryUrl = `${appUrl}/`;
 ---
 <BaseLayout>
   <main>
     <section class="hero container">
-      <Lockup />
-      <h1>Log tailing that works in seconds. No signup.</h1>
-      <a href={tryUrl} class="btn btn-primary">Try it now</a>
-    </section>
-
-    <section class="pricing container" id="pricing">
-      <p class="eyebrow">Pro</p>
-      <h2>QikLog Pro</h2>
-      <p class="price"><span>$9</span>/month</p>
-      <p class="blurb">
-        Live log tailing for developers. Unlimited sources, real time streaming, API keys.
-      </p>
-      <ul>
-        <li>Unlimited sources</li>
-        <li>Real-time streaming</li>
-        <li>API keys</li>
-      </ul>
-      <a class="btn btn-primary" href={`${tryUrl.replace(/\/$/, '')}/manage`}>Upgrade</a>
-      <p class="fineprint">Checkout is not live yet. Upgrade opens Manage so you can keep using keys today.</p>
+      <div class="copy">
+        <Lockup />
+        <h1>Log tailing that works in seconds. No signup.</h1>
+        <a href={tryUrl} class="btn btn-primary">Try it now</a>
+        <p class="price-hint">$9/mo, cancel anytime.</p>
+      </div>
+      <TailPreview />
     </section>
   </main>
 
-  <footer class="footer container">
-    <p class="footer-note">
-      <a href="/#pricing">Pricing</a>
-      · <a href="/docs/">Docs</a>
-      · <a href="/docs/quickstart/">Quickstart</a>
-      · <a href="/terms/">Terms</a>
-      · <a href="/privacy/">Privacy</a>
-      · © {new Date().getFullYear()} QikLog
-    </p>
-  </footer>
+  <SiteFooter />
 </BaseLayout>
 
 <style>
   .hero {
     padding: 5rem 0 4rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    gap: 2.25rem 2.75rem;
+    align-items: center;
+    max-width: 56rem;
+  }
+
+  .copy {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
-    max-width: 42rem;
   }
 
   h1 {
@@ -62,90 +50,16 @@ const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
     color: var(--ql-ink);
   }
 
-  .pricing {
-    max-width: 36rem;
-    padding: 0 0 4rem;
-    border-top: 1px solid var(--ql-hairline);
-    padding-top: 2.5rem;
-  }
-
-  .eyebrow {
-    margin: 0 0 0.4rem;
-    font-family: var(--ql-font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ql-rust);
-  }
-
-  .pricing h2 {
-    margin: 0 0 0.75rem;
-    font-family: var(--ql-font-display);
-    font-weight: 800;
-    font-size: 1.75rem;
-    letter-spacing: -0.01em;
-  }
-
-  .price {
-    margin: 0 0 0.75rem;
-    color: var(--ql-ink-muted);
-  }
-
-  .price span {
-    font-family: var(--ql-font-display);
-    font-weight: 800;
-    font-size: 2.5rem;
-    letter-spacing: -0.03em;
-    color: var(--ql-ink);
-  }
-
-  .blurb {
-    margin: 0 0 1rem;
-    color: var(--ql-ink-muted);
-    max-width: 42ch;
-  }
-
-  .pricing ul {
-    margin: 0 0 1.5rem;
-    padding: 0;
-    list-style: none;
-    color: var(--ql-ink);
-  }
-
-  .pricing li {
-    padding: 0.25rem 0;
-  }
-
-  .pricing li::before {
-    content: "";
-    display: inline-block;
-    width: 0.45rem;
-    height: 0.45rem;
-    margin-right: 0.55rem;
-    background: var(--ql-rust);
-    border-radius: 1px;
-    vertical-align: middle;
-  }
-
-  .fineprint {
-    margin: 0.85rem 0 0;
-    font-size: 0.85rem;
-    color: var(--ql-ink-caption);
-    max-width: 46ch;
-  }
-
-  .footer {
-    padding: 1.5rem 0 3rem;
-    border-top: 1px solid var(--ql-hairline);
-  }
-
-  .footer-note {
-    margin: 0;
-    font-size: 0.85rem;
+  .price-hint {
+    margin: -0.6rem 0 0;
+    font-size: 0.9rem;
     color: var(--ql-ink-caption);
   }
 
-  .footer-note a {
-    color: var(--ql-ink-caption);
+  @media (max-width: 720px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding-top: 3.5rem;
+    }
   }
 </style>

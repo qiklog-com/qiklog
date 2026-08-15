@@ -1,0 +1,93 @@
+---
+interface Props {
+  manageUrl: string;
+}
+
+const { manageUrl } = Astro.props;
+---
+<section class="pricing" id="pricing">
+  <p class="eyebrow">Pro</p>
+  <h1>QikLog Pro</h1>
+  <p class="price"><span>$9</span>/month</p>
+  <p class="blurb">
+    Live log tailing for developers. Unlimited sources, real time streaming, API keys.
+  </p>
+  <ul>
+    <li>Unlimited sources</li>
+    <li>Real-time streaming</li>
+    <li>API keys</li>
+  </ul>
+  <a class="btn btn-primary" href={manageUrl}>Upgrade</a>
+  <p class="fineprint">Checkout is not live yet. Upgrade opens Manage so you can keep using keys today.</p>
+</section>
+
+<style>
+  .pricing {
+    max-width: 36rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.4rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ql-rust);
+  }
+
+  h1 {
+    margin: 0 0 0.75rem;
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    font-size: 1.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .price {
+    margin: 0 0 0.75rem;
+    color: var(--ql-ink-muted);
+  }
+
+  .price span {
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    font-size: 2.5rem;
+    letter-spacing: -0.03em;
+    color: var(--ql-ink);
+  }
+
+  .blurb {
+    margin: 0 0 1rem;
+    color: var(--ql-ink-muted);
+    max-width: 42ch;
+  }
+
+  ul {
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ql-ink);
+  }
+
+  li {
+    padding: 0.25rem 0;
+  }
+
+  li::before {
+    content: "";
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.55rem;
+    background: var(--ql-rust);
+    border-radius: 1px;
+    vertical-align: middle;
+  }
+
+  .fineprint {
+    margin: 0.85rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+    max-width: 46ch;
+  }
+</style>

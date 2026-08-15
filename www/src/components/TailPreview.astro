@@ -1,0 +1,98 @@
+---
+const message = 'hello from curl';
+---
+<div class="preview" role="img" aria-label={`Example log line: 14:02:11 INFO demo ${message}`}>
+  <p class="chrome">demo</p>
+  <p class="line">
+    <span class="meta">14:02:11 INFO demo</span>
+    <span class="msg">{message}</span><span class="cursor" aria-hidden="true"></span>
+  </p>
+</div>
+
+<style>
+  .preview {
+    width: min(100%, 22rem);
+    padding: 0.7rem 0.85rem 0.85rem;
+    background: var(--ql-ink);
+    color: var(--ql-paper);
+    font-family: var(--ql-font-mono);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    border-radius: var(--ql-radius-sm);
+  }
+
+  .chrome {
+    margin: 0 0 0.55rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ql-ink-caption);
+  }
+
+  .line {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .meta {
+    color: var(--ql-hairline);
+    margin-right: 0.5ch;
+  }
+
+  .msg {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    max-width: 15ch;
+    animation: type 9s steps(15, end) infinite;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.5ch;
+    height: 0.95em;
+    margin-left: 1px;
+    background: var(--ql-rust);
+    vertical-align: -0.1em;
+    animation: blink 1.1s steps(1, end) infinite;
+  }
+
+  @keyframes type {
+    0%,
+    8% {
+      max-width: 0;
+    }
+    32%,
+    72% {
+      max-width: 15ch;
+    }
+    88%,
+    100% {
+      max-width: 0;
+    }
+  }
+
+  @keyframes blink {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .msg {
+      animation: none;
+      max-width: 15ch;
+    }
+
+    .cursor {
+      animation: none;
+      opacity: 1;
+    }
+  }
+</style>
