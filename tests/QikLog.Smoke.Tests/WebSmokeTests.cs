@@ -21,7 +21,8 @@ public sealed class WebSmokeTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var body = await response.Content.ReadAsStringAsync();
-        body.ShouldContain("qiklog");
+        body.ShouldContain("qiklog", Case.Insensitive);
+        body.ShouldContain("Try it now");
     }
 
     [SmokeFact]
@@ -33,6 +34,8 @@ public sealed class WebSmokeTests
 
         var body = await response.Content.ReadAsStringAsync();
         body.ShouldContain("--ql-accent-teal");
+        body.ShouldContain("--ql-accent-rust");
+        body.ShouldContain("#B94700");
     }
 
     /// <summary>

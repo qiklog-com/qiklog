@@ -10,31 +10,38 @@
  */
 
 :root {
-  /* Brand color: teal cursor */
-  --ql-accent-teal:        #2dd4bf;   /* primary accent, dark-mode surfaces */
-  --ql-accent-teal-dark:   #0d9488;   /* same accent on light-mode surfaces */
-  --ql-accent-teal-glow:   rgba(45, 212, 191, 0.25);  /* halos, focus rings */
+  /* Field Clinical palette (docs/BRAND.md) */
+  --ql-paper:              #FCFAF5;
+  --ql-ink:                #2E2A26;
+  --ql-accent-rust:        #B94700;
+  --ql-hairline:           #D9D3CA;
+  --ql-ink-muted:          #5C554D;
+  --ql-ink-caption:        #8A8177;
 
-  /* Surface (background) ramp - GitHub-dark family */
-  --ql-surface-ink:        #0d1117;   /* deepest bg, brand black, terminal */
-  --ql-surface-elev1:      #161b22;   /* card on ink */
-  --ql-surface-elev2:      #21262d;   /* card on elev1 */
-  --ql-surface-border:     #30363d;   /* divider on dark */
+  /* Brand color: rust is primary. Teal kept for log-level greens already in use. */
+  --ql-accent-teal:        #2dd4bf;
+  --ql-accent-teal-dark:   #0d9488;
+  --ql-accent-teal-glow:   rgba(45, 212, 191, 0.25);
+
+  /* Surface (background) ramp */
+  --ql-surface-ink:        #2E2A26;
+  --ql-surface-elev1:      #3a3530;
+  --ql-surface-elev2:      #4a433c;
+  --ql-surface-border:     #5C554D;
 
   /* Text on dark surfaces */
-  --ql-text-fg:            #c9d1d9;   /* body */
-  --ql-text-fg-strong:     #f0f6fc;   /* headings */
-  --ql-text-fg-muted:      #8b949e;   /* secondary */
-  --ql-text-fg-dim:        #6e7681;   /* timestamps, tertiary */
+  --ql-text-fg:            #FCFAF5;
+  --ql-text-fg-strong:     #FCFAF5;
+  --ql-text-fg-muted:      #D9D3CA;
+  --ql-text-fg-dim:        #8A8177;
 
   /* Text on light surfaces */
-  --ql-text-ink:           #0d1117;   /* body on white */
-  --ql-text-ink-muted:     #57606a;   /* secondary on white */
+  --ql-text-ink:           #2E2A26;
+  --ql-text-ink-muted:     #5C554D;
 
-  /* Light-mode surfaces (marketing site, light dashboard) */
-  --ql-paper:              #ffffff;
-  --ql-paper-elev1:        #f6f8fa;
-  --ql-paper-border:       #d0d7de;
+  /* Light-mode surfaces */
+  --ql-paper-elev1:        #F6F1E8;
+  --ql-paper-border:       #D9D3CA;
 
   /* Notice banner — yellow card for standing warnings (demo/pre-alpha state).
      Tuned to read as "pay attention once" rather than "something is broken". */
@@ -53,8 +60,9 @@
   --ql-level-critical:     #ff7b72;
 
   /* Typography */
-  --ql-font-sans:  'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  --ql-font-mono:  ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --ql-font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --ql-font-sans:  'Public Sans', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --ql-font-mono:  'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Sizing */
   --ql-radius-sm:  4px;
@@ -89,31 +97,31 @@
   display: inline-block;
   width: 0.55em;
   height: 1.1em;
-  background: var(--ql-accent-teal);
+  background: var(--ql-accent-rust);
   vertical-align: text-bottom;
   margin-left: 0.08em;
   border-radius: 1.5px;
   animation: ql-blink 1.2s steps(1, end) infinite;
 }
 
-/* Wordmark - HTML version of the SVG lockup, for places where text reflows */
+/* Wordmark: Bricolage Grotesque 800, Qik in ink, Log in rust */
 .ql-wordmark {
-  font-family: var(--ql-font-mono);
-  font-weight: 600;
+  font-family: var(--ql-font-display);
+  font-weight: 800;
   font-size: 1.5rem;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--ql-text-ink);
   display: inline-flex;
   align-items: baseline;
 }
 .ql-wordmark .ql-wordmark-accent {
-  color: var(--ql-accent-teal-dark);
+  color: var(--ql-accent-rust);
 }
 
 /* Dark surface variant of the wordmark */
 .ql-on-dark .ql-wordmark {
-  color: var(--ql-text-fg-strong);
+  color: var(--ql-paper);
 }
 .ql-on-dark .ql-wordmark .ql-wordmark-accent {
-  color: var(--ql-accent-teal);
+  color: var(--ql-accent-rust);
 }
