@@ -12,11 +12,28 @@ const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
       <h1>Log tailing that works in seconds. No signup.</h1>
       <a href={tryUrl} class="btn btn-primary">Try it now</a>
     </section>
+
+    <section class="pricing container" id="pricing">
+      <p class="eyebrow">Pro</p>
+      <h2>QikLog Pro</h2>
+      <p class="price"><span>$9</span>/month</p>
+      <p class="blurb">
+        Live log tailing for developers. Unlimited sources, real time streaming, API keys.
+      </p>
+      <ul>
+        <li>Unlimited sources</li>
+        <li>Real-time streaming</li>
+        <li>API keys</li>
+      </ul>
+      <a class="btn btn-primary" href={`${tryUrl.replace(/\/$/, '')}/manage`}>Upgrade</a>
+      <p class="fineprint">Checkout is not live yet. Upgrade opens Manage so you can keep using keys today.</p>
+    </section>
   </main>
 
   <footer class="footer container">
     <p class="footer-note">
-      <a href="/docs/">Docs</a>
+      <a href="/#pricing">Pricing</a>
+      · <a href="/docs/">Docs</a>
       · <a href="/docs/quickstart/">Quickstart</a>
       · <a href="/terms/">Terms</a>
       · <a href="/privacy/">Privacy</a>
@@ -27,7 +44,7 @@ const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
 
 <style>
   .hero {
-    padding: 5rem 0 6rem;
+    padding: 5rem 0 4rem;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -43,6 +60,78 @@ const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
     line-height: 1.08;
     letter-spacing: -0.02em;
     color: var(--ql-ink);
+  }
+
+  .pricing {
+    max-width: 36rem;
+    padding: 0 0 4rem;
+    border-top: 1px solid var(--ql-hairline);
+    padding-top: 2.5rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.4rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ql-rust);
+  }
+
+  .pricing h2 {
+    margin: 0 0 0.75rem;
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    font-size: 1.75rem;
+    letter-spacing: -0.01em;
+  }
+
+  .price {
+    margin: 0 0 0.75rem;
+    color: var(--ql-ink-muted);
+  }
+
+  .price span {
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    font-size: 2.5rem;
+    letter-spacing: -0.03em;
+    color: var(--ql-ink);
+  }
+
+  .blurb {
+    margin: 0 0 1rem;
+    color: var(--ql-ink-muted);
+    max-width: 42ch;
+  }
+
+  .pricing ul {
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ql-ink);
+  }
+
+  .pricing li {
+    padding: 0.25rem 0;
+  }
+
+  .pricing li::before {
+    content: "";
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.55rem;
+    background: var(--ql-rust);
+    border-radius: 1px;
+    vertical-align: middle;
+  }
+
+  .fineprint {
+    margin: 0.85rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+    max-width: 46ch;
   }
 
   .footer {

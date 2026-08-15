@@ -9,13 +9,17 @@ order: 8
 | Plan | Ingest / month | Price |
 |------|----------------|-------|
 | Free | 10,000 (default) | $0 |
-| Pro | 500,000 (default) | $9/mo via Stripe |
+| Pro | 500,000 (default) | $9/month |
 
 Limits return **HTTP 402** when exceeded.
 
+The marketing site lists **QikLog Pro** at **$9/month** with an **Upgrade** link to `/manage`. Stripe Checkout is not wired yet.
+
 ## Upgrade (dashboard)
 
-Sign in (when `QikLog:Auth` is enabled), open **Billing**, and start Stripe Checkout.
+When Checkout ships: sign in (when `QikLog:Auth` is enabled), open **Billing**, and start Stripe Checkout.
+
+Until then, use **Upgrade** on the site or open **Manage** in the app.
 
 Requires API configuration:
 

@@ -8,6 +8,10 @@ const {
   title = 'QikLog: log tailing that works in seconds',
   description = 'See your logs in the browser in seconds. No signup. POST a line, watch it land live.',
 } = Astro.props;
+
+const site = (Astro.site?.toString() ?? 'https://www.qiklog.com').replace(/\/$/, '');
+const canonical = new URL(Astro.url.pathname, `${site}/`).toString();
+const ogImage = `${site}/og-image.png`;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -15,7 +19,23 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#B94700" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

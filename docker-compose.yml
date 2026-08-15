@@ -68,6 +68,16 @@ services:
     depends_on:
       - api
 
+  www:
+    build:
+      context: .
+      dockerfile: www/Dockerfile
+      args:
+        PUBLIC_APP_URL: http://localhost:5081
+    ports:
+      - "4321:80"
+    profiles: ["www"]
+
 volumes:
   qiklog_pg_data:
   qiklog_web_dataprotection:

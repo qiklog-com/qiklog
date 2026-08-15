@@ -218,7 +218,7 @@ azure: azure-setup azure-deploy ## Full Azure path: infra then deploy
 
 # ── Marketing site (www/) ─────────────────────────────────────────────────────
 WWW_DIR := $(ROOT)/www
-.PHONY: www-install www-dev www-build
+.PHONY: www-install www-dev www-build www-docker
 www-install: ## npm install in www/
 	$(call banner,www install)
 	@cd $(WWW_DIR) && npm install
@@ -231,6 +231,12 @@ www-build: www-install ## Static build → www/dist/
 	$(call banner,www build)
 	@cd $(WWW_DIR) && npm run build
 	$(call ok,www built → www/dist/)
+
+.PHONY: www-docker
+www-docker: ## Build and run marketing site in nginx (http://localhost:4321)
+	$(call banner,www docker)
+	@docker compose --profile www up --build -d www
+	$(call ok,www container listening on http://localhost:4321)
 
 # ── CI parity ─────────────────────────────────────────────────────────────────
 .PHONY: ci
