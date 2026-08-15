@@ -102,6 +102,16 @@ any keeper before caring about the name.
 Everything else waits for QikLog's numbers. The empire's first brick
 is a developer signing in.
 
+## Hero motion: tape reel, not generic animation
+
+Landing hero needs something proving the "works in seconds" claim,
+not decoration. Chosen direction: a small VCR/cassette-tape motif --
+reels slowly turning as log lines stream past like a tape counter,
+a quiet rust "REC" dot. Ties the visual to the actual feature (a
+"tail" is literally a tape metaphor) rather than a generic typing
+cursor. Keep it small and quiet in the hero, respect
+prefers-reduced-motion (static frame when reduced).
+
 ## Standing rules that apply here
 
 - Business case first. The empire is worth zero until QikLog has

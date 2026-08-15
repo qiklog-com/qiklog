@@ -68,14 +68,16 @@ used elsewhere in this repo (no shading, no gradients beyond one per
 diagram, dark-mode-safe by design -- fights against the specular 3D
 look Cloudcraft has).
 
-Recommended path: build on IsoFlow (isoflow.io, open source, React)
-rather than hand-rolling isometric projection or reaching for a game
-engine. IsoFlow already solves projection math + icon system; the
-actual work is a QikLog-branded icon set (rust/paper/ink) and
-wrapping it around our own architecture data (DNS, service flow,
-tiers) instead of generic cloud icons. Holstered per Qik-thesis rule
-until there's bandwidth -- flat SVG diagrams cover the documentation
-need today.
+Recommended path: build on the free, MIT-licensed `isoflow` npm
+library (not isoflow.io, the hosted SaaS, which is $15/editor/month
+for team network-doc collaboration -- a different product solving a
+different problem). FossFLOW (github.com/stan-smith/FossFLOW,
+Unlicense) is a full open-source app built on that same library and
+a good reference implementation. SimService's actual work is a
+QikLog-branded icon set (rust/paper/ink) and wrapping the library
+around our own architecture data, not building or paying for a
+diagramming SaaS. Holstered per Qik-thesis rule until there's
+bandwidth -- flat SVG diagrams cover the documentation need today.
 
 ## Tooling: adopt Stripe's agent skills
 
