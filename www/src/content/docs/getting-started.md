@@ -4,7 +4,7 @@ description: What QikLog is, core concepts, and the five-minute mental model.
 order: 1
 ---
 
-QikLog is real-time log tailing for developers: send a line, watch it appear in the browser — like `tail -f`, but over HTTP and SignalR.
+QikLog is real-time log tailing for developers: send a line, watch it appear in the browser. Like `tail -f`, but over HTTP and SignalR.
 
 ## Core concepts
 
@@ -18,18 +18,19 @@ QikLog is real-time log tailing for developers: send a line, watch it appear in 
 
 ## What you need
 
-- **API** — receives logs (default local port `5080`)
-- **Web app** — Blazor dashboard for live tail (default local port `5081`)
-- **Optional CLI** — `qiklog send` and `qiklog tail-file` from your terminal
+- **API**: receives logs (default local port `5080`)
+- **Web app**: Blazor dashboard for live tail (default local port `5081`)
+- **Optional CLI**: `qiklog send` and `qiklog tail-file` from your terminal
 
 ## Fastest path
 
-1. [Quickstart](/docs/quickstart/) — run the stack locally and see your first line
-2. [Ingest API](/docs/ingest-api/) — wire your app or curl
-3. [Live tail](/docs/live-tail/) — open the browser viewer
-4. [API keys](/docs/api-keys/) — required in production; optional locally
-5. [CLI](/docs/cli/) — ship logs from scripts and files
-6. [Manage UI](/docs/manage-ui/) — list sources and keys in the dashboard
+1. [qiklog.com](https://www.qiklog.com/): click **Try it now**. The app home shows a copy-paste curl and a live tail for source `demo`.
+2. [Quickstart](/docs/quickstart/): run the stack locally
+3. [Ingest API](/docs/ingest-api/): wire your app or curl
+4. [Live tail](/docs/live-tail/): open the browser viewer
+5. [API keys](/docs/api-keys/): required in production; optional locally
+6. [CLI](/docs/cli/): ship logs from scripts and files
+7. [Manage UI](/docs/manage-ui/): list sources and keys in the dashboard
 
 ## Pre-alpha honesty
 

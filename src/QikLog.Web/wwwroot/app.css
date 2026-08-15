@@ -4,7 +4,9 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--ql-font-sans);
+    background: var(--ql-paper);
+    color: var(--ql-ink);
 }
 
 .body-content {
@@ -56,7 +58,13 @@ a:hover {
 }
 
 .ql-lockup .ql-wordmark {
-    font-size: 1.2rem;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.ql-lockup img {
+    width: 1.35rem;
+    height: 1.35rem;
 }
 
 .ql-nav {
@@ -73,7 +81,7 @@ a:hover {
 }
 
 .ql-nav-link:hover {
-    color: var(--ql-accent-teal);
+    color: var(--ql-accent-rust);
     text-decoration: none;
 }
 
@@ -229,7 +237,7 @@ h1:focus,
 }
 
 .ql-terminal-prompt {
-    color: var(--ql-accent-teal);
+    color: var(--ql-accent-rust);
     user-select: none;
 }
 
@@ -238,4 +246,45 @@ h1:focus,
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-top: 1.5rem;
+}
+
+.ql-demo-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+}
+
+@media (max-width: 800px) {
+    .ql-demo-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ql-demo-pane {
+    min-width: 0;
+}
+
+.ql-tail-wait {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 12rem;
+    padding: 1.25rem 1.35rem;
+    background: var(--ql-surface-ink);
+    color: var(--ql-paper);
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-md);
+    text-decoration: none;
+    font-family: var(--ql-font-mono);
+    font-size: 0.875rem;
+}
+
+.ql-tail-wait:hover {
+    text-decoration: none;
+    color: var(--ql-paper);
+}
+
+.ql-tail-wait-label {
+    color: var(--ql-ink-caption);
 }

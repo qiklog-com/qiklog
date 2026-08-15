@@ -1,5 +1,5 @@
 ---
-import Wordmark from './Wordmark.astro';
+import Lockup from './Lockup.astro';
 
 interface Props {
   appUrl: string;
@@ -9,15 +9,11 @@ const { appUrl } = Astro.props;
 const path = Astro.url.pathname;
 const onDocs = path.startsWith('/docs');
 ---
-<header class="nav glass glass-sm container">
-  <a href="/" class="nav-brand">
-    <Wordmark />
-  </a>
+<header class="nav container">
+  <Lockup size="nav" />
   <nav class="nav-links" aria-label="Primary">
-    <a href="/#features" class:list={[{ active: !onDocs }]}>Features</a>
     <a href="/docs/" class:list={[{ active: onDocs }]}>Docs</a>
-    <a href="/#pricing">Pricing</a>
-    <a href={appUrl} class="btn btn-primary">Open app</a>
+    <a href={appUrl} class="btn btn-primary">Try it now</a>
   </nav>
 </header>
 
@@ -26,34 +22,24 @@ const onDocs = path.startsWith('/docs');
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1.25rem;
-    padding: 0.85rem 1.25rem;
-  }
-
-  .nav-brand {
-    text-decoration: none;
-    color: inherit;
+    padding: 1.5rem 0 0;
   }
 
   .nav-links {
     display: flex;
     align-items: center;
     gap: 1.25rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .nav-links a:not(.btn) {
-    color: var(--ql-text-fg-muted);
+    color: var(--ql-ink-muted);
     text-decoration: none;
+    font-weight: 500;
   }
 
   .nav-links a:not(.btn):hover,
   .nav-links a.active:not(.btn) {
-    color: var(--ql-text-fg-strong);
-  }
-
-  .nav-links a.active:not(.btn) {
-    border-bottom: 1px solid var(--ql-accent-teal);
-    padding-bottom: 0.1rem;
+    color: var(--ql-ink);
   }
 </style>

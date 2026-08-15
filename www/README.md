@@ -1,11 +1,11 @@
 # QikLog marketing site (www.qiklog.com)
 
-Static landing page and **end-user documentation** — separate from the Blazor app (`app.qiklog.com` / local `:5081`).
+Static landing page and **end-user documentation**. The product UI lives on `app.qiklog.com` (local `:5081`).
 
 ## Stack
 
-- **[Astro](https://astro.build)** — HTML-first, ships zero JS by default, fast deploy to Vercel/Azure Static Web Apps/any CDN
-- **Frosted glass** via `backdrop-filter` + token-aligned CSS (not liquid-glass / WebGL)
+- **[Astro](https://astro.build)** — HTML-first, ships zero JS by default
+- Brand per `docs/BRAND.md`: paper, ink, rust; Bricolage Grotesque / Public Sans / IBM Plex Mono
 
 ## Commands
 

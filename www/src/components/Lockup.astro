@@ -1,0 +1,59 @@
+---
+interface Props {
+  href?: string;
+  size?: 'hero' | 'nav';
+}
+
+const { href = '/', size = 'hero' } = Astro.props;
+---
+<a class:list={['lockup', size]} href={href} aria-label="QikLog">
+  <img class="lockup-mark" src="/brand/qiklog-mark.svg" width="42" height="42" alt="" />
+  <span class="lockup-wordmark" aria-hidden="true">Qik<span>Log</span></span>
+</a>
+
+<style>
+  .lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    text-decoration: none;
+    color: var(--ql-ink);
+  }
+
+  .lockup:hover {
+    text-decoration: none;
+  }
+
+  .lockup.hero .lockup-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .lockup.hero .lockup-wordmark {
+    font-size: 33px;
+  }
+
+  .lockup.nav {
+    gap: 8px;
+  }
+
+  .lockup.nav .lockup-mark {
+    width: 22px;
+    height: 22px;
+  }
+
+  .lockup.nav .lockup-wordmark {
+    font-size: 18px;
+  }
+
+  .lockup-wordmark {
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .lockup-wordmark span {
+    color: var(--ql-rust);
+  }
+</style>

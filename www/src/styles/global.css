@@ -1,23 +1,29 @@
 /*
- * Marketing site tokens — aligned with src/QikLog.Web/wwwroot/brand/brand.css
+ * Marketing site tokens. Source of truth: docs/BRAND.md
+ * paper #FCFAF5, ink #2E2A26, rust #B94700, hairline #D9D3CA
  */
 :root {
-  --ql-accent-teal: #2dd4bf;
-  --ql-accent-teal-dark: #0d9488;
-  --ql-accent-teal-glow: rgba(45, 212, 191, 0.35);
-  --ql-surface-ink: #0d1117;
-  --ql-surface-elev1: #161b22;
-  --ql-surface-border: #30363d;
-  --ql-text-fg: #c9d1d9;
-  --ql-text-fg-strong: #f0f6fc;
-  --ql-text-fg-muted: #8b949e;
-  --ql-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --ql-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --ql-radius-lg: 12px;
-  --ql-radius-xl: 22px;
-  --glass-bg: rgba(22, 27, 34, 0.55);
-  --glass-border: rgba(48, 54, 61, 0.65);
-  --glass-blur: 18px;
+  --ql-paper: #fcfaf5;
+  --ql-ink: #2e2a26;
+  --ql-rust: #b94700;
+  --ql-hairline: #d9d3ca;
+  --ql-ink-muted: #5c554d;
+  --ql-ink-caption: #8a8177;
+
+  --ql-font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --ql-font-sans: 'Public Sans', system-ui, -apple-system, sans-serif;
+  --ql-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  --ql-radius-sm: 4px;
+  --ql-radius-lg: 4px;
+
+  /* Aliases so older docs chrome keeps compiling */
+  --ql-accent-teal: var(--ql-rust);
+  --ql-text-fg: var(--ql-ink);
+  --ql-text-fg-strong: var(--ql-ink);
+  --ql-text-fg-muted: var(--ql-ink-muted);
+  --ql-surface-ink: var(--ql-ink);
+  --glass-border: var(--ql-hairline);
 }
 
 *,
@@ -34,42 +40,14 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--ql-font-sans);
-  color: var(--ql-text-fg);
-  background: var(--ql-surface-ink);
-  line-height: 1.6;
-}
-
-/* Mesh background — depth without liquid-glass WebGL */
-.bg-mesh {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse 80% 60% at 15% 10%, var(--ql-accent-teal-glow), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(13, 148, 136, 0.2), transparent 50%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(88, 166, 255, 0.08), transparent 45%),
-    var(--ql-surface-ink);
-}
-
-.glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--ql-radius-xl);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 24px 48px rgba(0, 0, 0, 0.35);
-}
-
-.glass-sm {
-  border-radius: var(--ql-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  color: var(--ql-ink);
+  background: var(--ql-paper);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--ql-accent-teal);
+  color: var(--ql-rust);
   text-decoration: none;
 }
 
@@ -86,58 +64,41 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.35rem;
-  border-radius: var(--ql-radius-lg);
+  padding: 0.8rem 1.4rem;
+  border-radius: var(--ql-radius-sm);
+  font-family: var(--ql-font-sans);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn:hover {
   text-decoration: none;
-  transform: translateY(-1px);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--ql-accent-teal), var(--ql-accent-teal-dark));
-  color: var(--ql-surface-ink);
-  box-shadow: 0 8px 24px var(--ql-accent-teal-glow);
+  background: var(--ql-rust);
+  color: var(--ql-paper);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--glass-border);
-  color: var(--ql-text-fg-strong);
+  background: transparent;
+  border-color: var(--ql-hairline);
+  color: var(--ql-ink);
 }
 
-@keyframes ql-blink {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0; }
-  100% { opacity: 1; }
+.glass {
+  background: var(--ql-paper);
+  border: 1px solid var(--ql-hairline);
+  border-radius: var(--ql-radius-sm);
 }
 
-.wordmark {
-  font-family: var(--ql-font-mono);
-  font-weight: 600;
-  font-size: 1.35rem;
-  letter-spacing: -0.02em;
-  color: var(--ql-text-fg-strong);
-}
-
-.wordmark-accent {
-  color: var(--ql-accent-teal);
-}
-
-.wordmark-cursor {
-  display: inline-block;
-  width: 0.55em;
-  height: 1.05em;
-  background: var(--ql-accent-teal);
-  vertical-align: text-bottom;
-  margin-left: 0.08em;
-  border-radius: 1.5px;
-  animation: ql-blink 1.2s steps(1, end) infinite;
+.glass-sm {
+  border-radius: var(--ql-radius-sm);
 }

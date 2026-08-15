@@ -1,33 +1,61 @@
 @page "/"
 @rendermode InteractiveServer
+@inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 
 <PageTitle>QikLog</PageTitle>
 
-<div class="ql-page">
-    @* aria-label keeps the split-colour wordmark from being read as "qik log". *@
-    <h1 class="ql-hero-title ql-wordmark" aria-label="QikLog">qik<span class="ql-wordmark-accent">log</span><span class="ql-cursor" aria-hidden="true"></span></h1>
-
+<div class="ql-page-wide">
+    <h1 class="ql-hero-title">Try it now</h1>
     <p class="ql-lede">
-        Lightweight log tailing for developers who want to see what their app is doing right now —
-        without setting up Datadog.
-    </p>
-    <p class="ql-muted">
-        Send a log line with curl and watch it land on the tail page in real time.
+        Copy the curl. The tail on the right is already waiting for source <code>demo</code>.
     </p>
 
-    <section class="ql-section">
-        <h2 class="ql-section-title">Try it</h2>
-        <pre class="ql-terminal"><span class="ql-terminal-prompt">$</span> curl -X POST http://localhost:5080/v1/logs \
-    -H "Content-Type: application/json" \
-    -d '{"source":"demo","level":"info","message":"hello from curl"}'</pre>
-
-        <div class="ql-cta-row">
-            <FluentAnchor Appearance="Appearance.Accent" Href="/tail/demo">
-                Open live tail for "demo"
-            </FluentAnchor>
-            <FluentAnchor Appearance="Appearance.Outline" Href="/manage">
-                Manage sources &amp; keys
-            </FluentAnchor>
-        </div>
-    </section>
+    <div class="ql-demo-split">
+        <section class="ql-demo-pane">
+            <h2 class="ql-section-title">Send a line</h2>
+            <pre class="ql-terminal"><span class="ql-terminal-prompt">$</span> @_curl</pre>
+            <p class="ql-muted">
+                Workspace is the shared demo source. Treat anything you send as public.
+            </p>
+        </section>
+        <section class="ql-demo-pane">
+            <h2 class="ql-section-title">Live tail</h2>
+            <a class="ql-tail-wait" href="/tail/demo">
+                <span class="ql-tail-wait-label">waiting for your first log line</span>
+                <span class="ql-cursor" aria-hidden="true"></span>
+            </a>
+            <p class="ql-muted">
+                <a href="/tail/demo">Open live tail for demo</a>
+                · <a href="/manage">Manage sources and keys</a>
+            </p>
+        </section>
+    </div>
 </div>
+
+@code {
+    private string _curl = "";
+
+    protected override void OnInitialized()
+    {
+        var opts = Options.Value;
+        var api = string.IsNullOrWhiteSpace(opts.ApiBaseUrl)
+            ? "http://127.0.0.1:5080"
+            : opts.ApiBaseUrl.TrimEnd('/');
+        var payload = """{"source":"demo","level":"info","message":"hello from curl"}""";
+        if (!string.IsNullOrWhiteSpace(opts.HubApiKey))
+        {
+            _curl =
+                $"curl -X POST {api}/v1/logs \\\n" +
+                "  -H \"Content-Type: application/json\" \\\n" +
+                $"  -H \"Authorization: Bearer {opts.HubApiKey}\" \\\n" +
+                $"  -d '{payload}'";
+        }
+        else
+        {
+            _curl =
+                $"curl -X POST {api}/v1/logs \\\n" +
+                "  -H \"Content-Type: application/json\" \\\n" +
+                $"  -d '{payload}'";
+        }
+    }
+}
