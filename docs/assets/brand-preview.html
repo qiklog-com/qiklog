@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QikLog mark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#FCFAF5;--ink:#2E2A26;--rust:#B94700;--hair:#D9D3CA}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Public Sans",system-ui,sans-serif;font-size:15px;
+    line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 20px 72px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--rust);margin:0 0 6px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:clamp(30px,8vw,44px);line-height:1.05;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{margin:0 0 30px;max-width:52ch;color:#5C554D}
+  section{border-top:1px solid var(--hair);padding-top:20px;margin-top:36px}
+  h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;
+    font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
+  .note{font-size:13.5px;color:#5C554D;margin:0 0 18px;max-width:56ch}
+  .hero{display:flex;align-items:center;justify-content:center;
+    padding:38px 20px;border:1px solid var(--hair);border-radius:4px}
+  .ladder{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;
+    padding:24px 20px;border:1px solid var(--hair);border-radius:4px}
+  .rung{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .rung span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    color:#8A8177;letter-spacing:.06em}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:460px){.split{grid-template-columns:1fr}}
+  .tile{display:flex;align-items:center;justify-content:center;
+    padding:32px 12px;border-radius:4px;border:1px solid var(--hair)}
+  .tile.dark{background:var(--ink);border-color:var(--ink)}
+  .cap{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#8A8177;
+    letter-spacing:.06em;text-align:center;margin-top:7px}
+  .icon-tile{width:104px;height:104px;background:var(--paper);
+    border:1px solid var(--hair);border-radius:23px;
+    display:flex;align-items:center;justify-content:center}
+  .icon-tile.rustbg{background:var(--rust);border-color:var(--rust)}
+  .lockup{display:flex;align-items:center;gap:13px;padding:26px 20px;
+    border:1px solid var(--hair);border-radius:4px}
+  .wordmark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+    font-size:33px;letter-spacing:-.03em;line-height:1}
+  .wordmark em{font-style:normal;color:var(--rust)}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .sw{flex:1;min-width:78px}
+  .chip{height:42px;border-radius:3px;border:1px solid var(--hair)}
+  .sw code{font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+    color:#8A8177;display:block;margin-top:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">QikLog / brand reference</p>
+  <h1>The QikLog mark</h1>
+  <p class="sub">A prompt frame with the corner broken open, a chevron inside, and the tail crossing the gap. Reads as a terminal prompt and as a Q. Spec lives in docs/BRAND.md.</p>
+
+  <div class="hero">
+    <svg width="150" height="150" viewBox="0 0 64 64" fill="none" role="img" aria-label="QikLog">
+      <g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/>
+        <path d="M26 20 L38 30 L26 40"/>
+        <path d="M43 41 L55 53"/>
+      </g>
+    </svg>
+  </div>
+
+  <section>
+    <h2>Small sizes</h2>
+    <p class="note">Strokes are 8 units on a 64 grid so the counter stays open and the chevron stays legible down to favicon scale.</p>
+    <div class="ladder">
+      <div class="rung">
+        <svg width="96" height="96" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        <span>96</span>
+      </div>
+      <div class="rung">
+        <svg width="48" height="48" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        <span>48</span>
+      </div>
+      <div class="rung">
+        <svg width="32" height="32" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        <span>32</span>
+      </div>
+      <div class="rung">
+        <svg width="16" height="16" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        <span>16</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>On paper, on ink</h2>
+    <p class="note">Rust is primary. Dark surfaces get the paper mark, not the rust one.</p>
+    <div class="split">
+      <div>
+        <div class="tile">
+          <svg width="76" height="76" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        </div>
+        <p class="cap">RUST ON PAPER</p>
+      </div>
+      <div>
+        <div class="tile dark">
+          <svg width="76" height="76" viewBox="0 0 64 64" fill="none"><g stroke="#FCFAF5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+        </div>
+        <p class="cap">PAPER ON INK</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>App icon</h2>
+    <div class="split">
+      <div>
+        <div class="tile">
+          <div class="icon-tile">
+            <svg width="62" height="62" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+          </div>
+        </div>
+        <p class="cap">MARK ON PAPER</p>
+      </div>
+      <div>
+        <div class="tile">
+          <div class="icon-tile rustbg">
+            <svg width="62" height="62" viewBox="0 0 64 64" fill="none"><g stroke="#FCFAF5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+          </div>
+        </div>
+        <p class="cap">MARK ON RUST</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Lockup</h2>
+    <p class="note">Bricolage Grotesque 800, tight tracking. Mark height matches the wordmark cap height.</p>
+    <div class="lockup">
+      <svg width="42" height="42" viewBox="0 0 64 64" fill="none"><g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/><path d="M26 20 L38 30 L26 40"/><path d="M43 41 L55 53"/></g></svg>
+      <div class="wordmark">Qik<em>Log</em></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Palette</h2>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#FCFAF5"></div><code>#FCFAF5</code></div>
+      <div class="sw"><div class="chip" style="background:#2E2A26"></div><code>#2E2A26</code></div>
+      <div class="sw"><div class="chip" style="background:#B94700"></div><code>#B94700</code></div>
+      <div class="sw"><div class="chip" style="background:#D9D3CA"></div><code>#D9D3CA</code></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
