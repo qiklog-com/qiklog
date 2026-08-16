@@ -1,10 +1,10 @@
 ---
 title: CLI
-description: qiklog send, tail-file, and key management from the terminal.
+description: qiklog send, watch, tail-file, and key management from the terminal.
 order: 6
 ---
 
-The `qiklog` CLI ships logs from your terminal — useful for scripts, CI, and tailing local files.
+The `qiklog` CLI ships and receives logs from your terminal — useful for scripts, CI, live tail, and tailing local files.
 
 ## Install / run from source
 
@@ -49,9 +49,26 @@ dotnet run --project src/QikLog.Cli -- send \
   -s demo -m "hello from the CLI" -l info
 ```
 
-The CLI sends `Authorization: Bearer <key>` (same credential the API also accepts as `X-QikLog-API-Key`). There is no interactive OAuth login for `send` / `tail-file` — that is intentional for agent-style ingest.
+The CLI sends `Authorization: Bearer <key>` (same credential the API also accepts as `X-QikLog-API-Key`). There is no interactive OAuth login for `send` / `watch` / `tail-file` — that is intentional for agent-style ingest.
 
 Exit code `0` on **202 Accepted**; non-zero on failure with stderr details.
+
+## watch — live-tail a source
+
+Connects to the same SignalR hub as the browser (`/hubs/logs`), calls `Subscribe` for a source, and prints each `LogReceived` line to stdout:
+
+```bash
+dotnet run --project src/QikLog.Cli -- watch \
+  --source demo \
+  --api https://api.qiklog.com \
+  --key "$QIKLOG_API_KEY"
+```
+
+Press `Ctrl+C` to stop. Lines look like `HH:mm:ss.fff LEVEL source message`.
+
+**No history on subscribe.** The hub joins the source group only; it does not replay the buffer. Open a watch session first, then `send` (or curl) to the same source to see lines. For past entries, use the browser tail page or `GET /v1/sources/{source}/logs`.
+
+Wrong or missing keys fail with a clear stderr message (exit code `1`), not a hung connection.
 
 ## tail-file — ship a local file
 
@@ -81,9 +98,13 @@ Prints JSON with the new key. Store it in `QIKLOG_API_KEY` or your password mana
 qiklog send -s production -m "release v1.2.3 live" -l info --api https://api.qiklog.com --key "$QIKLOG_API_KEY"
 ```
 
-**Watch in browser**
+**Watch live (CLI or browser)**
 
-Open `/tail/production` on the web app while shipping logs.
+```bash
+qiklog watch -s production --api https://api.qiklog.com --key "$QIKLOG_API_KEY"
+```
+
+Or open `/tail/production` on the web app while shipping logs.
 
 ## Next steps
 
