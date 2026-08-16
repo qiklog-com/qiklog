@@ -26,6 +26,18 @@ public static class SmokeEnvironment
         Environment.GetEnvironmentVariable("QIKLOG_SMOKE_API_URL"), DefaultApiUrl);
 
     /// <summary>
+    /// Optional Zitadel access token for JWT manage-endpoint smoke.
+    /// </summary>
+    public static string? AccessToken
+    {
+        get
+        {
+            var token = Environment.GetEnvironmentVariable("QIKLOG_SMOKE_ACCESS_TOKEN");
+            return string.IsNullOrWhiteSpace(token) ? null : token.Trim();
+        }
+    }
+
+    /// <summary>
     /// Optional API key enabling the authenticated round-trip check. Without it those
     /// tests skip, because minting a key is a manual step against a real deployment.
     /// </summary>

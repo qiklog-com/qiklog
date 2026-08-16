@@ -43,6 +43,7 @@ internal static class ApiAuthExtensions
             .AddJwtBearer(options =>
             {
                 options.Authority = auth.Authority.TrimEnd('/');
+                // Zitadel project id (see QikLogAuthOptions.ApiAudience), not "qiklog-api".
                 options.Audience = auth.ApiAudience;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
