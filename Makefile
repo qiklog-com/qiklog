@@ -21,6 +21,30 @@ WEB_URL      := http://localhost:5081
 SMOKE_WEB_URL ?= https://qiklog.up.railway.app
 SMOKE_API_URL ?= https://qiklog-api.up.railway.app
 
+# Global CLI install (`make install-cli`). Override: make install-cli PREFIX=/usr/local/bin
+CLI_PROJ      := $(ROOT)/src/QikLog.Cli/QikLog.Cli.csproj
+CLI_PUBLISH   := $(ROOT)/artifacts/cli
+PREFIX        ?= $(HOME)/.local/bin
+
+# Host RID for self-contained single-file publish (macOS / Linux).
+UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_S),Darwin)
+  ifeq ($(UNAME_M),arm64)
+    CLI_RID ?= osx-arm64
+  else
+    CLI_RID ?= osx-x64
+  endif
+else ifeq ($(UNAME_S),Linux)
+  ifeq ($(UNAME_M),aarch64)
+    CLI_RID ?= linux-arm64
+  else
+    CLI_RID ?= linux-x64
+  endif
+else
+  CLI_RID ?= win-x64
+endif
+
 # ── Color (disabled when NO_COLOR is set) ─────────────────────────────────────
 ifeq ($(NO_COLOR),)
   BOLD  := \033[1m
@@ -72,11 +96,12 @@ help: ## Show this help
 		awk 'BEGIN {FS = ":.*## "}; {printf "  $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
 	@printf '\n$(DIM)Examples:$(RESET)\n'
 	@printf '  make up-d          $(DIM)# stack in background$(RESET)\n'
+	@printf '  make install-cli   $(DIM)# qiklog on PATH ($(PREFIX))$(RESET)\n'
 	@printf '  make demo          $(DIM)# POST a test log$(RESET)\n'
 	@printf '  make azure         $(DIM)# setup + deploy$(RESET)\n\n'
 
 # ── .NET ──────────────────────────────────────────────────────────────────────
-.PHONY: restore build test test-all smoke smoke-local clean
+.PHONY: restore build test test-all smoke smoke-local clean install-cli uninstall-cli
 restore: ## dotnet restore
 	$(call banner,Restore)
 	$(call step,dotnet restore $(SLN))
@@ -125,8 +150,33 @@ clean: ## Remove bin/obj and dotnet artifacts
 	$(call banner,Clean)
 	$(call step,Removing bin/ and obj/)
 	@find $(ROOT)/src $(ROOT)/tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} + 2>/dev/null || true
+	@rm -rf $(CLI_PUBLISH)
 	@dotnet clean $(SLN) -c $(CONFIG) --verbosity quiet 2>/dev/null || true
 	$(call ok,Clean complete)
+
+install-cli: ## Publish single-file qiklog and install to PREFIX (default: ~/.local/bin)
+	$(call banner,Install CLI → $(PREFIX)/qiklog)
+	$(call step,dotnet publish $(CLI_PROJ) -c $(CONFIG) -r $(CLI_RID))
+	@dotnet publish $(CLI_PROJ) -c $(CONFIG) -r $(CLI_RID) --self-contained true \
+		-p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+		-o $(CLI_PUBLISH)
+	@test -x $(CLI_PUBLISH)/qiklog || { $(fail) "publish did not produce $(CLI_PUBLISH)/qiklog"; exit 1; }
+	@mkdir -p $(PREFIX)
+	@install -m 755 $(CLI_PUBLISH)/qiklog $(PREFIX)/qiklog
+	@case ":$$PATH:" in *":$(PREFIX):"*) ;; *) \
+		$(call warn,$(PREFIX) is not on PATH — add it to your shell profile, e.g. export PATH=\"$(PREFIX):$$PATH\");; \
+	esac
+	$(call ok,Installed $(PREFIX)/qiklog ($(CLI_RID)))
+	@$(PREFIX)/qiklog --help >/dev/null && printf '  $(DIM)try: qiklog --help$(RESET)\n'
+
+uninstall-cli: ## Remove qiklog from PREFIX
+	$(call banner,Uninstall CLI)
+	@if [ -e $(PREFIX)/qiklog ]; then \
+		rm -f $(PREFIX)/qiklog; \
+		$(call ok,Removed $(PREFIX)/qiklog); \
+	else \
+		$(call warn,Nothing to remove at $(PREFIX)/qiklog); \
+	fi
 
 # ── Docker Compose ────────────────────────────────────────────────────────────
 .PHONY: up up-d down restart logs ps build-images

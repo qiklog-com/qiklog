@@ -8,13 +8,21 @@ The `qiklog` CLI ships and receives logs from your terminal — useful for scrip
 
 ## Install / run from source
 
-From the repository (requires .NET 9 SDK):
+From the repository (requires .NET 9 SDK), install a global `qiklog` on your PATH:
+
+```bash
+make install-cli
+# → ~/.local/bin/qiklog  (override: make install-cli PREFIX=/usr/local/bin)
+qiklog --help
+```
+
+Remove with `make uninstall-cli`. Or run without installing:
 
 ```bash
 dotnet run --project src/QikLog.Cli -- --help
 ```
 
-A packaged single-file binary is planned for Homebrew and Scoop.
+Homebrew / Scoop packages are planned later.
 
 ## Global options
 
