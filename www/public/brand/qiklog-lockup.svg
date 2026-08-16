@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" width="280" height="64" fill="none" role="img" aria-label="QikLog">
   <title>QikLog</title>
+  <!-- Mark: same paths as docs/assets/qiklog-mark.svg (Field Clinical). -->
   <g stroke="#B94700" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M38 52 L22 52 A12 12 0 0 1 10 40 L10 20 A12 12 0 0 1 22 8 L42 8 A12 12 0 0 1 54 20 L54 36"/>
     <path d="M26 20 L38 30 L26 40"/>
     <path d="M43 41 L55 53"/>
   </g>
+  <!-- Wordmark: Qik ink / Log rust (matches www Lockup.astro). -->
   <text
     x="78"
     y="46"

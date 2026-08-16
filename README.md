@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/QikLog.Web/wwwroot/brand/lockup.svg" alt="QikLog" width="360" />
+  <img src="docs/assets/qiklog-lockup.svg" alt="QikLog" width="280" />
 </p>
 
 # QikLog
