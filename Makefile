@@ -12,7 +12,7 @@ CONFIG       ?= Release
 
 # Kept unquoted in a variable: inlining the quoted filter into $(call step,…) ends
 # the macro's own single quotes and leaves `&` for the shell to background on.
-TEST_FILTER  := Category!=E2E&Category!=Smoke
+TEST_FILTER  := Category!=E2E&Category!=Smoke&Category!=Timing
 
 API_URL      := http://localhost:5080
 WEB_URL      := http://localhost:5081

@@ -1,19 +1,12 @@
 using System.CommandLine;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using QikLog.Cli;
 using QikLog.Core;
 
 var apiOption = new Option<string>("--api") { Description = "API base URL", DefaultValueFactory = _ => "http://localhost:5080" };
 var keyOption = new Option<string?>("--key", "-k") { Description = "API key (ql_...) or set QIKLOG_API_KEY" };
-
-static void ApplyApiKey(HttpClient http, string? key)
-{
-    var value = key ?? Environment.GetEnvironmentVariable("QIKLOG_API_KEY");
-    if (!string.IsNullOrWhiteSpace(value))
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", value.Trim());
-}
 
 // `qiklog send --source api --message "hello" --level info`
 var sourceOption = new Option<string>("--source", "-s") { Description = "Source name", Required = true };
@@ -31,29 +24,36 @@ sendCommand.SetAction(async (parseResult, ct) =>
     var source = parseResult.GetValue(sourceOption)!;
     var message = parseResult.GetValue(messageOption)!;
     var level = parseResult.GetValue(levelOption);
-    var api = parseResult.GetValue(apiOption)!.TrimEnd('/');
+    var api = parseResult.GetValue(apiOption)!;
 
-    using var http = new HttpClient();
-    ApplyApiKey(http, parseResult.GetValue(keyOption));
-
-    var payload = new
-    {
-        source,
-        message,
-        level = (int)level,
-        timestamp = DateTimeOffset.UtcNow
-    };
-
-    var response = await http.PostAsJsonAsync($"{api}/v1/logs", payload, ct);
-    if (response.IsSuccessStatusCode)
+    var result = await LogSender.SendAsync(api, parseResult.GetValue(keyOption), source, message, level, ct);
+    if (result.ExitCode == 0)
     {
         Console.WriteLine($"sent: [{level}] {source}: {message}");
         return 0;
     }
 
-    var body = await response.Content.ReadAsStringAsync(ct);
-    Console.Error.WriteLine($"failed: {(int)response.StatusCode} {response.ReasonPhrase} {body}");
+    Console.Error.WriteLine(result.Error);
     return 1;
+});
+
+// `qiklog watch --source demo --api <url> --key <key>`
+var watchSourceOption = new Option<string>("--source", "-s") { Description = "Source name to subscribe to", Required = true };
+var watchCommand = new Command("watch", "Live-tail a source over SignalR (same hub as the browser)");
+watchCommand.Options.Add(watchSourceOption);
+watchCommand.Options.Add(apiOption);
+watchCommand.Options.Add(keyOption);
+watchCommand.SetAction(async (parseResult, ct) =>
+{
+    var source = parseResult.GetValue(watchSourceOption)!;
+    var api = parseResult.GetValue(apiOption)!;
+    return await WatchSession.RunAsync(
+        api,
+        source,
+        parseResult.GetValue(keyOption),
+        Console.Out,
+        Console.Error,
+        ct);
 });
 
 // `qiklog tail-file ./app.log --source mybox`
@@ -76,7 +76,7 @@ tailCommand.SetAction(async (parseResult, ct) =>
     }
 
     using var http = new HttpClient();
-    ApplyApiKey(http, parseResult.GetValue(keyOption));
+    LogSender.ApplyApiKey(http, parseResult.GetValue(keyOption));
 
     using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
     using var reader = new StreamReader(stream);
@@ -144,9 +144,10 @@ keyCreateCommand.SetAction(async (parseResult, ct) =>
     return 0;
 });
 
-var root = new RootCommand("QikLog CLI — send and tail logs from the terminal")
+var root = new RootCommand("QikLog CLI — send, watch, and ship logs from the terminal")
 {
     sendCommand,
+    watchCommand,
     tailCommand,
     keyCommand
 };

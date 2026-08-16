@@ -17,6 +17,13 @@ public static class SmokeEnvironment
     public static bool Enabled =>
         string.Equals(Environment.GetEnvironmentVariable("QIKLOG_SMOKE"), "1", StringComparison.Ordinal);
 
+    /// <summary>
+    /// True when the opt-in send→watch latency measurement may hit a live API.
+    /// Independent of <see cref="Enabled"/> so timing is never part of <c>make smoke</c>.
+    /// </summary>
+    public static bool TimingEnabled =>
+        string.Equals(Environment.GetEnvironmentVariable("QIKLOG_TIMING"), "1", StringComparison.Ordinal);
+
     /// <summary>Origin of the Blazor dashboard under test, without a trailing slash.</summary>
     public static string WebUrl => Normalize(
         Environment.GetEnvironmentVariable("QIKLOG_SMOKE_WEB_URL"), DefaultWebUrl);

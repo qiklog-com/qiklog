@@ -11,6 +11,11 @@
     <ProjectReference Include="..\QikLog.Core\QikLog.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="QikLog.Cli.Tests" />
+    <InternalsVisibleTo Include="QikLog.Smoke.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
   </ItemGroup>
 </Project>

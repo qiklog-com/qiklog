@@ -98,6 +98,7 @@ CI and `make test` exclude `Category=Smoke` and `Category=E2E`.
 | `QIKLOG_SMOKE_API_URL` | Override API origin (default Railway api) |
 | `QIKLOG_SMOKE_API_KEY` | Real ingest key for round-trip scenarios |
 | `QIKLOG_SMOKE_ACCESS_TOKEN` | Zitadel JWT access token after sign-in (Manage path) |
+| `QIKLOG_TIMING=1` | Opt-in send→SignalR latency measurement (reports ms; not a CI gate). Needs `QIKLOG_SMOKE_API_KEY`. |
 
 ## Auth regressions this process must catch
 

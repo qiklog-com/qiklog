@@ -50,3 +50,19 @@ public sealed class OidcSmokeFactAttribute : FactAttribute
                 "Zitadel Auth Token Type must be JWT, not opaque Bearer.";
     }
 }
+
+/// <summary>
+/// Spot-check send→SignalR latency against a live API. Skipped unless
+/// <c>QIKLOG_TIMING=1</c> (and <c>QIKLOG_SMOKE_API_KEY</c>). Not a CI gate.
+/// </summary>
+public sealed class TimingFactAttribute : FactAttribute
+{
+    /// <summary>Marks the test skipped when timing runs are not opted in.</summary>
+    public TimingFactAttribute()
+    {
+        if (!SmokeEnvironment.TimingEnabled)
+            Skip = "Set QIKLOG_TIMING=1 to measure send→SignalR receive latency against a live API.";
+        else if (SmokeEnvironment.ApiKey is null)
+            Skip = "Set QIKLOG_SMOKE_API_KEY to measure authenticated send→watch latency.";
+    }
+}
