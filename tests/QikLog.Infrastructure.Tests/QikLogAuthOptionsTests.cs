@@ -13,6 +13,8 @@ public sealed class QikLogAuthOptionsTests
         options.ApiAudience.ShouldBe("383416044909259568");
         options.ProjectAudienceScope.ShouldBe(
             "urn:zitadel:iam:org:project:id:383416044909259568:aud");
+        options.ProjectAudienceScope.ShouldNotContain("qiklog-api");
+        options.ApiAudience.ShouldNotContain("qiklog-api");
     }
 
     [Fact]

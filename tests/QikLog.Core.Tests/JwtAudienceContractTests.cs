@@ -10,6 +10,7 @@ public sealed class JwtAudienceContractTests
     {
         var web = ReadRepoFile("src/QikLog.Web/WebAuthExtensions.cs");
         web.ShouldContain("ProjectAudienceScope");
+        web.ShouldContain("options.Scope.Add(auth.ProjectAudienceScope)");
         web.ShouldNotContain("AudienceValidator");
         web.ShouldNotContain("—");
     }
@@ -21,8 +22,18 @@ public sealed class JwtAudienceContractTests
         api.ShouldContain("options.Audience = auth.ApiAudience");
         api.ShouldContain("ValidateAudience = true");
         api.ShouldContain("ValidateIssuer = true");
+        api.ShouldContain("MapInboundClaims = false");
         api.ShouldNotContain("AudienceValidator");
         api.ShouldNotContain("ValidAudiences");
+    }
+
+    [Fact]
+    public void Appsettings_defaults_use_project_id_not_qiklog_api_string()
+    {
+        ReadRepoFile("src/QikLog.Api/appsettings.json").ShouldContain("383416044909259568");
+        ReadRepoFile("src/QikLog.Api/appsettings.json").ShouldNotContain("qiklog-api");
+        ReadRepoFile("src/QikLog.Web/appsettings.json").ShouldContain("383416044909259568");
+        ReadRepoFile("src/QikLog.Web/appsettings.json").ShouldNotContain("qiklog-api");
     }
 
     private static string ReadRepoFile(string relativePath)

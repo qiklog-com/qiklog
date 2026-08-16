@@ -20,6 +20,18 @@ public sealed class TenantClaimContractTests
         var claims = ReadRepoFile("src/QikLog.Infrastructure/Tenants/TenantClaims.cs");
         claims.ShouldContain("urn:zitadel:iam:user:resourceowner");
         claims.ShouldContain("urn:zitadel:iam:user:resourceowner:id");
+        claims.ShouldContain("Shared claim reads for web OIDC provisioning and API JWT tenant resolution");
+    }
+
+    [Fact]
+    public void Testing_convention_doc_exists_and_names_the_process()
+    {
+        var doc = ReadRepoFile("docs/TESTING.md");
+        doc.ShouldContain("Conditions of Satisfaction");
+        doc.ShouldContain("Given / When / Then");
+        doc.ShouldContain("QikLog.Smoke.Tests");
+        doc.ShouldContain("make test");
+        doc.ShouldNotContain("—");
     }
 
     [Fact]
