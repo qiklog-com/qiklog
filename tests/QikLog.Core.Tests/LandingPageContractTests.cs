@@ -13,11 +13,14 @@ public sealed class LandingPageContractTests
         index.ShouldContain("Try it now");
         index.ShouldContain("Log tailing that works in seconds. No signup.");
         index.ShouldContain("<Lockup");
-        index.ShouldContain("QikLog Pro");
-        index.ShouldContain("$9");
-        index.ShouldContain("Upgrade");
-        index.ShouldContain("/manage");
-        index.ShouldContain("Live log tailing for developers. Unlimited sources, real time streaming, API keys.");
+        index.ShouldContain("<TailPreview");
+        index.ShouldContain("$9/mo, cancel anytime.");
+        index.ShouldContain("PUBLIC_APP_URL");
+        index.ShouldContain("const tryUrl = `${appUrl}/`");
+        index.ShouldNotContain("QikLog Pro");
+        index.ShouldNotContain("Upgrade");
+        index.ShouldNotContain("/signup");
+        index.ShouldNotContain("/docs/");
         ReadRepoFile("www/src/components/Lockup.astro").ShouldContain("qiklog-mark.svg");
         index.ShouldNotContain("Get started");
         index.ShouldNotContain("Open app");
@@ -25,6 +28,51 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("checkout.stripe.com");
         index.ShouldNotContain("—");
         index.ShouldNotContain("–");
+    }
+
+    [Fact]
+    public void Pricing_lives_on_its_own_page()
+    {
+        var pricing = ReadRepoFile("www/src/pages/pricing.astro");
+        pricing.ShouldContain("<PricingCard");
+        pricing.ShouldContain("/manage");
+
+        var card = ReadRepoFile("www/src/components/PricingCard.astro");
+        card.ShouldContain("QikLog Pro");
+        card.ShouldContain("$9");
+        card.ShouldContain("Upgrade");
+        card.ShouldContain("Live log tailing for developers. Unlimited sources, real time streaming, API keys.");
+        card.ShouldNotContain("checkout.stripe.com");
+        card.ShouldNotContain("—");
+
+        var footer = ReadRepoFile("www/src/components/SiteFooter.astro");
+        footer.ShouldContain("href=\"/pricing/\"");
+        ReadRepoFile("www/src/components/SiteNav.astro").ShouldContain("href=\"/pricing/\"");
+    }
+
+    [Fact]
+    public void Hero_preview_types_a_log_line_and_respects_reduced_motion()
+    {
+        var preview = ReadRepoFile("www/src/components/TailPreview.astro");
+        preview.ShouldContain("hello from curl");
+        preview.ShouldContain("prefers-reduced-motion");
+        preview.ShouldContain("var(--ql-ink)");
+        preview.ShouldContain("var(--ql-paper)");
+        preview.ShouldContain("var(--ql-rust)");
+        preview.ShouldContain("var(--ql-font-mono)");
+        preview.ShouldNotContain("#2E2A26");
+        preview.ShouldNotContain("#B94700");
+        preview.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Try_it_now_in_nav_hits_the_app_root()
+    {
+        var nav = ReadRepoFile("www/src/components/SiteNav.astro");
+        nav.ShouldContain("Try it now");
+        nav.ShouldContain("href={tryUrl}");
+        nav.ShouldContain("appUrl.replace");
+        nav.ShouldNotContain("/signup");
     }
 
     [Fact]
