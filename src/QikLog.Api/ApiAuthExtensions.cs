@@ -45,6 +45,8 @@ internal static class ApiAuthExtensions
                 options.Authority = auth.Authority.TrimEnd('/');
                 // Zitadel project id (see QikLogAuthOptions.ApiAudience), not "qiklog-api".
                 options.Audience = auth.ApiAudience;
+                // Keep Zitadel URN claim types (resourceowner/org id) unmapped.
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,

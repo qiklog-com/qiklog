@@ -77,18 +77,17 @@ internal static class WebAuthExtensions
                 options.Scope.Add("email");
                 options.Scope.Add("offline_access");
                 options.Scope.Add(auth.ProjectAudienceScope);
+                // Puts urn:zitadel:iam:user:resourceowner:id on the JWT access token
+                // so the API can resolve the same org the web provisioned against.
+                options.Scope.Add(TenantClaims.ResourceOwnerScope);
 
                 options.TokenValidationParameters.NameClaimType = "name";
                 options.TokenValidationParameters.RoleClaimType = "roles";
 
                 options.Events.OnTokenValidated = async context =>
                 {
-                    var orgId = context.Principal?.FindFirstValue(auth.OrganizationClaim)
-                        ?? context.Principal?.FindFirstValue("urn:zitadel:iam:user:resourceowner:id");
-                    var name = context.Principal?.FindFirstValue("name")
-                        ?? context.Principal?.FindFirstValue("email")
-                        ?? context.Principal?.FindFirstValue(ClaimTypes.Email)
-                        ?? "Tenant";
+                    var orgId = TenantClaims.TryGetOrgId(context.Principal, auth);
+                    var name = TenantClaims.GetDisplayName(context.Principal);
 
                     await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
                     var provisioner = scope.ServiceProvider.GetRequiredService<TenantProvisioner>();
