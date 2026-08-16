@@ -1,5 +1,7 @@
 ---
-const message = 'hello from curl';
+// Provisional demo line (option 1). Alternatives listed in the PR; Jamey picks.
+// Typewriter steps/max-width must match message.length (17 for the provisional line).
+const message = 'GET /checkout 200';
 ---
 <div class="preview" role="img" aria-label={`Example log line: 14:02:11 INFO demo ${message}`}>
   <p class="chrome">demo</p>
@@ -44,8 +46,8 @@ const message = 'hello from curl';
     display: inline-block;
     overflow: hidden;
     vertical-align: bottom;
-    max-width: 15ch;
-    animation: type 9s steps(15, end) infinite;
+    max-width: 17ch;
+    animation: type 9s steps(17, end) infinite;
   }
 
   .cursor {
@@ -65,7 +67,7 @@ const message = 'hello from curl';
     }
     32%,
     72% {
-      max-width: 15ch;
+      max-width: 17ch;
     }
     88%,
     100% {
@@ -87,7 +89,7 @@ const message = 'hello from curl';
   @media (prefers-reduced-motion: reduce) {
     .msg {
       animation: none;
-      max-width: 15ch;
+      max-width: 17ch;
     }
 
     .cursor {
