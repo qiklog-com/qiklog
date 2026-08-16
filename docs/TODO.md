@@ -79,6 +79,33 @@ around our own architecture data, not building or paying for a
 diagramming SaaS. Holstered per Qik-thesis rule until there's
 bandwidth -- flat SVG diagrams cover the documentation need today.
 
+Alternate pipeline worth prototyping (Jamey's own portfolio piece,
+not a QikLog dependency): SVG -> OpenSCAD -> Blender. Modern OpenSCAD
+(2021.01+) imports SVG natively via import("icon.svg"), no separate
+conversion step needed -- collapses to extrude, position (skip
+manual rotate/translate on the model; use OpenSCAD's ortho camera at
+the isometric angle instead, e.g. rotate([35.264, 0, 45]) applied to
+the camera, for consistent batch rendering), then export. Fully
+headless-scriptable via the OpenSCAD CLI
+(openscad -o out.png --imgsize=512,512 --projection=ortho model.scad),
+so it's a real automatable pipeline, not a one-off. Two gotchas to
+test on one throwaway icon before building tooling around this:
+(1) most Iconify icon sets (Lucide, Tabler, Feather) are stroke-only
+SVGs with no fill, and OpenSCAD's import() reads filled regions, so
+a pure-stroke icon may import as zero-volume -- prefer filled icon
+sets (e.g. Material Symbols) or test extrusion on one icon first;
+(2) OpenSCAD's native renderer is CAD-flat -- a final hop through
+Blender (import the STL/OBJ, flat-shade in rust/paper/ink, quick
+Eevee render) is likely needed for genuinely eye-catching output
+rather than raw OpenSCAD renders.
+
+## Backlog: Iconify (team-wide, not QikLog-specific)
+
+iconify.design -- unified icon query API across every major icon set
+(Material, Tabler, Lucide, Font Awesome, etc). Team-wide tooling
+idea, not scoped to this project; capture separately in graymatter
+notes rather than QikLog docs if it needs a home.
+
 ## Tooling: adopt Stripe's agent skills
 
 Stripe ships installable skills/plugins + an MCP server so coding
