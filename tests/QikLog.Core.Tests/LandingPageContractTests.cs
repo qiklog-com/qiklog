@@ -6,17 +6,28 @@ namespace QikLog.Core.Tests;
 public sealed class LandingPageContractTests
 {
     [Fact]
-    public void Landing_page_is_the_demo_not_a_pitch()
+    public void Landing_page_leads_with_visitor_outcome_not_tool_speed()
     {
         var index = ReadRepoFile("www/src/pages/index.astro");
+        var layout = ReadRepoFile("www/src/layouts/BaseLayout.astro");
 
+        // Visible H1 + lede: outcome for the visitor's app (provisional Option A).
+        index.ShouldContain("Add logs to your app in seconds.");
+        index.ShouldContain("Watch them stream live in the browser. No signup.");
         index.ShouldContain("Try it now");
-        index.ShouldContain("Log tailing that works in seconds. No signup.");
         index.ShouldContain("<Lockup");
         index.ShouldContain("<TailPreview");
         index.ShouldContain("$9/mo, cancel anytime.");
         index.ShouldContain("PUBLIC_APP_URL");
         index.ShouldContain("const tryUrl = `${appUrl}/`");
+
+        // Meta / OG defaults match the same outcome framing (not the old tool-speed pitch).
+        index.ShouldContain("description =");
+        index.ShouldContain("Add logs to your app in seconds. Watch them stream live in the browser. No signup.");
+        layout.ShouldContain("Add logs to your app in seconds. Watch them stream live in the browser. No signup.");
+        layout.ShouldNotContain("log tailing that works in seconds");
+
+        index.ShouldNotContain("Log tailing that works in seconds");
         index.ShouldNotContain("QikLog Pro");
         index.ShouldNotContain("Upgrade");
         index.ShouldNotContain("/signup");
@@ -51,10 +62,11 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
-    public void Hero_preview_types_a_log_line_and_respects_reduced_motion()
+    public void Hero_preview_types_a_production_looking_log_line()
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
-        preview.ShouldContain("hello from curl");
+        preview.ShouldContain("GET /checkout 200");
+        preview.ShouldNotContain("hello from curl");
         preview.ShouldContain("prefers-reduced-motion");
         preview.ShouldContain("var(--ql-ink)");
         preview.ShouldContain("var(--ql-paper)");
