@@ -93,6 +93,8 @@ To generate from `assets/qiklog-mark.svg`:
 - `apple-touch-icon.png` — 180, paper mark on rust field
 - `icon-192.png`, `icon-512.png` — PWA manifest, paper mark on rust field
 - `og-image.png` — 1200x630, lockup on paper, rust hairline border
+- `qiklog-lockup.svg` — mark + outlined Bricolage 800 wordmark for README/GitHub.
+  Uses `prefers-color-scheme` so ink/mark flip to paper on dark surfaces.
 
 Do not generate raster derivatives from the old JPGs. Their transparency is a
 checkerboard baked into the pixels, not an alpha channel.
