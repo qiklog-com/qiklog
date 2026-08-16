@@ -38,13 +38,11 @@ public sealed class TenantResolver(
                 : new TenantResolution(TenantResolutionStatus.TenantNotFound);
         }
 
-        var orgId = principal.FindFirst(authOptions.Value.OrganizationClaim)?.Value;
+        var orgId = TenantClaims.TryGetOrgId(principal, authOptions.Value);
         if (string.IsNullOrWhiteSpace(orgId))
             return new TenantResolution(TenantResolutionStatus.TenantNotFound);
 
-        var name = principal.FindFirst("name")?.Value
-            ?? principal.FindFirst(ClaimTypes.Email)?.Value
-            ?? "Tenant";
+        var name = TenantClaims.GetDisplayName(principal);
         var provisionedId = await provisioner.EnsureTenantAsync(orgId, name, cancellationToken);
         return new TenantResolution(TenantResolutionStatus.Success, provisionedId);
     }

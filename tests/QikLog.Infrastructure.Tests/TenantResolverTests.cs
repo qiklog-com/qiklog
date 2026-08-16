@@ -77,6 +77,36 @@ public sealed class TenantResolverTests
     }
 
     [Fact]
+    public async Task Resolve_resourceowner_claim_provisions_and_returns_Success()
+    {
+        await using var db = CreateDb();
+        var principal = Authenticated(
+            ("urn:zitadel:iam:user:resourceowner:id", "org-resource-7"),
+            ("email", "dev@example.com"));
+        var result = await CreateResolver(db).ResolveFromPrincipalAsync(principal, CancellationToken.None);
+
+        result.Status.ShouldBe(TenantResolutionStatus.Success);
+        result.TenantId.ShouldNotBeNull();
+        var row = await db.Tenants.SingleAsync();
+        row.ZitadelOrgId.ShouldBe("org-resource-7");
+        row.Name.ShouldBe("dev@example.com");
+    }
+
+    [Fact]
+    public async Task Resolve_prefers_configured_org_claim_over_resourceowner()
+    {
+        await using var db = CreateDb();
+        var principal = Authenticated(
+            ("urn:zitadel:iam:org:id", "org-preferred"),
+            ("urn:zitadel:iam:user:resourceowner:id", "org-other"),
+            ("name", "Preferred"));
+        var result = await CreateResolver(db).ResolveFromPrincipalAsync(principal, CancellationToken.None);
+
+        result.Status.ShouldBe(TenantResolutionStatus.Success);
+        (await db.Tenants.SingleAsync()).ZitadelOrgId.ShouldBe("org-preferred");
+    }
+
+    [Fact]
     public async Task Resolve_missing_org_and_tenant_claim_returns_TenantNotFound()
     {
         await using var db = CreateDb();
@@ -87,6 +117,7 @@ public sealed class TenantResolverTests
 
     [Theory]
     [InlineData("name", "From Name", "From Name")]
+    [InlineData("email", "ops@example.com", "ops@example.com")]
     [InlineData(ClaimTypes.Email, "ops@example.com", "ops@example.com")]
     public async Task Resolve_uses_name_or_email_claim_for_display_name(
         string claimType,
