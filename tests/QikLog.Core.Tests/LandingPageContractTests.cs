@@ -56,6 +56,16 @@ public sealed class LandingPageContractTests
         readme.ShouldContain("app.qiklog.com");
         readme.ShouldNotContain("src/QikLog.Web/wwwroot/brand/lockup.svg");
         readme.ShouldNotContain("—");
+
+        var lockup = ReadRepoFile("docs/assets/qiklog-lockup.svg");
+        lockup.ShouldContain("prefers-color-scheme: dark");
+        lockup.ShouldContain("Bricolage Grotesque");
+        lockup.ShouldContain("class=\"ink\"");
+        lockup.ShouldContain("class=\"rust\"");
+        lockup.ShouldContain("class=\"mark\"");
+        lockup.ShouldNotContain("system-ui");
+        lockup.ShouldNotContain("<text");
+        lockup.ShouldNotContain("—");
     }
 
     [Fact]
