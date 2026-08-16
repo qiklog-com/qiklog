@@ -38,6 +38,29 @@ public static class SmokeEnvironment
     }
 
     /// <summary>
+    /// True when <see cref="AccessToken"/> has three JWT segments.
+    /// Opaque Bearer tokens from Zitadel fail this and must not be used for Manage smoke.
+    /// </summary>
+    public static bool AccessTokenLooksLikeJwt
+    {
+        get
+        {
+            var token = AccessToken;
+            if (token is null)
+                return false;
+            var parts = token.Split('.');
+            return parts.Length == 3
+                && parts.All(static p => p.Length > 0);
+        }
+    }
+
+    /// <summary>Custom domain for the Blazor app (TLS smoke).</summary>
+    public const string AppCustomDomainUrl = "https://app.qiklog.com";
+
+    /// <summary>Custom domain for the API (TLS smoke).</summary>
+    public const string ApiCustomDomainUrl = "https://api.qiklog.com";
+
+    /// <summary>
     /// Optional API key enabling the authenticated round-trip check. Without it those
     /// tests skip, because minting a key is a manual step against a real deployment.
     /// </summary>
