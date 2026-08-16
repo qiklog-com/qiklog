@@ -13,7 +13,17 @@ public sealed class QikLogAuthOptions
 
     public string? ClientSecret { get; set; }
 
-    public string ApiAudience { get; set; } = "qiklog-api";
+    /// <summary>
+    /// Zitadel project id. Zitadel puts this in <c>aud</c> when the web app
+    /// requests <see cref="ProjectAudienceScope"/>. Not the string "qiklog-api".
+    /// </summary>
+    public string ApiAudience { get; set; } = "383416044909259568";
+
+    /// <summary>
+    /// Reserved Zitadel scope that adds <see cref="ApiAudience"/> to the access token audience.
+    /// </summary>
+    public string ProjectAudienceScope =>
+        $"urn:zitadel:iam:org:project:id:{ApiAudience}:aud";
 
     /// <summary>Claim type for Zitadel organization ID (default Zitadel org claim).</summary>
     public string OrganizationClaim { get; set; } = "urn:zitadel:iam:org:id";

@@ -76,6 +76,7 @@ internal static class WebAuthExtensions
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
                 options.Scope.Add("offline_access");
+                options.Scope.Add(auth.ProjectAudienceScope);
 
                 options.TokenValidationParameters.NameClaimType = "name";
                 options.TokenValidationParameters.RoleClaimType = "roles";
