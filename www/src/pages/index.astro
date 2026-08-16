@@ -7,18 +7,18 @@ import SiteFooter from '../components/SiteFooter.astro';
 const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
 const tryUrl = `${appUrl}/`;
 
-// Provisional copy (Option A). Alternatives listed in the PR; Jamey picks the winner.
-const title = 'QikLog: add logs to your app in seconds';
+// Landing copy Option B + demo line 3 (founder vote).
+const title = 'QikLog: see what your app is doing, live';
 const description =
-  'Add logs to your app in seconds. Watch them stream live in the browser. No signup.';
+  'See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.';
 ---
 <BaseLayout title={title} description={description}>
   <main>
     <section class="hero container">
       <div class="copy">
         <Lockup />
-        <h1>Add logs to your app in seconds.</h1>
-        <p class="lede">Watch them stream live in the browser. No signup.</p>
+        <h1>See what your app is doing, live.</h1>
+        <p class="lede">Add a log line from your code. Watch it stream in the browser. No signup.</p>
         <a href={tryUrl} class="btn btn-primary">Try it now</a>
         <p class="price-hint">$9/mo, cancel anytime.</p>
       </div>

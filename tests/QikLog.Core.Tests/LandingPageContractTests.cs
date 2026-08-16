@@ -11,9 +11,9 @@ public sealed class LandingPageContractTests
         var index = ReadRepoFile("www/src/pages/index.astro");
         var layout = ReadRepoFile("www/src/layouts/BaseLayout.astro");
 
-        // Visible H1 + lede: outcome for the visitor's app (provisional Option A).
-        index.ShouldContain("Add logs to your app in seconds.");
-        index.ShouldContain("Watch them stream live in the browser. No signup.");
+        // Visible H1 + lede: outcome for the visitor's app (Option B).
+        index.ShouldContain("See what your app is doing, live.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("Try it now");
         index.ShouldContain("<Lockup");
         index.ShouldContain("<TailPreview");
@@ -23,11 +23,14 @@ public sealed class LandingPageContractTests
 
         // Meta / OG defaults match the same outcome framing (not the old tool-speed pitch).
         index.ShouldContain("description =");
-        index.ShouldContain("Add logs to your app in seconds. Watch them stream live in the browser. No signup.");
-        layout.ShouldContain("Add logs to your app in seconds. Watch them stream live in the browser. No signup.");
+        index.ShouldContain(
+            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.");
+        layout.ShouldContain(
+            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.");
         layout.ShouldNotContain("log tailing that works in seconds");
 
         index.ShouldNotContain("Log tailing that works in seconds");
+        index.ShouldNotContain("Add logs to your app in seconds");
         index.ShouldNotContain("QikLog Pro");
         index.ShouldNotContain("Upgrade");
         index.ShouldNotContain("/signup");
@@ -39,6 +42,20 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("checkout.stripe.com");
         index.ShouldNotContain("—");
         index.ShouldNotContain("–");
+    }
+
+    [Fact]
+    public void Readme_shows_field_clinical_lockup_and_status_badges()
+    {
+        var readme = ReadRepoFile("README.md");
+        readme.ShouldContain("docs/assets/qiklog-lockup.svg");
+        readme.ShouldContain("actions/workflows/ci.yml/badge.svg");
+        readme.ShouldContain("badge/.NET-9");
+        readme.ShouldContain("badge/status-pre--alpha");
+        readme.ShouldContain("www.qiklog.com");
+        readme.ShouldContain("app.qiklog.com");
+        readme.ShouldNotContain("src/QikLog.Web/wwwroot/brand/lockup.svg");
+        readme.ShouldNotContain("—");
     }
 
     [Fact]
@@ -65,8 +82,9 @@ public sealed class LandingPageContractTests
     public void Hero_preview_types_a_production_looking_log_line()
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
-        preview.ShouldContain("GET /checkout 200");
+        preview.ShouldContain("JWT expired 401");
         preview.ShouldNotContain("hello from curl");
+        preview.ShouldNotContain("GET /checkout 200");
         preview.ShouldContain("prefers-reduced-motion");
         preview.ShouldContain("var(--ql-ink)");
         preview.ShouldContain("var(--ql-paper)");

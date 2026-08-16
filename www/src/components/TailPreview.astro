@@ -1,7 +1,6 @@
 ---
-// Provisional demo line (option 1). Alternatives listed in the PR; Jamey picks.
-// Typewriter steps/max-width must match message.length (17 for the provisional line).
-const message = 'GET /checkout 200';
+// Demo line option 3 (founder vote). Typewriter steps/max-width = message.length (15).
+const message = 'JWT expired 401';
 ---
 <div class="preview" role="img" aria-label={`Example log line: 14:02:11 INFO demo ${message}`}>
   <p class="chrome">demo</p>
@@ -46,8 +45,8 @@ const message = 'GET /checkout 200';
     display: inline-block;
     overflow: hidden;
     vertical-align: bottom;
-    max-width: 17ch;
-    animation: type 9s steps(17, end) infinite;
+    max-width: 15ch;
+    animation: type 9s steps(15, end) infinite;
   }
 
   .cursor {
@@ -67,7 +66,7 @@ const message = 'GET /checkout 200';
     }
     32%,
     72% {
-      max-width: 17ch;
+      max-width: 15ch;
     }
     88%,
     100% {
@@ -89,7 +88,7 @@ const message = 'GET /checkout 200';
   @media (prefers-reduced-motion: reduce) {
     .msg {
       animation: none;
-      max-width: 17ch;
+      max-width: 15ch;
     }
 
     .cursor {
