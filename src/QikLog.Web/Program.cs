@@ -29,6 +29,27 @@ builder.Services.AddDataProtection()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Marketing www iframes /embed/tail/{source}. Blazor Server defaults to
+// frame-ancestors 'self' (and Antiforgery adds X-Frame-Options: SAMEORIGIN),
+// which blocks www.qiklog.com. Allow known marketing origins; CSP replaces XFO.
+builder.Services.Configure<Microsoft.AspNetCore.Components.Server.ServerComponentsEndpointOptions>(options =>
+{
+    options.ContentSecurityFrameAncestorsPolicy =
+        "'self' https://www.qiklog.com https://qiklog.com http://localhost:4321 http://127.0.0.1:4321";
+});
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.SuppressXFrameOptionsHeader = true;
+    // Cross-origin iframe (www → app) needs SameSite=None for the circuit cookie.
+    // Secure+None is production-only; local HTTP iframes keep the default Lax cookie.
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    }
+});
+
 builder.Services.AddFluentUIComponents();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddQikLogWebAuth(builder.Configuration, builder.Environment);
@@ -65,19 +86,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-
-// Marketing site embeds /embed/tail/{source} in an iframe. Allow known www origins only.
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path.StartsWithSegments("/embed", StringComparison.OrdinalIgnoreCase))
-    {
-        context.Response.Headers.ContentSecurityPolicy =
-            "frame-ancestors 'self' https://www.qiklog.com https://qiklog.com http://localhost:4321 http://127.0.0.1:4321";
-        context.Response.Headers.Remove("X-Frame-Options");
-    }
-
-    await next();
-});
 
 var webAuth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<QikLogAuthOptions>>().Value;
 if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
