@@ -1,0 +1,79 @@
+---
+/**
+ * Real live tail: iframe to the Blazor LiveTailPanel at /embed/tail/{source}.
+ * Lazy-loaded so the hero does not pay the Blazor circuit cost up front.
+ */
+interface Props {
+  appUrl: string;
+  source?: string;
+}
+
+const { appUrl, source = 'demo' } = Astro.props;
+const embedUrl = `${appUrl.replace(/\/$/, '')}/embed/tail/${encodeURIComponent(source)}`;
+---
+<div class="live-frame">
+  <p class="live-kicker"><span class="live-pill">LIVE</span> Real stream from source <code>{source}</code></p>
+  <iframe
+    class="live-iframe"
+    title={`Live tail for ${source}`}
+    src={embedUrl}
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    allow="clipboard-write"
+  ></iframe>
+  <p class="live-note">
+    Same panel as <a href={`${appUrl.replace(/\/$/, '')}/tail/${encodeURIComponent(source)}`}>/tail/{source}</a>.
+    Send a line to this source and it appears here.
+  </p>
+</div>
+
+<style>
+  .live-frame {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .live-kicker {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ql-ink-muted);
+  }
+
+  .live-pill {
+    display: inline-block;
+    margin-right: 0.45rem;
+    padding: 0.12rem 0.4rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ql-paper);
+    background: var(--ql-rust);
+    border-radius: var(--ql-radius-sm);
+    vertical-align: 0.05em;
+  }
+
+  .live-iframe {
+    width: 100%;
+    min-height: 26rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    background: var(--ql-ink);
+  }
+
+  .live-note {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .live-note a {
+    color: var(--ql-rust);
+  }
+
+  .live-kicker code {
+    font-family: var(--ql-font-mono);
+    font-size: 0.85em;
+  }
+</style>

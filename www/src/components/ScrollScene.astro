@@ -1,0 +1,56 @@
+---
+/**
+ * Scroll-reveal scene wrapper. IntersectionObserver adds .is-in; reduced motion skips animation.
+ */
+interface Props {
+  id?: string;
+  eyebrow?: string;
+}
+
+const { id, eyebrow } = Astro.props;
+---
+<section class="scene" id={id} data-scene>
+  <div class="scene-inner container">
+    {eyebrow && <p class="scene-eyebrow">{eyebrow}</p>}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .scene {
+    padding: 4.5rem 0;
+    border-top: 1px solid var(--ql-hairline);
+  }
+
+  .scene-inner {
+    max-width: 52rem;
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity 0.55s ease,
+      transform 0.55s ease;
+  }
+
+  .scene.is-in .scene-inner,
+  .scene.no-motion .scene-inner {
+    opacity: 1;
+    transform: none;
+  }
+
+  .scene-eyebrow {
+    margin: 0 0 0.75rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ql-rust);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene-inner {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

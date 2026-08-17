@@ -65,6 +65,20 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
+// Marketing site embeds /embed/tail/{source} in an iframe. Allow known www origins only.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/embed", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Headers.ContentSecurityPolicy =
+            "frame-ancestors 'self' https://www.qiklog.com https://qiklog.com http://localhost:4321 http://127.0.0.1:4321";
+        context.Response.Headers.Remove("X-Frame-Options");
+    }
+
+    await next();
+});
+
 var webAuth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<QikLogAuthOptions>>().Value;
 if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
 {

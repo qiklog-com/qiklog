@@ -125,3 +125,32 @@
 .ql-on-dark .ql-wordmark .ql-wordmark-accent {
   color: var(--ql-accent-rust);
 }
+
+/* Embed iframe host (marketing /embed/tail/{source}) */
+.ql-embed-root {
+  margin: 0;
+  padding: 0.75rem;
+  min-height: 100vh;
+  background: var(--ql-paper);
+  box-sizing: border-box;
+}
+
+.ql-live-tail-compact .ql-live-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  font-family: var(--ql-font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ql-paper);
+  background: var(--ql-accent-rust);
+  border-radius: var(--ql-radius-sm);
+}
+
+.ql-live-tail-compact .ql-live-source {
+  font-family: var(--ql-font-mono);
+  font-size: 0.85rem;
+  color: var(--ql-ink-muted);
+}
+
