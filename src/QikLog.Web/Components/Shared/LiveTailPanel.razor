@@ -25,7 +25,7 @@
                 <code class="ql-live-source">@Source</code>
                 <FluentSpacer />
             }
-            <FluentBadge Appearance="@StatusAppearance">@StatusText</FluentBadge>
+            <span class="ql-live-status" data-state="@StatusText">@StatusText</span>
             @if (!Compact)
             {
                 <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
@@ -129,9 +129,6 @@
         _ => _connectionError is null ? "connecting" : "disconnected"
     };
 
-    private Appearance StatusAppearance => _hub?.State == HubConnectionState.Connected
-        ? Appearance.Accent
-        : Appearance.Neutral;
 
     protected override async Task OnInitializedAsync()
     {

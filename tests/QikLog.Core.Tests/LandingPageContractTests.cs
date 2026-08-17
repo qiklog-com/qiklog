@@ -133,6 +133,12 @@ public sealed class LandingPageContractTests
         panel.ShouldContain("BuildHub");
         panel.ShouldContain("X-QikLog-API-Key");
         panel.ShouldContain("AccessTokenProvider");
+        panel.ShouldContain("ql-live-status");
+        panel.ShouldNotContain("Appearance.Accent");
+        panel.ShouldNotContain("FluentBadge");
+        var brand = ReadRepoFile("src/QikLog.Web/wwwroot/brand/brand.css");
+        brand.ShouldContain(".ql-live-status[data-state=\"connected\"]");
+        brand.ShouldContain("var(--ql-accent-rust)");
         tailPage.ShouldContain("<LiveTailPanel");
         embedPage.ShouldContain("<LiveTailPanel");
         embedPage.ShouldContain("Compact=\"true\"");
@@ -169,7 +175,9 @@ public sealed class LandingPageContractTests
         // When: alignment is set
         // Then: the note is centered, not left-aligned
         footer.ShouldContain("text-align: center");
+        footer.ShouldContain("justify-content: center");
         footer.ShouldNotContain("text-align: left");
+        footer.ShouldNotContain("class=\"footer container\"");
         footer.ShouldNotContain("—");
     }
 
@@ -202,6 +210,8 @@ public sealed class LandingPageContractTests
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
         preview.ShouldContain("JWT expired 401");
+        preview.ShouldContain("ERROR demo");
+        preview.ShouldNotContain("INFO demo");
         preview.ShouldNotContain("hello from curl");
         preview.ShouldNotContain("GET /checkout 200");
         preview.ShouldContain("#scene-1.is-in");
@@ -249,6 +259,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("scrollIntoView");
         index.ShouldContain("2000");
         index.ShouldContain("chevron-pop");
+        index.ShouldContain("toggleAttribute('hidden'");
         index.ShouldContain("IntersectionObserver");
         index.ShouldContain("dataset.seen");
         index.ShouldContain("prefers-reduced-motion");
@@ -321,6 +332,10 @@ public sealed class LandingPageContractTests
         index.ShouldContain("No dashboard to configure.");
         index.ShouldContain("your code");
         index.ShouldContain("your browser");
+        index.ShouldContain("qiklog-mark.svg");
+        index.ShouldContain("M8 6 3 12l5 6");
+        index.ShouldNotContain("&lt;/&gt;");
+        index.ShouldNotContain("path-icon\" aria-hidden=\"true\">[]");
         index.ShouldContain("Prebuilt .NET integration included.");
         index.ShouldContain("Get started");
         index.ShouldNotContain("GET STARTED", Case.Sensitive);
