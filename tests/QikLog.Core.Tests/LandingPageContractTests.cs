@@ -130,6 +130,9 @@ public sealed class LandingPageContractTests
         panel.ShouldContain("Subscribe");
         panel.ShouldContain("LogReceived");
         panel.ShouldContain("Compact");
+        panel.ShouldContain("BuildHub");
+        panel.ShouldContain("X-QikLog-API-Key");
+        panel.ShouldContain("AccessTokenProvider");
         tailPage.ShouldContain("<LiveTailPanel");
         embedPage.ShouldContain("<LiveTailPanel");
         embedPage.ShouldContain("Compact=\"true\"");
@@ -201,6 +204,7 @@ public sealed class LandingPageContractTests
         preview.ShouldContain("JWT expired 401");
         preview.ShouldNotContain("hello from curl");
         preview.ShouldNotContain("GET /checkout 200");
+        preview.ShouldContain("#scene-1.is-in");
         preview.ShouldContain("prefers-reduced-motion");
         preview.ShouldContain("var(--ql-ink)");
         preview.ShouldContain("var(--ql-paper)");
@@ -237,10 +241,14 @@ public sealed class LandingPageContractTests
 
         // When / Then: CSS scroll-snap, delayed chevron, one-shot IO, reduced motion
         css.ShouldContain("scroll-snap-type");
+        css.ShouldContain("620ms");
+        css.ShouldContain("--ql-shadow-pop");
         scene.ShouldContain("scroll-snap-align");
+        scene.ShouldContain("620ms");
         index.ShouldContain("scroll-chevron");
         index.ShouldContain("scrollIntoView");
         index.ShouldContain("2000");
+        index.ShouldContain("chevron-pop");
         index.ShouldContain("IntersectionObserver");
         index.ShouldContain("dataset.seen");
         index.ShouldContain("prefers-reduced-motion");
@@ -266,6 +274,8 @@ public sealed class LandingPageContractTests
         tape.ShouldContain("Content-Type: application/json");
         tape.ShouldContain("Authorization: Bearer");
         tape.ShouldContain("""{"source":"demo","level":"info","message":"hello from curl"}""");
+        tape.ShouldContain("define:vars");
+        tape.ShouldContain("data-tape-target");
         tape.ShouldContain("REC");
         tape.ShouldContain("28");
         tape.ShouldNotContain("nuget install");
@@ -287,6 +297,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("It's already streaming.");
         index.ShouldContain("source=\"demo\"");
         index.ShouldContain("data-enter=\"right\"");
+        index.ShouldContain("--enter-delay: 480ms");
         embed.ShouldContain("/embed/tail/");
         embed.ShouldContain("loading=\"lazy\"");
         embed.ShouldContain("200 GET /api/orders 24.31ms");
@@ -409,6 +420,30 @@ public sealed class LandingPageContractTests
         ico[2].ShouldBe((byte)1);
         ico[3].ShouldBe((byte)0);
         ico[4].ShouldBe((byte)3);
+    }
+
+    [Fact]
+    public void Given_ingest_docs_When_read_Then_hosted_curl_and_auth_headers_are_documented()
+    {
+        var ingest = ReadRepoFile("www/src/content/docs/ingest-api.md");
+        var keys = ReadRepoFile("www/src/content/docs/api-keys.md");
+        var start = ReadRepoFile("www/src/content/docs/getting-started.md");
+
+        ingest.ShouldContain("https://api.qiklog.com/v1/logs");
+        ingest.ShouldContain("Authorization: Bearer $QIKLOG_API_KEY");
+        ingest.ShouldContain("X-QikLog-API-Key");
+        ingest.ShouldContain("X-Api-Key");
+        ingest.ShouldContain("202 Accepted");
+        ingest.ShouldContain("401 Unauthorized");
+        ingest.ShouldContain("""{"source":"demo","level":"info","message":"hello from curl"}""");
+        ingest.ShouldNotContain("—");
+
+        keys.ShouldContain("X-QikLog-API-Key");
+        keys.ShouldContain("https://api.qiklog.com/v1/logs");
+        keys.ShouldContain("Authorization: Bearer");
+
+        start.ShouldContain("https://api.qiklog.com/v1/logs");
+        start.ShouldContain("Authorization: Bearer $QIKLOG_API_KEY");
     }
 
     private static void AssertPngSize(string relativePath, int width, int height)

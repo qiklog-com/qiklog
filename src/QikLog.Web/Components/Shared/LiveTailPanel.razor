@@ -196,12 +196,54 @@
     private async Task ConnectAsync()
     {
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
-        var hubApiKey = Options.Value.HubApiKey;
-        var accessToken = HttpContextAccessor.HttpContext is { } http
-            ? await http.GetTokenAsync("access_token")
-            : null;
+        var hubApiKey = Options.Value.HubApiKey?.Trim();
+        // Embeds must not inherit a visitor's expired OIDC cookie; that 401s and
+        // skips the shared hub key. Compact always uses HubApiKey.
+        var accessToken = Compact
+            ? null
+            : HttpContextAccessor.HttpContext is { } http
+                ? await http.GetTokenAsync("access_token")
+                : null;
 
-        _hub = new HubConnectionBuilder()
+        _hub = BuildHub(baseUrl, accessToken, hubApiKey);
+
+        try
+        {
+            await _hub.StartAsync();
+            await _hub.InvokeAsync("Subscribe", Source);
+            _connectionError = null;
+        }
+        catch (Exception first)
+        {
+            if (!string.IsNullOrWhiteSpace(accessToken) && !string.IsNullOrWhiteSpace(hubApiKey))
+            {
+                await _hub.DisposeAsync();
+                _hub = BuildHub(baseUrl, accessToken: null, hubApiKey);
+                try
+                {
+                    await _hub.StartAsync();
+                    await _hub.InvokeAsync("Subscribe", Source);
+                    _connectionError = null;
+                    StateHasChanged();
+                    return;
+                }
+                catch (Exception retry)
+                {
+                    first = retry;
+                }
+            }
+
+            _connectionError = DescribeFailure(first);
+            await _hub.DisposeAsync();
+            _hub = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private HubConnection BuildHub(string baseUrl, string? accessToken, string? hubApiKey)
+    {
+        var hub = new HubConnectionBuilder()
             .WithUrl($"{baseUrl}/hubs/logs", options =>
             {
                 if (!string.IsNullOrWhiteSpace(accessToken))
@@ -210,32 +252,19 @@
                 }
                 else if (!string.IsNullOrWhiteSpace(hubApiKey))
                 {
-                    options.Headers.Add("X-QikLog-API-Key", hubApiKey);
+                    options.Headers["X-QikLog-API-Key"] = hubApiKey;
+                    // Bearer survives proxies that strip custom headers on negotiate/WebSocket.
+                    options.AccessTokenProvider = () => Task.FromResult<string?>(hubApiKey);
                 }
             })
             .WithAutomaticReconnect()
             .Build();
 
-        _hub.On<LogEntry>("LogReceived", _incoming.Enqueue);
-
-        _hub.Reconnected += _ => InvokeAsync(StateHasChanged);
-        _hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
-        _hub.Closed += _ => InvokeAsync(StateHasChanged);
-
-        try
-        {
-            await _hub.StartAsync();
-            await _hub.InvokeAsync("Subscribe", Source);
-            _connectionError = null;
-        }
-        catch (Exception ex)
-        {
-            _connectionError = DescribeFailure(ex);
-            await _hub.DisposeAsync();
-            _hub = null;
-        }
-
-        StateHasChanged();
+        hub.On<LogEntry>("LogReceived", _incoming.Enqueue);
+        hub.Reconnected += _ => InvokeAsync(StateHasChanged);
+        hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
+        hub.Closed += _ => InvokeAsync(StateHasChanged);
+        return hub;
     }
 
     private static string DescribeFailure(Exception ex) =>

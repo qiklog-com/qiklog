@@ -1,10 +1,10 @@
 ---
 title: Ingest API
-description: POST /v1/logs — JSON shape, log levels, and response codes.
+description: POST /v1/logs JSON shape, auth headers, log levels, and response codes.
 order: 3
 ---
 
-Send logs to the API with a single JSON endpoint.
+Send logs to the API with a single JSON POST. Same contract for curl, the CLI, and the Serilog sink.
 
 ## Endpoint
 
@@ -13,10 +13,58 @@ POST /v1/logs
 Content-Type: application/json
 ```
 
-**Base URL (local):** `http://localhost:5080`  
-**Base URL (cloud):** your deployed API host (e.g. `https://api.qiklog.com`)
+| Environment | Base URL |
+|-------------|----------|
+| Local Docker | `http://localhost:5080` |
+| Hosted | `https://api.qiklog.com` |
 
-When API keys are required, add authentication — see [API keys](/docs/api-keys/).
+## Authentication
+
+Production requires a key on every ingest. Local Docker defaults to keys optional. See [API keys](/docs/api-keys/).
+
+Send the key with **one** of these headers:
+
+| Header | Example |
+|--------|---------|
+| `Authorization: Bearer` | `Authorization: Bearer ql_your_full_key_here` (recommended) |
+| `X-QikLog-API-Key` | `X-QikLog-API-Key: ql_your_full_key_here` |
+| `X-Api-Key` | `X-Api-Key: ql_your_full_key_here` (legacy alias) |
+
+CLI and Serilog send `Authorization: Bearer`. The landing tape uses the same hosted curl.
+
+## Hosted curl
+
+```bash
+export QIKLOG_API_KEY='ql_your_full_key_here'
+
+curl -X POST https://api.qiklog.com/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $QIKLOG_API_KEY" \
+  -d '{"source":"demo","level":"info","message":"hello from curl"}'
+```
+
+Use source `demo` to see the line on [the live landing panel](https://www.qiklog.com/) and at `/tail/demo` on the dashboard.
+
+Equivalent with the product header:
+
+```bash
+curl -X POST https://api.qiklog.com/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "X-QikLog-API-Key: $QIKLOG_API_KEY" \
+  -d '{"source":"demo","level":"info","message":"hello from curl"}'
+```
+
+A successful ingest returns **HTTP 202 Accepted** with an empty body.
+
+## Local curl
+
+```bash
+curl -X POST http://localhost:5080/v1/logs \
+  -H "Content-Type: application/json" \
+  -d '{"source":"demo","level":"info","message":"payment captured"}'
+```
+
+When local auth is on, add the same Bearer or `X-QikLog-API-Key` header as production.
 
 ## Request body
 
@@ -56,21 +104,14 @@ Accepted as **case-insensitive strings** or **integers**:
 | `error` or `err` | 4 | Failures |
 | `critical` or `crit` | 5 | Severe / page-worthy |
 
-### curl example
-
-```bash
-curl -X POST http://localhost:5080/v1/logs \
-  -H "Content-Type: application/json" \
-  -d '{"source":"demo","level":"info","message":"payment captured"}'
-```
-
 ## Responses
 
 | Status | Meaning |
 |--------|---------|
 | **202 Accepted** | Log accepted, broadcast to live subscribers, queued for storage |
 | **400 Bad Request** | Missing `source`/`message`, invalid JSON, or unknown `level` |
-| **401 Unauthorized** | Missing or invalid API key (when auth is enabled) |
+| **401 Unauthorized** | Missing API key (when auth is enabled) |
+| **403 Forbidden** | Invalid or revoked API key |
 | **429 Too Many Requests** | Per-key rate limit exceeded (default 120/minute) |
 
 ## What happens after ingest
@@ -83,13 +124,16 @@ curl -X POST http://localhost:5080/v1/logs \
 ## Health check
 
 ```bash
-curl http://localhost:5080/healthz
+curl https://api.qiklog.com/healthz
 ```
+
+Local: `curl http://localhost:5080/healthz`.
 
 Returns `status` and `postgres` connectivity when a database is configured.
 
 ## Next steps
 
-- [Live tail](/docs/live-tail/) — watch lines stream in the browser
-- [API keys](/docs/api-keys/) — secure ingest in production
-- [Serilog](/docs/serilog/) — one-line .NET sink
+- [Live tail](/docs/live-tail/): watch lines stream in the browser
+- [API keys](/docs/api-keys/): mint and send a Bearer key
+- [Serilog](/docs/serilog/): one-line .NET sink
+- [CLI](/docs/cli/): `qiklog send` from a terminal

@@ -13,16 +13,13 @@ const command =
     </div>
     <span class="rec"><span class="rec-dot"></span> REC</span>
   </div>
-  <pre class="tape-body"><code data-tape-target></code></pre>
-  <template data-tape-source>{command}</template>
+  <pre class="tape-body"><code data-tape-target>{command}</code></pre>
 </div>
 
-<script>
+<script define:vars={{ command }}>
   const CHAR_MS = 28;
   const root = document.querySelector('[data-tape]');
   const target = root?.querySelector('[data-tape-target]');
-  const source = root?.querySelector('[data-tape-source]');
-  const command = source?.textContent ?? '';
   const scene = document.getElementById('scene-2');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -40,6 +37,7 @@ const command =
       return;
     }
     root.classList.add('is-typing');
+    target.textContent = '';
     let i = 0;
     const tick = () => {
       i += 1;
@@ -56,16 +54,24 @@ const command =
     type();
   }
 
-  if (reduce || scene?.classList.contains('is-in') || scene?.classList.contains('no-motion')) {
+  function sceneReady() {
+    return !scene || scene.classList.contains('is-in') || scene.classList.contains('no-motion');
+  }
+
+  if (reduce || sceneReady()) {
     start();
   } else if (scene) {
     const mo = new MutationObserver(() => {
-      if (scene.classList.contains('is-in') || scene.classList.contains('no-motion')) {
+      if (sceneReady()) {
         start();
         mo.disconnect();
       }
     });
     mo.observe(scene, { attributes: true, attributeFilter: ['class'] });
+    window.setTimeout(() => {
+      mo.disconnect();
+      start();
+    }, 2500);
   }
 </script>
 

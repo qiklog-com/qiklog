@@ -26,12 +26,21 @@ QikLog is real-time log tailing for developers: send a line, watch it appear in 
 
 1. [qiklog.com](https://www.qiklog.com/): click **Try it now**. The app home shows a copy-paste curl and a live tail for source `demo`.
 2. [Quickstart](/docs/quickstart/): run the stack locally
-3. [Ingest API](/docs/ingest-api/): wire your app or curl
+3. [Ingest API](/docs/ingest-api/): `POST /v1/logs` with Bearer or `X-QikLog-API-Key`
 4. [Live tail](/docs/live-tail/): open the browser viewer
 5. [API keys](/docs/api-keys/): required in production; optional locally
 6. [CLI](/docs/cli/): ship logs from scripts and files
 7. [Serilog](/docs/serilog/): one line in Program.cs
 8. [Manage UI](/docs/manage-ui/): list sources and keys in the dashboard
+
+Hosted ingest (key required):
+
+```bash
+curl -X POST https://api.qiklog.com/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $QIKLOG_API_KEY" \
+  -d '{"source":"demo","level":"info","message":"hello from curl"}'
+```
 
 ## Pre-alpha honesty
 

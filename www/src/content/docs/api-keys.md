@@ -49,23 +49,27 @@ The response includes the plaintext `key`. **Save it now** — it cannot be retr
 
 ## Use a key on ingest
 
+Hosted API: `https://api.qiklog.com`. Same headers locally when `RequireApiKey` is on. Full JSON contract: [Ingest API](/docs/ingest-api/).
+
 ### Authorization header (recommended)
 
 ```bash
-curl -X POST http://localhost:5080/v1/logs \
+curl -X POST https://api.qiklog.com/v1/logs \
   -H "Authorization: Bearer ql_your_full_key_here" \
   -H "Content-Type: application/json" \
   -d '{"source":"demo","level":"info","message":"authenticated"}'
 ```
 
-### X-Api-Key header
+### X-QikLog-API-Key header
 
 ```bash
-curl -X POST http://localhost:5080/v1/logs \
-  -H "X-Api-Key: ql_your_full_key_here" \
+curl -X POST https://api.qiklog.com/v1/logs \
+  -H "X-QikLog-API-Key: ql_your_full_key_here" \
   -H "Content-Type: application/json" \
   -d '{"source":"demo","message":"hello"}'
 ```
+
+`X-Api-Key` is accepted as a legacy alias of `X-QikLog-API-Key`.
 
 ### Environment variable for CLI
 
