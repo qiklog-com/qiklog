@@ -1,6 +1,6 @@
 ---
 /**
- * Scroll-reveal scene wrapper. IntersectionObserver adds .is-in; reduced motion skips animation.
+ * One full-viewport snap slide. Parent IntersectionObserver adds .is-in once.
  */
 interface Props {
   id?: string;
@@ -11,30 +11,27 @@ const { id, eyebrow } = Astro.props;
 ---
 <section class="scene" id={id} data-scene>
   <div class="scene-inner container">
-    {eyebrow && <p class="scene-eyebrow">{eyebrow}</p>}
+    {eyebrow && (
+      <p class="scene-eyebrow" data-enter="up">{eyebrow}</p>
+    )}
     <slot />
   </div>
 </section>
 
 <style>
   .scene {
-    padding: 4.5rem 0;
-    border-top: 1px solid var(--ql-hairline);
+    min-height: calc(100svh - var(--ql-nav-height));
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.25rem 0 3.25rem;
   }
 
   .scene-inner {
+    width: 100%;
     max-width: 52rem;
-    opacity: 0;
-    transform: translateY(1.25rem);
-    transition:
-      opacity 0.55s ease,
-      transform 0.55s ease;
-  }
-
-  .scene.is-in .scene-inner,
-  .scene.no-motion .scene-inner {
-    opacity: 1;
-    transform: none;
   }
 
   .scene-eyebrow {
@@ -46,8 +43,34 @@ const { id, eyebrow } = Astro.props;
     color: var(--ql-rust);
   }
 
+  :global([data-enter]) {
+    opacity: 0;
+  }
+
+  :global([data-enter='up']) {
+    transform: translateY(12px);
+  }
+
+  :global([data-enter='left']) {
+    transform: translateX(-2.25rem);
+  }
+
+  :global([data-enter='right']) {
+    transform: translateX(2.25rem);
+  }
+
+  :global(.is-in [data-enter]),
+  :global(.no-motion [data-enter]) {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 260ms ease,
+      transform 260ms ease;
+    transition-delay: var(--enter-delay, 0ms);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .scene-inner {
+    :global([data-enter]) {
       opacity: 1;
       transform: none;
       transition: none;

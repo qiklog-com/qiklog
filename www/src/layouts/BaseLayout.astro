@@ -2,12 +2,14 @@
 interface Props {
   title?: string;
   description?: string;
+  snap?: boolean;
 }
 
 const {
   title = 'QikLog: see what your app is doing, live',
   description =
     'See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.',
+  snap = false,
 } = Astro.props;
 
 const site = (Astro.site?.toString() ?? 'https://www.qiklog.com').replace(/\/$/, '');
@@ -15,7 +17,7 @@ const canonical = new URL(Astro.url.pathname, `${site}/`).toString();
 const ogImage = `${site}/og-image.png`;
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class:list={[{ snap }]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -15,7 +15,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("See what your app is doing, live.");
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("Try it now");
-        index.ShouldContain("<Lockup");
+        index.ShouldContain("<SiteNav");
         index.ShouldContain("<TailPreview");
         index.ShouldContain("$9/mo, cancel anytime.");
         index.ShouldContain("PUBLIC_APP_URL");
@@ -36,7 +36,8 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("/signup");
         index.ShouldNotContain("/docs/");
         ReadRepoFile("www/src/components/Lockup.astro").ShouldContain("qiklog-mark.svg");
-        index.ShouldNotContain("Get started");
+        index.ShouldContain("Get started");
+        index.ShouldNotContain("GET STARTED", Case.Sensitive);
         index.ShouldNotContain("Open app");
         index.ShouldNotContain("coming soon");
         index.ShouldNotContain("checkout.stripe.com");
@@ -106,7 +107,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("id=\"scene-3\"");
         index.ShouldContain("id=\"scene-4\"");
         index.ShouldContain("id=\"scene-5\"");
-        index.ShouldContain("One POST. Any language.");
+        index.ShouldContain("One POST. From anywhere.");
         index.ShouldContain("It's already streaming.");
         index.ShouldContain("No dashboard to configure.");
         index.ShouldContain("<LiveTailEmbed");
@@ -114,6 +115,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("prefers-reduced-motion");
         index.ShouldContain("IntersectionObserver");
+        index.ShouldContain("scrollIntoView");
 
         embed.ShouldContain("/embed/tail/");
         embed.ShouldContain("loading=\"lazy\"");
@@ -182,7 +184,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("See what your app is doing, live.");
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("minmax(28rem, 1.35fr)");
-        index.ShouldContain("var(--ql-hairline)");
+        index.ShouldContain("var(--ql-shadow)");
         index.ShouldNotContain("minmax(16rem, 22rem)");
 
         preview.ShouldContain("JWT expired 401");
@@ -216,7 +218,105 @@ public sealed class LandingPageContractTests
         nav.ShouldContain("Try it now");
         nav.ShouldContain("href={tryUrl}");
         nav.ShouldContain("appUrl.replace");
+        nav.ShouldContain("btn-outline");
+        nav.ShouldContain("Sign in");
+        nav.ShouldContain("/login");
+        nav.ShouldContain("Pricing");
+        nav.ShouldContain("Docs");
+        nav.ShouldNotContain("btn-primary");
         nav.ShouldNotContain("/signup");
+    }
+
+    [Fact]
+    public void Given_landing_When_inspected_Then_snap_slides_chevron_and_one_shot_motion()
+    {
+        // Given: the marketing landing deck
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var scene = ReadRepoFile("www/src/components/ScrollScene.astro");
+        var css = ReadRepoFile("www/src/styles/global.css");
+
+        // When / Then: CSS scroll-snap, delayed chevron, one-shot IO, reduced motion
+        css.ShouldContain("scroll-snap-type");
+        scene.ShouldContain("scroll-snap-align");
+        index.ShouldContain("scroll-chevron");
+        index.ShouldContain("scrollIntoView");
+        index.ShouldContain("2000");
+        index.ShouldContain("IntersectionObserver");
+        index.ShouldContain("dataset.seen");
+        index.ShouldContain("prefers-reduced-motion");
+        index.ShouldContain("@media (max-width: 375px)");
+        index.ShouldNotContain("—");
+        scene.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_ingest_slide_When_read_Then_tape_types_real_api_curl()
+    {
+        // Given: scene 2 is the ingest tell
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var tape = ReadRepoFile("www/src/components/TapeTerminal.astro");
+
+        // When / Then: real production curl, tape treatment, caption last
+        index.ShouldContain("INGEST");
+        index.ShouldContain("One POST. From anywhere.");
+        index.ShouldContain("<TapeTerminal");
+        index.ShouldContain("All you need is a path to send.");
+        index.ShouldContain("data-enter=\"left\"");
+        tape.ShouldContain("https://api.qiklog.com/v1/logs");
+        tape.ShouldContain("Content-Type: application/json");
+        tape.ShouldContain("Authorization: Bearer");
+        tape.ShouldContain("""{"source":"demo","level":"info","message":"hello from curl"}""");
+        tape.ShouldContain("REC");
+        tape.ShouldContain("28");
+        tape.ShouldNotContain("nuget install");
+        tape.ShouldNotContain("/var/log");
+        tape.ShouldNotContain("qiklog.io");
+        tape.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_live_slide_When_read_Then_embed_enters_from_right_with_realistic_placeholder()
+    {
+        // Given: scene 3 is the real Blazor embed
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var embed = ReadRepoFile("www/src/components/LiveTailEmbed.astro");
+        var smoke = ReadRepoFile("tests/QikLog.Smoke.Tests/WebSmokeTests.cs");
+
+        // When / Then: lazy iframe to demo; placeholder lines are HTTP logs, not file tails
+        index.ShouldContain("LIVE");
+        index.ShouldContain("It's already streaming.");
+        index.ShouldContain("source=\"demo\"");
+        index.ShouldContain("data-enter=\"right\"");
+        embed.ShouldContain("/embed/tail/");
+        embed.ShouldContain("loading=\"lazy\"");
+        embed.ShouldContain("200 GET /api/orders 24.31ms");
+        embed.ShouldContain("401 POST /api/checkout");
+        embed.ShouldNotContain("/var/log");
+        embed.ShouldNotContain("hello from curl");
+        smoke.ShouldContain("Given_demo_ingest_When_history_read_Then_embed_source_receives_line");
+        smoke.ShouldContain("/embed/tail/demo");
+        index.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_path_and_cta_slides_When_read_Then_cards_and_sentence_case_close()
+    {
+        // Given: scenes 4 and 5
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var nav = ReadRepoFile("www/src/components/SiteNav.astro");
+
+        // When / Then: three elevated cards, quiet .NET line, Get started close
+        index.ShouldContain("PATH");
+        index.ShouldContain("No dashboard to configure.");
+        index.ShouldContain("your code");
+        index.ShouldContain("your browser");
+        index.ShouldContain("Prebuilt .NET integration included.");
+        index.ShouldContain("Get started");
+        index.ShouldNotContain("GET STARTED", Case.Sensitive);
+        index.ShouldContain("<SiteFooter");
+        nav.ShouldContain("backdrop-filter");
+        nav.ShouldContain("height: 60px");
+        index.ShouldNotContain("—");
     }
 
     [Fact]
@@ -258,6 +358,7 @@ public sealed class LandingPageContractTests
         css.ShouldContain("Bricolage Grotesque");
         css.ShouldContain("Public Sans");
         css.ShouldContain("IBM Plex Mono");
+        css.ShouldContain("--ql-shadow");
     }
 
     [Fact]
