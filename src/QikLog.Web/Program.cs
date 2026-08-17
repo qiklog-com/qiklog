@@ -29,17 +29,9 @@ builder.Services.AddDataProtection()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Marketing www iframes /embed/tail/{source}. Blazor Server defaults to
-// frame-ancestors 'self' (and Antiforgery adds X-Frame-Options: SAMEORIGIN),
-// which blocks www.qiklog.com. Allow known marketing origins; CSP replaces XFO.
-builder.Services.Configure<Microsoft.AspNetCore.Components.Server.ServerComponentsEndpointOptions>(options =>
-{
-    options.ContentSecurityFrameAncestorsPolicy =
-        "'self' https://www.qiklog.com https://qiklog.com http://localhost:4321 http://127.0.0.1:4321";
-});
-
 builder.Services.AddAntiforgery(options =>
 {
+    // CSP frame-ancestors (set on AddInteractiveServerRenderMode) replaces XFO.
     options.SuppressXFrameOptionsHeader = true;
     // Cross-origin iframe (www → app) needs SameSite=None for the circuit cookie.
     // Secure+None is production-only; local HTTP iframes keep the default Lax cookie.
@@ -110,8 +102,14 @@ if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
     });
 }
 
+// Marketing www iframes /embed/tail/{source}. Default is frame-ancestors 'self',
+// which blocks www.qiklog.com. Policy is applied by interactive server render mode.
 app.MapRazorComponents<App>()
-   .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode(options =>
+    {
+        options.ContentSecurityFrameAncestorsPolicy =
+            "'self' https://www.qiklog.com https://qiklog.com http://localhost:4321 http://127.0.0.1:4321";
+    });
 
 app.Run();
 
