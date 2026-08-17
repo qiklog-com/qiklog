@@ -112,6 +112,103 @@ a quiet rust "REC" dot. Ties the visual to the actual feature (a
 cursor. Keep it small and quiet in the hero, respect
 prefers-reduced-motion (static frame when reduced).
 
+## Post-demo choice branch (8/16 late night)
+
+After the "try it now" demo, offer a secondary choice menu rather
+than one CTA, catching visitors who scrolled past the primary
+button without converting. Four paths, brainstormed from a real
+usage moment:
+
+1. Sign me up (existing CTA, just relabeled as one branch)
+2. Terminal curl install -- "want to see it in your terminal
+   instead?" BLOCKED on the CLI watch/receive command (see TODO,
+   not built yet -- send only right now). This path can't honestly
+   exist until that ships.
+3. `qiklog init` / an installable AI skill that wires logging into
+   an app automatically -- the deep-integration bet (echoes the
+   Serilog/NuGet sink idea). Real engineering, correctly held, not
+   a tonight thing.
+4. Clone-and-run GitHub repo -- cheapest of the four, no
+   dependencies, doubles as the quickstart docs example. Could ship
+   soonest.
+
+Framing: keep ONE dominant "Try it now" as primary (already proven,
+don't dilute it with paradox-of-choice). These four go in a quieter
+secondary section further down the page -- "prefer a different way
+in?" -- not competing with the main CTA.
+
+## Scroll sequence mechanic (evolved from Apple's MacBook Pro page)
+
+Watched apple.com/macbook-pro for reference. Initial read was scroll
+scrubbing an actual video by frame count (their frame counter, e.g.
+"844F -> 1516F", confirms this) -- too heavy an ask for a solo dev
+landing page.
+
+CORRECTED, SIMPLER mechanic (Jamey's reframe, this is the one to
+build): think animated slides with a "next" control, not continuous
+video scrub.
+- CSS scroll-snap sections, one slide per viewport.
+- A down-chevron affordance (mobile "more below" style) advances to
+  the next section via scrollIntoView() -- a discrete click, not
+  tracked scroll position.
+- Each slide's entrance animation fires ONCE on first arrival, then
+  locks static. Scrolling back up/down later just re-reveals settled
+  content in order, no replay.
+- Reduced-motion: show final static state immediately.
+This is a known, buildable pattern (Stripe/Notion/Linear have
+shipped versions), NOT the harder video-scrub technique. Real
+psychological hook: each "click to advance" is a small commitment
+that makes abandoning later feel like walking away from something
+half-finished (commitment escalation) -- this alone is doing the
+gamification work, see below.
+
+Two content directions for the slides, both good, pick one:
+- A: headline zooms ("Easy. Secure. Up in minutes.") -> curl
+  terminal slides in from left -> tail/dashboard terminal slides in
+  from below-right showing it land. Reskins the existing demo with
+  motion.
+- B (stronger): "Easily add to your app" -> NuGet install shown ->
+  one line added to Program.cs -> save/run -> log appears in
+  terminal. Answers "how much of my afternoon does this cost"
+  directly instead of just showing the payoff.
+Ends with a "Get started" button popping in, same slide-in style as
+the rest.
+
+Status: NOT YET SENT to Cursor as its own work order. The existing
+"5-scene fade-in" work order (scene 3 = real embedded live tail) is
+already in flight -- PR #14 landed the iframe-embed permission piece.
+Decide before next session: fold this snap+chevron+one-shot upgrade
+into that in-flight work, or treat as a deliberate v2 once the
+simpler version ships. Don't send conflicting specs to Cursor.
+
+## Gamifying setup: badges rejected, here's why (and the better idea)
+
+Jamey's instinct: developers respond to gamification, floated
+"QikLog badges" (Installed CLI, Viewed 500 log messages, Made a
+Suggestion). Correctly self-identified as probably too far, asked
+for a real read.
+
+Verdict: badges are solving the right problem with the wrong tool.
+Gamification works on REPEATED behavior (Duolingo streaks, GitHub
+contribution graphs) -- setup is a one-time event, so a badge for it
+is a participation sticker, not a hook. Worse: a badge/leaderboard
+system implies social proof (other people have earned this too) that
+doesn't exist yet with zero users -- shown to an early visitor it
+reads as an empty trophy case, not exciting.
+
+The actual insight: the slide sequence above (progression, small
+wins, forward click-to-advance momentum) IS the gamification.
+Manufacturing a second badge system to chase the same psychological
+need is redundant. Ship the slides, skip the badges.
+
+Where a real game-like mechanic DOES fit, with actual precedent in
+this category: shareable tail links (already on the fast-follow
+list). Not "look what I unlocked" but "look what I'm debugging,
+click to see it live" -- Loom/Figma/Notion's actual growth engine.
+Compounds through other people seeing the product, not one person's
+profile decoration. This is the "gamify it" itch worth scratching,
+not badges.
+
 ## Standing rules that apply here
 
 - Business case first. The empire is worth zero until QikLog has
