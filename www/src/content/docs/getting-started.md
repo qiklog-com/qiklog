@@ -30,7 +30,8 @@ QikLog is real-time log tailing for developers: send a line, watch it appear in 
 4. [Live tail](/docs/live-tail/): open the browser viewer
 5. [API keys](/docs/api-keys/): required in production; optional locally
 6. [CLI](/docs/cli/): ship logs from scripts and files
-7. [Manage UI](/docs/manage-ui/): list sources and keys in the dashboard
+7. [Serilog](/docs/serilog/): one line in Program.cs
+8. [Manage UI](/docs/manage-ui/): list sources and keys in the dashboard
 
 ## Pre-alpha honesty
 

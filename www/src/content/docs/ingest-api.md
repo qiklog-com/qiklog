@@ -92,3 +92,4 @@ Returns `status` and `postgres` connectivity when a database is configured.
 
 - [Live tail](/docs/live-tail/) — watch lines stream in the browser
 - [API keys](/docs/api-keys/) — secure ingest in production
+- [Serilog](/docs/serilog/) — one-line .NET sink
