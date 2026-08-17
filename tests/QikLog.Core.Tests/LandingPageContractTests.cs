@@ -146,7 +146,8 @@ public sealed class LandingPageContractTests
         // Given / When
         var program = ReadRepoFile("src/QikLog.Web/Program.cs");
 
-        // Then: Blazor frame-ancestors allow marketing origins; XFO suppressed
+        // Then: Blazor render-mode CSP allows marketing origins; XFO suppressed
+        program.ShouldContain("AddInteractiveServerRenderMode");
         program.ShouldContain("ContentSecurityFrameAncestorsPolicy");
         program.ShouldContain("https://www.qiklog.com");
         program.ShouldContain("SuppressXFrameOptionsHeader");
