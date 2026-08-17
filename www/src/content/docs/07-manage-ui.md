@@ -1,7 +1,7 @@
 ---
 title: Manage UI
 description: List sources and API keys in the Blazor dashboard at /manage.
-order: 7
+order: 8
 ---
 
 The dashboard includes a pre-alpha **Manage** console for sources and API keys.

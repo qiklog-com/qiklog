@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>QikLog.Smoke.Tests</RootNamespace>
-    <AssemblyName>QikLog.Smoke.Tests</AssemblyName>
+    <RootNamespace>QikLog.Serilog.Tests</RootNamespace>
+    <AssemblyName>QikLog.Serilog.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\QikLog.Cli\QikLog.Cli.csproj" />
     <ProjectReference Include="..\..\src\QikLog.Serilog\QikLog.Serilog.csproj" />
+    <ProjectReference Include="..\..\src\QikLog.Core\QikLog.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />

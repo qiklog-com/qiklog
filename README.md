@@ -77,6 +77,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full detail.
 - **QikLog.Api**: ASP.NET Core 9 minimal API + SignalR hub. Ingest + real-time.
 - **QikLog.Web**: Blazor Server dashboard. Fluent UI Blazor components.
 - **QikLog.Cli**: single-file .NET tool. `qiklog send`, `qiklog watch`, `qiklog tail-file`. Install with `make install-cli`.
+- **QikLog.Serilog**: Serilog sink. `WriteTo.QikLog(apiUrl, apiKey, source)`. Pack with `make pack-serilog` (not published to nuget.org from CI).
 
 ## Project plan
 

@@ -101,7 +101,7 @@ help: ## Show this help
 	@printf '  make azure         $(DIM)# setup + deploy$(RESET)\n\n'
 
 # ── .NET ──────────────────────────────────────────────────────────────────────
-.PHONY: restore build test test-all smoke smoke-local clean install-cli uninstall-cli
+.PHONY: restore build test test-all smoke smoke-local clean install-cli uninstall-cli pack-serilog
 restore: ## dotnet restore
 	$(call banner,Restore)
 	$(call step,dotnet restore $(SLN))
@@ -151,6 +151,7 @@ clean: ## Remove bin/obj and dotnet artifacts
 	$(call step,Removing bin/ and obj/)
 	@find $(ROOT)/src $(ROOT)/tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} + 2>/dev/null || true
 	@rm -rf $(CLI_PUBLISH)
+	@rm -rf $(ROOT)/artifacts/nuget
 	@dotnet clean $(SLN) -c $(CONFIG) --verbosity quiet 2>/dev/null || true
 	$(call ok,Clean complete)
 
@@ -168,6 +169,12 @@ install-cli: ## Publish single-file qiklog and install to PREFIX (default: ~/.lo
 	esac
 	$(call ok,Installed $(PREFIX)/qiklog ($(CLI_RID)))
 	@$(PREFIX)/qiklog --help >/dev/null && printf '  $(DIM)try: qiklog --help$(RESET)\n'
+
+pack-serilog: ## Pack QikLog.Serilog nupkg into artifacts/nuget (does not publish)
+	$(call banner,Pack QikLog.Serilog)
+	$(call step,dotnet pack src/QikLog.Serilog -c $(CONFIG))
+	@dotnet pack $(ROOT)/src/QikLog.Serilog/QikLog.Serilog.csproj -c $(CONFIG) -o $(ROOT)/artifacts/nuget
+	$(call ok,nupkg in artifacts/nuget)
 
 uninstall-cli: ## Remove qiklog from PREFIX
 	$(call banner,Uninstall CLI)

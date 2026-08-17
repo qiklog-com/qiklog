@@ -1,7 +1,7 @@
 ---
 title: CLI
 description: qiklog send, watch, tail-file, and key management from the terminal.
-order: 6
+order: 7
 ---
 
 The `qiklog` CLI ships and receives logs from your terminal — useful for scripts, CI, live tail, and tailing local files.
@@ -116,4 +116,4 @@ Or open `/tail/production` on the web app while shipping logs.
 
 ## Next steps
 
-You are through the core docs. Revisit [Getting started](/docs/) for the mental model, or run [Quickstart](/docs/quickstart/) again on a fresh machine.
+You are through the core docs. Wire a .NET app with [Serilog](/docs/serilog/), revisit [Getting started](/docs/) for the mental model, or run [Quickstart](/docs/quickstart/) again on a fresh machine.
