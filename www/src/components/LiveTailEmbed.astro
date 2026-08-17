@@ -13,7 +13,6 @@ const origin = appUrl.replace(/\/$/, '');
 const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
 ---
 <div class="live-frame">
-  <p class="live-kicker"><span class="live-pill">LIVE</span> Real stream from source <code>{source}</code></p>
   <div class="live-stage">
     <ul class="live-skeleton" data-live-skeleton aria-hidden="true">
       <li><span class="meta">14:02:11 INFO</span> 200 GET /api/orders 24.31ms</li>
@@ -40,26 +39,6 @@ const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
-  }
-
-  .live-kicker {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--ql-ink-muted);
-  }
-
-  .live-pill {
-    display: inline-block;
-    margin-right: 0.45rem;
-    padding: 0.12rem 0.4rem;
-    font-family: var(--ql-font-mono);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--ql-paper);
-    background: var(--ql-rust);
-    border-radius: var(--ql-radius-sm);
-    vertical-align: 0.05em;
   }
 
   .live-stage {
@@ -108,11 +87,6 @@ const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
 
   .live-note a {
     color: var(--ql-rust);
-  }
-
-  .live-kicker code {
-    font-family: var(--ql-font-mono);
-    font-size: 0.85em;
   }
 
   @media (max-width: 375px) {

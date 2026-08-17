@@ -34,7 +34,6 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("QikLog Pro");
         index.ShouldNotContain("Upgrade");
         index.ShouldNotContain("/signup");
-        index.ShouldNotContain("/docs/");
         ReadRepoFile("www/src/components/Lockup.astro").ShouldContain("qiklog-mark.svg");
         index.ShouldContain("Get started");
         index.ShouldNotContain("GET STARTED", Case.Sensitive);
@@ -313,6 +312,10 @@ public sealed class LandingPageContractTests
         embed.ShouldContain("loading=\"lazy\"");
         embed.ShouldContain("200 GET /api/orders 24.31ms");
         embed.ShouldContain("401 POST /api/checkout");
+        embed.ShouldContain("Same panel as");
+        embed.ShouldNotContain("live-kicker");
+        embed.ShouldNotContain("Real stream from source demo");
+        embed.ShouldNotContain("live-pill");
         embed.ShouldNotContain("/var/log");
         embed.ShouldNotContain("hello from curl");
         smoke.ShouldContain("Given_demo_ingest_When_history_read_Then_embed_source_receives_line");
@@ -342,6 +345,28 @@ public sealed class LandingPageContractTests
         index.ShouldContain("<SiteFooter");
         nav.ShouldContain("backdrop-filter");
         nav.ShouldContain("height: 60px");
+        index.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_cta_slide_When_read_Then_measured_close_and_quiet_entry_links()
+    {
+        // Given: scene 5 is the close
+        var index = ReadRepoFile("www/src/pages/index.astro");
+
+        // When / Then: measured headline, supporting line, quiet text links (not buttons)
+        index.ShouldContain("Still under 300ms.");
+        index.ShouldContain("Terminal to browser. Measured, not marketing.");
+        index.ShouldContain("Prefer another way in?");
+        index.ShouldContain("Read the docs");
+        index.ShouldContain("href=\"/docs/\"");
+        index.ShouldContain("Install the CLI");
+        index.ShouldContain("href=\"/docs/cli/\"");
+        index.ShouldContain("Clone the repo");
+        index.ShouldContain("https://github.com/qiklog-com/qiklog");
+        index.ShouldContain("cta-alt");
+        index.ShouldNotContain("cta-alt btn");
+        index.ShouldContain("toggleAttribute('hidden'");
         index.ShouldNotContain("—");
     }
 
