@@ -55,17 +55,32 @@ const description =
         <li data-enter="up" style="--enter-delay: 200ms">
           <span class="path-num" aria-hidden="true">1</span>
           <span class="path-label">your code</span>
-          <span class="path-icon" aria-hidden="true">&lt;/&gt;</span>
+          <svg class="path-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 6 3 12l5 6M16 6l5 6-5 6"
+            ></path>
+          </svg>
         </li>
         <li data-enter="up" style="--enter-delay: 300ms">
           <span class="path-num" aria-hidden="true">2</span>
           <span class="path-label">QikLog</span>
-          <span class="path-icon" aria-hidden="true">&lt;/&gt;</span>
+          <img class="path-icon path-icon-mark" src="/brand/qiklog-mark.svg" width="28" height="28" alt="" />
         </li>
         <li data-enter="up" style="--enter-delay: 400ms">
           <span class="path-num" aria-hidden="true">3</span>
           <span class="path-label">your browser</span>
-          <span class="path-icon" aria-hidden="true">[]</span>
+          <svg class="path-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.25" y="4.25" width="17.5" height="15.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.75"></rect>
+            <path d="M3 8.5h18" fill="none" stroke="currentColor" stroke-width="1.75"></path>
+            <circle cx="6.5" cy="6.25" r="0.7" fill="currentColor"></circle>
+            <circle cx="9" cy="6.25" r="0.7" fill="currentColor"></circle>
+            <circle cx="11.5" cy="6.25" r="0.7" fill="currentColor"></circle>
+          </svg>
         </li>
       </ol>
       <p class="scene-caption quiet" data-enter="up" style="--enter-delay: 500ms">
@@ -137,20 +152,28 @@ const description =
 
     function updateChevron() {
       if (!chevron) return;
-      chevron.toggleAttribute('data-last', currentIndex() >= scenes.length - 1);
+      const last = currentIndex() >= scenes.length - 1;
+      chevron.toggleAttribute('data-last', last);
+      chevron.toggleAttribute('hidden', last);
+      chevron.setAttribute('aria-hidden', last ? 'true' : 'false');
     }
 
     if (chevron) {
-      const reveal = () => chevron.classList.add('is-visible');
+      const reveal = () => {
+        chevron.classList.add('is-visible');
+        updateChevron();
+      };
       if (reduce) reveal();
       else window.setTimeout(reveal, 2000);
 
       chevron.addEventListener('click', () => {
         const next = scenes[currentIndex() + 1];
         next?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        window.setTimeout(updateChevron, reduce ? 0 : 400);
       });
 
       window.addEventListener('scroll', updateChevron, { passive: true });
+      window.addEventListener('scrollend', updateChevron, { passive: true });
       updateChevron();
     }
   </script>
@@ -266,9 +289,13 @@ const description =
 
   .path-icon {
     margin-top: auto;
-    font-family: var(--ql-font-mono);
-    font-size: 0.95rem;
+    width: 1.75rem;
+    height: 1.75rem;
     color: var(--ql-ink-caption);
+  }
+
+  .path-icon-mark {
+    display: block;
   }
 
   .cta {
@@ -312,7 +339,10 @@ const description =
       chevron-bob 2.2s ease-in-out 720ms infinite;
   }
 
-  .scroll-chevron[data-last] {
+  .scroll-chevron.is-visible[data-last],
+  .scroll-chevron[data-last],
+  .scroll-chevron[hidden] {
+    display: none;
     animation: none;
     opacity: 0;
     pointer-events: none;
@@ -401,7 +431,9 @@ const description =
       transform: translate(-50%, 0) scale(1);
     }
 
-    .scroll-chevron[data-last] {
+    .scroll-chevron[data-last],
+    .scroll-chevron[hidden] {
+      display: none;
       opacity: 0;
     }
   }

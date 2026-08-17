@@ -1,6 +1,6 @@
 ---
 ---
-<footer class="footer container">
+<footer class="footer">
   <p class="footer-note">
     <a href="/pricing/">Pricing</a>
     · <a href="/docs/">Docs</a>
@@ -13,12 +13,16 @@
 
 <style>
   .footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
     padding: 1.5rem 0 3rem;
     border-top: 1px solid var(--ql-hairline);
   }
 
   .footer-note {
     margin: 0;
+    max-width: 40rem;
     font-size: 0.85rem;
     color: var(--ql-ink-caption);
     text-align: center;
