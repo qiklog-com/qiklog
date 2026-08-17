@@ -91,8 +91,16 @@ const description =
     <ScrollScene id="scene-5">
       <div class="cta" data-enter="up">
         <Lockup size="nav" />
+        <h1 class="scene-title cta-title">Still under 300ms.</h1>
+        <p class="cta-lede">Terminal to browser. Measured, not marketing.</p>
         <a href={tryUrl} class="btn btn-primary">Get started</a>
         <p class="price-hint">$9/mo, cancel anytime.</p>
+        <p class="cta-alt">
+          Prefer another way in?
+          <a href="/docs/">Read the docs</a>
+          · <a href="/docs/cli/">Install the CLI</a>
+          · <a href="https://github.com/qiklog-com/qiklog">Clone the repo</a>
+        </p>
       </div>
       <SiteFooter />
     </ScrollScene>
@@ -309,6 +317,33 @@ const description =
 
   .cta .btn-primary {
     box-shadow: var(--ql-shadow);
+  }
+
+  .cta-title {
+    margin: 0;
+    font-size: clamp(1.45rem, 3.2vw, 2rem);
+  }
+
+  .cta-lede {
+    margin: -0.55rem 0 0;
+    max-width: 22rem;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--ql-ink-muted);
+  }
+
+  .cta-alt {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .cta-alt a {
+    color: var(--ql-ink-caption);
+  }
+
+  .cta-alt a:hover {
+    color: var(--ql-ink-muted);
   }
 
   .scroll-chevron {
