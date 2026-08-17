@@ -16,6 +16,9 @@
 
   --ql-radius-sm: 4px;
   --ql-radius-lg: 4px;
+  --ql-nav-height: 60px;
+  --ql-shadow: 0 22px 48px rgba(46, 42, 38, 0.12);
+  --ql-shadow-sm: 0 10px 28px rgba(46, 42, 38, 0.08);
 
   /* Aliases so older docs chrome keeps compiling */
   --ql-accent-teal: var(--ql-rust);
@@ -34,6 +37,21 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+html.snap {
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: var(--ql-nav-height);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  html.snap {
+    scroll-snap-type: none;
+  }
 }
 
 body {
@@ -93,6 +111,20 @@ a:hover {
   color: var(--ql-ink);
 }
 
+.btn-outline {
+  background: transparent;
+  color: var(--ql-rust);
+  border-color: var(--ql-rust);
+  border-radius: 999px;
+  padding: 0.45rem 1.05rem;
+  font-size: 0.9rem;
+}
+
+.btn-outline:hover {
+  background: transparent;
+  filter: brightness(1.08);
+}
+
 .glass {
   background: var(--ql-paper);
   border: 1px solid var(--ql-hairline);
@@ -101,4 +133,38 @@ a:hover {
 
 .glass-sm {
   border-radius: var(--ql-radius-sm);
+}
+
+[data-enter] {
+  opacity: 0;
+}
+
+[data-enter='up'] {
+  transform: translateY(12px);
+}
+
+[data-enter='left'] {
+  transform: translateX(-2.25rem);
+}
+
+[data-enter='right'] {
+  transform: translateX(2.25rem);
+}
+
+.is-in [data-enter],
+.no-motion [data-enter] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+  transition-delay: var(--enter-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-enter] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

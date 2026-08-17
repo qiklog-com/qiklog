@@ -6,43 +6,72 @@ interface Props {
 }
 
 const { appUrl } = Astro.props;
-const tryUrl = `${appUrl.replace(/\/$/, '')}/`;
+const origin = appUrl.replace(/\/$/, '');
+const tryUrl = `${origin}/`;
+const signInUrl = `${origin}/login`;
 const path = Astro.url.pathname;
 const onDocs = path.startsWith('/docs');
 const onPricing = path.startsWith('/pricing');
 ---
-<header class="nav container">
-  <Lockup size="nav" />
-  <nav class="nav-links" aria-label="Primary">
-    <a href="/docs/" class:list={[{ active: onDocs }]}>Docs</a>
-    <a href="/pricing/" class:list={[{ active: onPricing }]}>Pricing</a>
-    <a href={tryUrl} class="btn btn-primary">Try it now</a>
-  </nav>
+<header class="nav-shell">
+  <div class="nav container">
+    <Lockup size="nav" />
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/pricing/" class:list={[{ active: onPricing }]}>Pricing</a>
+      <a href="/docs/" class:list={[{ active: onDocs }]}>Docs</a>
+      <a href={signInUrl}>Sign in</a>
+      <a href={tryUrl} class="btn btn-outline">Try it now</a>
+    </nav>
+  </div>
 </header>
 
 <style>
+  .nav-shell {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: 60px;
+    background: color-mix(in srgb, var(--ql-paper) 78%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--ql-hairline);
+  }
+
   .nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.5rem 0 0;
+    height: 60px;
   }
 
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    font-size: 0.95rem;
+    gap: 1.15rem;
+    font-size: 0.92rem;
   }
 
   .nav-links a:not(.btn) {
     color: var(--ql-ink-muted);
     text-decoration: none;
     font-weight: 500;
+    white-space: nowrap;
   }
 
   .nav-links a:not(.btn):hover,
   .nav-links a.active:not(.btn) {
     color: var(--ql-ink);
+  }
+
+  @media (max-width: 375px) {
+    .nav-links {
+      gap: 0.55rem;
+      font-size: 0.78rem;
+    }
+
+    .nav-links .btn {
+      padding: 0.32rem 0.7rem;
+      font-size: 0.78rem;
+    }
   }
 </style>

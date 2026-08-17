@@ -1,108 +1,176 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Lockup from '../components/Lockup.astro';
+import SiteNav from '../components/SiteNav.astro';
 import TailPreview from '../components/TailPreview.astro';
 import LiveTailEmbed from '../components/LiveTailEmbed.astro';
 import ScrollScene from '../components/ScrollScene.astro';
+import TapeTerminal from '../components/TapeTerminal.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import Lockup from '../components/Lockup.astro';
 
 const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
 const tryUrl = `${appUrl}/`;
 
-// Landing copy Option B + demo line 3 (founder vote).
 const title = 'QikLog: see what your app is doing, live';
 const description =
   'See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.';
 ---
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} snap>
+  <SiteNav appUrl={appUrl} />
   <main>
-    {/* Scene 1: existing hero, unchanged copy */}
-    <section class="hero container" id="scene-1">
-      <div class="copy">
-        <Lockup />
-        <h1>See what your app is doing, live.</h1>
-        <p class="lede">Add a log line from your code. Watch it stream in the browser. No signup.</p>
-        <a href={tryUrl} class="btn btn-primary">Try it now</a>
-        <p class="price-hint">$9/mo, cancel anytime.</p>
-      </div>
-      <div class="stage">
-        <TailPreview />
+    <section class="scene hero" id="scene-1" data-scene>
+      <div class="hero-grid container">
+        <div class="copy">
+          <h1 data-enter="up">See what your app is doing, live.</h1>
+          <p class="lede" data-enter="up" style="--enter-delay: 100ms">
+            Add a log line from your code. Watch it stream in the browser. No signup.
+          </p>
+          <a href={tryUrl} class="btn btn-primary" data-enter="up" style="--enter-delay: 200ms">Try it now</a>
+          <p class="price-hint" data-enter="up" style="--enter-delay: 300ms">$9/mo, cancel anytime.</p>
+        </div>
+        <div class="stage" data-enter="right" style="--enter-delay: 200ms">
+          <TailPreview />
+        </div>
       </div>
     </section>
 
-    <ScrollScene id="scene-2" eyebrow="Ingest">
-      <h2 class="scene-title">One POST. Any language.</h2>
-      <ul class="tag-row" aria-label="Ingest options">
-        <li>curl</li>
-        <li>Serilog</li>
-        <li>raw HTTP</li>
-      </ul>
+    <ScrollScene id="scene-2" eyebrow="INGEST">
+      <h1 class="scene-title" data-enter="up" style="--enter-delay: 100ms">One POST. From anywhere.</h1>
+      <div data-enter="left" style="--enter-delay: 200ms">
+        <TapeTerminal />
+      </div>
+      <p class="scene-caption" data-enter="up" style="--enter-delay: 300ms">All you need is a path to send.</p>
     </ScrollScene>
 
-    <ScrollScene id="scene-3" eyebrow="Live">
-      <h2 class="scene-title">It's already streaming.</h2>
-      <LiveTailEmbed appUrl={appUrl} source="demo" />
+    <ScrollScene id="scene-3" eyebrow="LIVE">
+      <h1 class="scene-title" data-enter="up" style="--enter-delay: 100ms">It's already streaming.</h1>
+      <div data-enter="right" style="--enter-delay: 200ms">
+        <LiveTailEmbed appUrl={appUrl} source="demo" />
+      </div>
     </ScrollScene>
 
-    <ScrollScene id="scene-4" eyebrow="Path">
-      <h2 class="scene-title">No dashboard to configure.</h2>
-      <ol class="flow" aria-label="How logs move">
-        <li>
-          <span class="flow-mark" aria-hidden="true">1</span>
-          <span class="flow-label">your code</span>
+    <ScrollScene id="scene-4" eyebrow="PATH">
+      <h1 class="scene-title" data-enter="up" style="--enter-delay: 100ms">No dashboard to configure.</h1>
+      <ol class="path-cards" aria-label="How logs move">
+        <li data-enter="up" style="--enter-delay: 200ms">
+          <span class="path-num" aria-hidden="true">1</span>
+          <span class="path-label">your code</span>
+          <span class="path-icon" aria-hidden="true">&lt;/&gt;</span>
         </li>
-        <li>
-          <span class="flow-mark" aria-hidden="true">2</span>
-          <span class="flow-label">QikLog</span>
+        <li data-enter="up" style="--enter-delay: 300ms">
+          <span class="path-num" aria-hidden="true">2</span>
+          <span class="path-label">QikLog</span>
+          <span class="path-icon" aria-hidden="true">&lt;/&gt;</span>
         </li>
-        <li>
-          <span class="flow-mark" aria-hidden="true">3</span>
-          <span class="flow-label">your browser</span>
+        <li data-enter="up" style="--enter-delay: 400ms">
+          <span class="path-num" aria-hidden="true">3</span>
+          <span class="path-label">your browser</span>
+          <span class="path-icon" aria-hidden="true">[]</span>
         </li>
       </ol>
+      <p class="scene-caption quiet" data-enter="up" style="--enter-delay: 500ms">
+        Prebuilt .NET integration included.
+      </p>
     </ScrollScene>
 
-    <ScrollScene id="scene-5" eyebrow="Start">
-      <h2 class="scene-title">See it on your app.</h2>
-      <a href={tryUrl} class="btn btn-primary">Try it now</a>
-      <p class="price-hint bottom-price">$9/mo, cancel anytime.</p>
+    <ScrollScene id="scene-5">
+      <div class="cta" data-enter="up">
+        <Lockup size="nav" />
+        <a href={tryUrl} class="btn btn-primary">Get started</a>
+        <p class="price-hint">$9/mo, cancel anytime.</p>
+      </div>
+      <SiteFooter />
     </ScrollScene>
   </main>
 
-  <SiteFooter />
+  <button type="button" class="scroll-chevron" aria-label="See it live">
+    <span aria-hidden="true"></span>
+  </button>
 
   <script>
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const scenes = document.querySelectorAll('[data-scene]');
+    const chevron = document.querySelector('.scroll-chevron');
+
+    function markIn(el) {
+      if (el.dataset.seen) return;
+      el.dataset.seen = '1';
+      el.classList.add('is-in');
+    }
+
     if (reduce) {
-      scenes.forEach((el) => el.classList.add('no-motion', 'is-in'));
+      scenes.forEach((el) => {
+        el.classList.add('no-motion');
+        markIn(el);
+      });
     } else if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
-              entry.target.classList.add('is-in');
+              markIn(entry.target);
               io.unobserve(entry.target);
             }
           }
         },
-        { rootMargin: '0px 0px -12% 0px', threshold: 0.18 }
+        { threshold: 0.35 }
       );
       scenes.forEach((el) => io.observe(el));
     } else {
-      scenes.forEach((el) => el.classList.add('is-in'));
+      scenes.forEach((el) => markIn(el));
+    }
+
+    function currentIndex() {
+      let best = 0;
+      let bestDist = Number.POSITIVE_INFINITY;
+      scenes.forEach((el, i) => {
+        const dist = Math.abs(el.getBoundingClientRect().top - 60);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+        }
+      });
+      return best;
+    }
+
+    function updateChevron() {
+      if (!chevron) return;
+      chevron.toggleAttribute('data-last', currentIndex() >= scenes.length - 1);
+    }
+
+    if (chevron) {
+      const reveal = () => chevron.classList.add('is-visible');
+      if (reduce) reveal();
+      else window.setTimeout(reveal, 2000);
+
+      chevron.addEventListener('click', () => {
+        const next = scenes[currentIndex() + 1];
+        next?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      });
+
+      window.addEventListener('scroll', updateChevron, { passive: true });
+      updateChevron();
     }
   </script>
 </BaseLayout>
 
 <style>
   .hero {
-    padding: 5.5rem 0 5rem;
+    min-height: calc(100svh - var(--ql-nav-height));
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 0 3.25rem;
+  }
+
+  .hero-grid {
     display: grid;
     grid-template-columns: minmax(16rem, 0.85fr) minmax(28rem, 1.35fr);
     gap: 2.75rem 3.25rem;
     align-items: center;
     max-width: 68rem;
+    width: 100%;
   }
 
   .copy {
@@ -114,11 +182,10 @@ const description =
 
   .stage {
     justify-self: stretch;
-    padding: 2.25rem 2.4rem;
-    background: var(--ql-hairline);
   }
 
-  h1 {
+  h1,
+  .scene-title {
     margin: 0;
     font-family: var(--ql-font-display);
     font-weight: 800;
@@ -126,6 +193,11 @@ const description =
     line-height: 1.08;
     letter-spacing: -0.02em;
     color: var(--ql-ink);
+  }
+
+  .scene-title {
+    margin: 0 0 1.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.55rem);
   }
 
   .lede {
@@ -142,39 +214,18 @@ const description =
     color: var(--ql-ink-caption);
   }
 
-  .bottom-price {
-    margin: 1rem 0 0;
+  .scene-caption {
+    margin: 1.1rem 0 0;
+    font-size: 0.95rem;
+    color: var(--ql-ink-muted);
   }
 
-  .scene-title {
-    margin: 0 0 1.5rem;
-    font-family: var(--ql-font-display);
-    font-weight: 800;
-    font-size: clamp(1.65rem, 3.5vw, 2.35rem);
-    letter-spacing: -0.02em;
-    color: var(--ql-ink);
+  .scene-caption.quiet {
+    color: var(--ql-ink-caption);
+    font-size: 0.88rem;
   }
 
-  .tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.65rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .tag-row li {
-    padding: 0.45rem 0.85rem;
-    font-family: var(--ql-font-mono);
-    font-size: 0.9rem;
-    color: var(--ql-ink);
-    border: 1px solid var(--ql-hairline);
-    border-radius: var(--ql-radius-sm);
-    background: var(--ql-paper);
-  }
-
-  .flow {
+  .path-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
@@ -183,50 +234,140 @@ const description =
     list-style: none;
   }
 
-  .flow li {
+  .path-cards li {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.65rem;
-    padding: 1.1rem 1rem;
+    gap: 0.7rem;
+    min-height: 9.5rem;
+    padding: 1.15rem 1.05rem 1rem;
+    background: var(--ql-paper);
     border: 1px solid var(--ql-hairline);
     border-radius: var(--ql-radius-sm);
+    box-shadow: var(--ql-shadow-sm);
   }
 
-  .flow-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+  .path-num {
     font-family: var(--ql-font-mono);
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--ql-paper);
-    background: var(--ql-rust);
-    border-radius: var(--ql-radius-sm);
+    color: var(--ql-rust);
   }
 
-  .flow-label {
+  .path-label {
     font-family: var(--ql-font-display);
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     letter-spacing: -0.02em;
     color: var(--ql-ink);
   }
 
+  .path-icon {
+    margin-top: auto;
+    font-family: var(--ql-font-mono);
+    font-size: 0.95rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+    padding: 2rem 0 1.5rem;
+  }
+
+  .cta .btn-primary {
+    box-shadow: var(--ql-shadow);
+  }
+
+  .scroll-chevron {
+    position: fixed;
+    left: 50%;
+    bottom: 1.35rem;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border: 1px solid var(--ql-hairline);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--ql-paper) 88%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--ql-shadow-sm);
+    cursor: pointer;
+    opacity: 0;
+    transform: translate(-50%, 8px);
+    pointer-events: none;
+    transition:
+      opacity 320ms ease,
+      transform 320ms ease;
+  }
+
+  .scroll-chevron.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+
+  .scroll-chevron[data-last] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scroll-chevron span {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid var(--ql-ink);
+    border-bottom: 2px solid var(--ql-ink);
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+
   @media (max-width: 720px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .path-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .path-cards li {
+      min-height: 0;
+    }
+  }
+
+  @media (max-width: 375px) {
     .hero {
-      grid-template-columns: 1fr;
-      padding-top: 3.5rem;
+      padding-top: 0.75rem;
     }
 
-    .stage {
-      padding: 1.5rem 1.4rem;
+    .copy {
+      gap: 1.1rem;
     }
 
-    .flow {
-      grid-template-columns: 1fr;
+    h1,
+    .scene-title {
+      font-size: 1.85rem;
+    }
+
+    .lede {
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-chevron {
+      transition: none;
+      transform: translate(-50%, 0);
     }
   }
 </style>

@@ -9,20 +9,28 @@ interface Props {
 }
 
 const { appUrl, source = 'demo' } = Astro.props;
-const embedUrl = `${appUrl.replace(/\/$/, '')}/embed/tail/${encodeURIComponent(source)}`;
+const origin = appUrl.replace(/\/$/, '');
+const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
 ---
 <div class="live-frame">
   <p class="live-kicker"><span class="live-pill">LIVE</span> Real stream from source <code>{source}</code></p>
-  <iframe
-    class="live-iframe"
-    title={`Live tail for ${source}`}
-    src={embedUrl}
-    loading="lazy"
-    referrerpolicy="no-referrer-when-downgrade"
-    allow="clipboard-write"
-  ></iframe>
+  <div class="live-stage">
+    <ul class="live-skeleton" data-live-skeleton aria-hidden="true">
+      <li><span class="meta">14:02:11 INFO</span> 200 GET /api/orders 24.31ms</li>
+      <li><span class="meta">14:02:12 WARN</span> 401 POST /api/checkout</li>
+    </ul>
+    <iframe
+      class="live-iframe"
+      title={`Live tail for ${source}`}
+      src={embedUrl}
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      allow="clipboard-write"
+      onload="this.previousElementSibling.setAttribute('hidden','')"
+    ></iframe>
+  </div>
   <p class="live-note">
-    Same panel as <a href={`${appUrl.replace(/\/$/, '')}/tail/${encodeURIComponent(source)}`}>/tail/{source}</a>.
+    Same panel as <a href={`${origin}/tail/${encodeURIComponent(source)}`}>/tail/{source}</a>.
     Send a line to this source and it appears here.
   </p>
 </div>
@@ -54,11 +62,41 @@ const embedUrl = `${appUrl.replace(/\/$/, '')}/embed/tail/${encodeURIComponent(s
     vertical-align: 0.05em;
   }
 
-  .live-iframe {
-    width: 100%;
-    min-height: 26rem;
-    border: 1px solid var(--ql-hairline);
+  .live-stage {
+    position: relative;
+    box-shadow: var(--ql-shadow);
     border-radius: var(--ql-radius-sm);
+    overflow: hidden;
+  }
+
+  .live-skeleton {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 1.1rem 1.2rem;
+    list-style: none;
+    background: var(--ql-ink);
+    color: var(--ql-paper);
+    font-family: var(--ql-font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .live-skeleton[hidden] {
+    display: none;
+  }
+
+  .live-skeleton .meta {
+    color: var(--ql-hairline);
+    margin-right: 0.5ch;
+  }
+
+  .live-iframe {
+    display: block;
+    width: 100%;
+    min-height: 22rem;
+    border: 0;
     background: var(--ql-ink);
   }
 
@@ -75,5 +113,11 @@ const embedUrl = `${appUrl.replace(/\/$/, '')}/embed/tail/${encodeURIComponent(s
   .live-kicker code {
     font-family: var(--ql-font-mono);
     font-size: 0.85em;
+  }
+
+  @media (max-width: 375px) {
+    .live-iframe {
+      min-height: 16rem;
+    }
   }
 </style>

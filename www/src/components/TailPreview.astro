@@ -21,6 +21,7 @@ const message = 'JWT expired 401';
     font-size: 1.05rem;
     line-height: 1.55;
     border-radius: var(--ql-radius-sm);
+    box-shadow: var(--ql-shadow);
   }
 
   .chrome {
@@ -47,7 +48,7 @@ const message = 'JWT expired 401';
     overflow: hidden;
     vertical-align: bottom;
     max-width: 15ch;
-    animation: type 9s steps(15, end) infinite;
+    animation: type 2.4s steps(15, end) forwards;
   }
 
   .cursor {
@@ -61,17 +62,11 @@ const message = 'JWT expired 401';
   }
 
   @keyframes type {
-    0%,
-    8% {
+    from {
       max-width: 0;
     }
-    32%,
-    72% {
+    to {
       max-width: 15ch;
-    }
-    88%,
-    100% {
-      max-width: 0;
     }
   }
 
