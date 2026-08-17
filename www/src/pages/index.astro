@@ -22,7 +22,9 @@ const description =
         <a href={tryUrl} class="btn btn-primary">Try it now</a>
         <p class="price-hint">$9/mo, cancel anytime.</p>
       </div>
-      <TailPreview />
+      <div class="stage">
+        <TailPreview />
+      </div>
     </section>
   </main>
 
@@ -31,12 +33,12 @@ const description =
 
 <style>
   .hero {
-    padding: 5rem 0 4rem;
+    padding: 5.5rem 0 5rem;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-    gap: 2.25rem 2.75rem;
+    grid-template-columns: minmax(16rem, 0.85fr) minmax(28rem, 1.35fr);
+    gap: 2.75rem 3.25rem;
     align-items: center;
-    max-width: 56rem;
+    max-width: 68rem;
   }
 
   .copy {
@@ -44,6 +46,12 @@ const description =
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
+  }
+
+  .stage {
+    justify-self: stretch;
+    padding: 2.25rem 2.4rem;
+    background: var(--ql-hairline);
   }
 
   h1 {
@@ -74,6 +82,10 @@ const description =
     .hero {
       grid-template-columns: 1fr;
       padding-top: 3.5rem;
+    }
+
+    .stage {
+      padding: 1.5rem 1.4rem;
     }
   }
 </style>

@@ -89,6 +89,43 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
+    public void Footer_links_are_centered()
+    {
+        // Given: the shared marketing footer
+        var footer = ReadRepoFile("www/src/components/SiteFooter.astro");
+
+        // When: alignment is set
+        // Then: the note is centered, not left-aligned
+        footer.ShouldContain("text-align: center");
+        footer.ShouldNotContain("text-align: left");
+        footer.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Hero_terminal_is_the_visual_anchor()
+    {
+        // Given: the landing hero
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var preview = ReadRepoFile("www/src/components/TailPreview.astro");
+
+        // When: layout is inspected
+        // Then: the demo sits in a stage that takes the larger grid track, copy unchanged
+        index.ShouldContain("class=\"stage\"");
+        index.ShouldContain("<TailPreview");
+        index.ShouldContain("See what your app is doing, live.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
+        index.ShouldContain("minmax(28rem, 1.35fr)");
+        index.ShouldContain("var(--ql-hairline)");
+        index.ShouldNotContain("minmax(16rem, 22rem)");
+
+        preview.ShouldContain("JWT expired 401");
+        preview.ShouldContain("width: 100%");
+        preview.ShouldNotContain("width: min(100%, 22rem)");
+        preview.ShouldNotContain("#2E2A26");
+        preview.ShouldNotContain("#B94700");
+    }
+
+    [Fact]
     public void Hero_preview_types_a_production_looking_log_line()
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
