@@ -16,6 +16,8 @@ URL pattern:
 
 **Local example:** [http://localhost:5081/tail/demo](http://localhost:5081/tail/demo)
 
+Marketing landing scene 3 embeds the same panel at `/embed/tail/{source}` (minimal chrome, iframe-friendly).
+
 Replace `demo` with whatever `source` name you use when ingesting.
 
 ## What you see

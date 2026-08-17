@@ -45,6 +45,7 @@ public sealed class WebSmokeTests
     [Theory]
     [InlineData("/tail/demo")]
     [InlineData("/tail/does-not-exist")]
+    [InlineData("/embed/tail/demo")]
     public async Task Tail_page_never_returns_a_server_error(string path)
     {
         if (!SmokeEnvironment.Enabled)
@@ -55,6 +56,59 @@ public sealed class WebSmokeTests
         ((int)response.StatusCode).ShouldBeLessThan(
             500,
             $"{path} returned {(int)response.StatusCode}; hub failures must not crash the render");
+    }
+
+    [SmokeFact]
+    public async Task Embed_tail_page_renders_live_panel_chrome()
+    {
+        using var response = await SmokeClient.GetAsync($"{Web}/embed/tail/demo");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldContain("LIVE", Case.Insensitive);
+        body.ShouldContain("demo", Case.Insensitive);
+        // Embed layout: no marketing notice banner from MainLayout
+        body.ShouldNotContain("Demo environment, sample data only");
+    }
+
+    /// <summary>
+    /// Proves the embed path shares the authenticated ingest → hub story with /tail/demo:
+    /// a key can POST to source demo and history still reads it back (same source the embed
+    /// LiveTailPanel Subscribe joins). Full iframe paint is covered by DocGen/E2E when opted in.
+    /// </summary>
+    [AuthenticatedSmokeFact]
+    public async Task Given_demo_ingest_When_history_read_Then_embed_source_receives_line()
+    {
+        // Given: authenticated API + shared demo source used by /embed/tail/demo
+        var key = SmokeEnvironment.ApiKey!;
+        var marker = $"embed-live {Guid.NewGuid():N}";
+        var api = SmokeEnvironment.ApiUrl;
+
+        using var ingest = await SmokeClient.PostJsonAsync(
+            $"{api}/v1/logs",
+            $$"""{"source":"demo","level":"info","message":"{{marker}}"}""",
+            key);
+        ingest.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        // When: history for demo is read (same source LiveTailPanel Subscribe joins)
+        string body = "";
+        for (var attempt = 1; attempt <= 5; attempt++)
+        {
+            using var history = await SmokeClient.GetAsync($"{api}/v1/sources/demo/logs?limit=50", key);
+            history.StatusCode.ShouldBe(HttpStatusCode.OK);
+            body = await history.Content.ReadAsStringAsync();
+            if (body.Contains(marker, StringComparison.Ordinal))
+                break;
+            await Task.Delay(TimeSpan.FromMilliseconds(400 * attempt));
+        }
+
+        // Then: the line is in the demo source the embed watches
+        body.ShouldContain(marker);
+
+        using var embed = await SmokeClient.GetAsync($"{Web}/embed/tail/demo");
+        embed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var embedBody = await embed.Content.ReadAsStringAsync();
+        embedBody.ShouldContain("LIVE", Case.Insensitive);
     }
 
     [Theory]

@@ -1,0 +1,313 @@
+@implements IAsyncDisposable
+@using System.Collections.Concurrent
+@using Microsoft.AspNetCore.Authentication
+@inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
+@inject QikLog.Web.Services.QikLogApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ILogger<LiveTailPanel> Log
+
+@*
+  Shared live-tail panel used by /tail/{source} and /embed/tail/{source}.
+  One SignalR client implementation; pages only choose chrome density.
+*@
+
+<div class="@(Compact ? "ql-live-tail ql-live-tail-compact" : "ql-live-tail")">
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="@(Compact ? 8 : 12)" Class="@(Compact ? null : "ql-page-wide")">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center">
+            @if (!Compact)
+            {
+                <h2 style="margin: 0;">tail <code>@Source</code></h2>
+                <FluentSpacer />
+            }
+            else
+            {
+                <span class="ql-live-badge" aria-live="polite">LIVE</span>
+                <code class="ql-live-source">@Source</code>
+                <FluentSpacer />
+            }
+            <FluentBadge Appearance="@StatusAppearance">@StatusText</FluentBadge>
+            @if (!Compact)
+            {
+                <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
+                <FluentSwitch @bind-Value="@ShowHistory">History</FluentSwitch>
+                <FluentButton OnClick="ClearBuffer">Clear</FluentButton>
+            }
+        </FluentStack>
+
+        @if (!string.IsNullOrEmpty(_connectionError))
+        {
+            <FluentMessageBar Intent="MessageIntent.Warning" Title="Live tail unavailable">
+                @_connectionError
+            </FluentMessageBar>
+        }
+
+        @if (!Compact && !string.IsNullOrEmpty(_historyError))
+        {
+            <FluentMessageBar Intent="MessageIntent.Warning" Title="History unavailable">
+                @_historyError
+            </FluentMessageBar>
+        }
+
+        <FluentCard Style="padding: 0; background: var(--ql-surface-ink); color: var(--ql-text-fg); border: 1px solid var(--ql-surface-border);">
+            <div id="tail-viewport" class="ql-tail-viewport" style="@ViewportStyle">
+                @if (_entries.Count == 0)
+                {
+                    <div style="opacity: 0.6; padding: 1rem;">
+                        Waiting for logs on source <code>@Source</code>...
+                    </div>
+                }
+                else
+                {
+                    @foreach (var row in _entries)
+                    {
+                        <div @key="row.Sequence" style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
+                            <span style="opacity: 0.5; white-space: nowrap;">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
+                            <span style="@LevelStyle(row.Entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(row.Entry.Level)</span>
+                            <span style="white-space: pre-wrap; word-break: break-word;">@row.Entry.Message</span>
+                        </div>
+                    }
+                }
+            </div>
+        </FluentCard>
+
+        @if (!Compact)
+        {
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="opacity: 0.7; font-size: 0.85rem;">
+                <span>@_entries.Count entries buffered</span>
+                <span>&middot;</span>
+                <span>Buffer cap: @BufferCap (oldest drop)</span>
+                @if (_historyLoaded > 0)
+                {
+                    <span>&middot;</span>
+                    <span>@_historyLoaded history rows loaded</span>
+                }
+            </FluentStack>
+        }
+    </FluentStack>
+</div>
+
+@code {
+    /// <summary>Source name subscribed on the SignalR hub (e.g. demo).</summary>
+    [Parameter, EditorRequired]
+    public string Source { get; set; } = "";
+
+    /// <summary>When true, omit page chrome for marketing iframe embeds.</summary>
+    [Parameter]
+    public bool Compact { get; set; }
+
+    /// <summary>Viewport height CSS value (default full-page 70vh; embed uses a shorter pane).</summary>
+    [Parameter]
+    public string ViewportHeight { get; set; } = "70vh";
+
+    private const int BufferCap = 500;
+    private const int FlushIntervalMs = 100;
+
+    private sealed record LogRow(long Sequence, LogEntry Entry);
+
+    private readonly List<LogRow> _entries = [];
+    private readonly ConcurrentQueue<LogEntry> _incoming = new();
+    private readonly CancellationTokenSource _cts = new();
+    private Task? _flushLoop;
+    private long _sequence;
+
+    private HubConnection? _hub;
+    private bool AutoScroll { get; set; } = true;
+    private bool ShowHistory { get; set; } = true;
+    private int _historyLoaded;
+    private string? _connectionError;
+    private string? _historyError;
+
+    private string ViewportStyle =>
+        $"height: {ViewportHeight}; overflow-y: auto; padding: 1rem; font-family: var(--ql-font-mono); font-size: 0.85rem; line-height: 1.5;";
+
+    private string StatusText => _hub?.State switch
+    {
+        HubConnectionState.Connected => "connected",
+        HubConnectionState.Connecting => "connecting",
+        HubConnectionState.Reconnecting => "reconnecting",
+        HubConnectionState.Disconnected => "disconnected",
+        _ => _connectionError is null ? "connecting" : "disconnected"
+    };
+
+    private Appearance StatusAppearance => _hub?.State == HubConnectionState.Connected
+        ? Appearance.Accent
+        : Appearance.Neutral;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ShowHistory && !Compact)
+            await LoadHistoryAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _flushLoop = RunFlushLoopAsync();
+        await ConnectAsync();
+    }
+
+    private async Task RunFlushLoopAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(FlushIntervalMs));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_cts.Token))
+                await FlushAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Page navigated away.
+        }
+    }
+
+    private async Task FlushAsync()
+    {
+        if (_incoming.IsEmpty || _cts.IsCancellationRequested)
+            return;
+
+        await InvokeAsync(() =>
+        {
+            if (_cts.IsCancellationRequested)
+                return;
+
+            var appended = 0;
+            while (_incoming.TryDequeue(out var entry))
+            {
+                _entries.Add(new LogRow(++_sequence, entry));
+                appended++;
+            }
+
+            if (appended == 0)
+                return;
+
+            TrimToCap();
+            StateHasChanged();
+        });
+    }
+
+    private void TrimToCap()
+    {
+        if (_entries.Count > BufferCap)
+            _entries.RemoveRange(0, _entries.Count - BufferCap);
+    }
+
+    private async Task ConnectAsync()
+    {
+        var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
+        var hubApiKey = Options.Value.HubApiKey;
+        var accessToken = HttpContextAccessor.HttpContext is { } http
+            ? await http.GetTokenAsync("access_token")
+            : null;
+
+        _hub = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/hubs/logs", options =>
+            {
+                if (!string.IsNullOrWhiteSpace(accessToken))
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(accessToken)!;
+                }
+                else if (!string.IsNullOrWhiteSpace(hubApiKey))
+                {
+                    options.Headers.Add("X-QikLog-API-Key", hubApiKey);
+                }
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<LogEntry>("LogReceived", _incoming.Enqueue);
+
+        _hub.Reconnected += _ => InvokeAsync(StateHasChanged);
+        _hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
+        _hub.Closed += _ => InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await _hub.StartAsync();
+            await _hub.InvokeAsync("Subscribe", Source);
+            _connectionError = null;
+        }
+        catch (Exception ex)
+        {
+            _connectionError = DescribeFailure(ex);
+            await _hub.DisposeAsync();
+            _hub = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private static string DescribeFailure(Exception ex) =>
+        ex.Message.Contains("401", StringComparison.Ordinal)
+            ? "The API rejected this connection. Live tail needs a signed-in session or a configured hub API key; history above is still shown when available."
+            : $"Could not reach the log stream: {ex.Message}";
+
+    private void ClearBuffer()
+    {
+        while (_incoming.TryDequeue(out _))
+        {
+        }
+
+        _entries.Clear();
+        _historyLoaded = 0;
+        StateHasChanged();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        try
+        {
+            var history = await Api.GetSourceHistoryAsync(Source, BufferCap, CancellationToken.None);
+
+            foreach (var entry in history)
+                _entries.Add(new LogRow(++_sequence, entry));
+
+            TrimToCap();
+            _historyLoaded = history.Count;
+        }
+        catch (Exception ex)
+        {
+            _historyLoaded = 0;
+            _historyError = ex is HttpRequestException
+                ? "Could not load stored history from the API."
+                : $"Stored history could not be read: {ex.Message}";
+            Log.LogWarning(ex, "History load failed for source {Source}", Source);
+        }
+    }
+
+    private static string LevelLabel(LogLevel level) => level switch
+    {
+        LogLevel.Trace => "TRACE",
+        LogLevel.Debug => "DEBUG",
+        LogLevel.Info => "INFO",
+        LogLevel.Warning => "WARN",
+        LogLevel.Error => "ERROR",
+        LogLevel.Critical => "CRIT",
+        _ => level.ToString().ToUpperInvariant()
+    };
+
+    private static string LevelStyle(LogLevel level) => level switch
+    {
+        LogLevel.Trace => "color: var(--ql-level-trace);",
+        LogLevel.Debug => "color: var(--ql-level-debug);",
+        LogLevel.Info => "color: var(--ql-level-info);",
+        LogLevel.Warning => "color: var(--ql-level-warning);",
+        LogLevel.Error => "color: var(--ql-level-error);",
+        LogLevel.Critical => "color: var(--ql-level-critical); text-shadow: 0 0 4px var(--ql-accent-teal-glow);",
+        _ => ""
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        await _cts.CancelAsync();
+
+        if (_hub is not null)
+        {
+            try { await _hub.InvokeAsync("Unsubscribe", Source); } catch { /* connection may be gone */ }
+            await _hub.DisposeAsync();
+        }
+
+        _cts.Dispose();
+    }
+}

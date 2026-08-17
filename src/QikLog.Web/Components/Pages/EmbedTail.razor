@@ -1,0 +1,12 @@
+@page "/embed/tail/{Source}"
+@layout QikLog.Web.Components.Layout.EmbedLayout
+@rendermode InteractiveServer
+@using QikLog.Web.Components.Shared
+
+<PageTitle>live @Source &middot; QikLog</PageTitle>
+
+<LiveTailPanel Source="@Source" Compact="true" ViewportHeight="22rem" />
+
+@code {
+    [Parameter] public string Source { get; set; } = "";
+}

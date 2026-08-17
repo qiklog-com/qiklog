@@ -2,6 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Lockup from '../components/Lockup.astro';
 import TailPreview from '../components/TailPreview.astro';
+import LiveTailEmbed from '../components/LiveTailEmbed.astro';
+import ScrollScene from '../components/ScrollScene.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 
 const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
@@ -14,7 +16,8 @@ const description =
 ---
 <BaseLayout title={title} description={description}>
   <main>
-    <section class="hero container">
+    {/* Scene 1: existing hero, unchanged copy */}
+    <section class="hero container" id="scene-1">
       <div class="copy">
         <Lockup />
         <h1>See what your app is doing, live.</h1>
@@ -26,9 +29,70 @@ const description =
         <TailPreview />
       </div>
     </section>
+
+    <ScrollScene id="scene-2" eyebrow="Ingest">
+      <h2 class="scene-title">One POST. Any language.</h2>
+      <ul class="tag-row" aria-label="Ingest options">
+        <li>curl</li>
+        <li>Serilog</li>
+        <li>raw HTTP</li>
+      </ul>
+    </ScrollScene>
+
+    <ScrollScene id="scene-3" eyebrow="Live">
+      <h2 class="scene-title">It's already streaming.</h2>
+      <LiveTailEmbed appUrl={appUrl} source="demo" />
+    </ScrollScene>
+
+    <ScrollScene id="scene-4" eyebrow="Path">
+      <h2 class="scene-title">No dashboard to configure.</h2>
+      <ol class="flow" aria-label="How logs move">
+        <li>
+          <span class="flow-mark" aria-hidden="true">1</span>
+          <span class="flow-label">your code</span>
+        </li>
+        <li>
+          <span class="flow-mark" aria-hidden="true">2</span>
+          <span class="flow-label">QikLog</span>
+        </li>
+        <li>
+          <span class="flow-mark" aria-hidden="true">3</span>
+          <span class="flow-label">your browser</span>
+        </li>
+      </ol>
+    </ScrollScene>
+
+    <ScrollScene id="scene-5" eyebrow="Start">
+      <h2 class="scene-title">See it on your app.</h2>
+      <a href={tryUrl} class="btn btn-primary">Try it now</a>
+      <p class="price-hint bottom-price">$9/mo, cancel anytime.</p>
+    </ScrollScene>
   </main>
 
   <SiteFooter />
+
+  <script>
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const scenes = document.querySelectorAll('[data-scene]');
+    if (reduce) {
+      scenes.forEach((el) => el.classList.add('no-motion', 'is-in'));
+    } else if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-in');
+              io.unobserve(entry.target);
+            }
+          }
+        },
+        { rootMargin: '0px 0px -12% 0px', threshold: 0.18 }
+      );
+      scenes.forEach((el) => io.observe(el));
+    } else {
+      scenes.forEach((el) => el.classList.add('is-in'));
+    }
+  </script>
 </BaseLayout>
 
 <style>
@@ -78,6 +142,79 @@ const description =
     color: var(--ql-ink-caption);
   }
 
+  .bottom-price {
+    margin: 1rem 0 0;
+  }
+
+  .scene-title {
+    margin: 0 0 1.5rem;
+    font-family: var(--ql-font-display);
+    font-weight: 800;
+    font-size: clamp(1.65rem, 3.5vw, 2.35rem);
+    letter-spacing: -0.02em;
+    color: var(--ql-ink);
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tag-row li {
+    padding: 0.45rem 0.85rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.9rem;
+    color: var(--ql-ink);
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    background: var(--ql-paper);
+  }
+
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .flow li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 1.1rem 1rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+  }
+
+  .flow-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ql-paper);
+    background: var(--ql-rust);
+    border-radius: var(--ql-radius-sm);
+  }
+
+  .flow-label {
+    font-family: var(--ql-font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: var(--ql-ink);
+  }
+
   @media (max-width: 720px) {
     .hero {
       grid-template-columns: 1fr;
@@ -86,6 +223,10 @@ const description =
 
     .stage {
       padding: 1.5rem 1.4rem;
+    }
+
+    .flow {
+      grid-template-columns: 1fr;
     }
   }
 </style>

@@ -89,6 +89,71 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
+    public void Landing_scroll_scenes_use_real_live_embed()
+    {
+        // Given: the marketing landing page
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var embed = ReadRepoFile("www/src/components/LiveTailEmbed.astro");
+        var scene = ReadRepoFile("www/src/components/ScrollScene.astro");
+        var panel = ReadRepoFile("src/QikLog.Web/Components/Shared/LiveTailPanel.razor");
+        var embedPage = ReadRepoFile("src/QikLog.Web/Components/Pages/EmbedTail.razor");
+        var tailPage = ReadRepoFile("src/QikLog.Web/Components/Pages/Tail.razor");
+        var tape = ReadRepoFile("tapes/landing-live.tape");
+
+        // When / Then: five-scene structure, hero copy unchanged, scene 3 is real embed
+        index.ShouldContain("id=\"scene-1\"");
+        index.ShouldContain("id=\"scene-2\"");
+        index.ShouldContain("id=\"scene-3\"");
+        index.ShouldContain("id=\"scene-4\"");
+        index.ShouldContain("id=\"scene-5\"");
+        index.ShouldContain("One POST. Any language.");
+        index.ShouldContain("It's already streaming.");
+        index.ShouldContain("No dashboard to configure.");
+        index.ShouldContain("<LiveTailEmbed");
+        index.ShouldContain("See what your app is doing, live.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
+        index.ShouldContain("prefers-reduced-motion");
+        index.ShouldContain("IntersectionObserver");
+
+        embed.ShouldContain("/embed/tail/");
+        embed.ShouldContain("loading=\"lazy\"");
+        embed.ShouldContain("LIVE");
+        embed.ShouldNotContain("JWT expired 401");
+        embed.ShouldNotContain("hello from curl");
+
+        scene.ShouldContain("data-scene");
+        scene.ShouldContain("prefers-reduced-motion");
+
+        // Same LiveTailPanel powers full page and embed (no second SignalR client)
+        panel.ShouldContain("Subscribe");
+        panel.ShouldContain("LogReceived");
+        panel.ShouldContain("Compact");
+        tailPage.ShouldContain("<LiveTailPanel");
+        embedPage.ShouldContain("<LiveTailPanel");
+        embedPage.ShouldContain("Compact=\"true\"");
+        embedPage.ShouldContain("@layout QikLog.Web.Components.Layout.EmbedLayout");
+        embedPage.ShouldContain("/embed/tail/{Source}");
+
+        tape.ShouldContain("landing-live.gif");
+        tape.ShouldContain("/embed/tail/demo");
+        tape.ShouldContain("JWT expired 401");
+        tape.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Embed_route_sets_frame_ancestors_for_www()
+    {
+        // Given / When
+        var program = ReadRepoFile("src/QikLog.Web/Program.cs");
+
+        // Then: marketing origins may iframe /embed
+        program.ShouldContain("frame-ancestors");
+        program.ShouldContain("https://www.qiklog.com");
+        program.ShouldContain("/embed");
+        program.ShouldNotContain("—");
+    }
+
+    [Fact]
     public void Footer_links_are_centered()
     {
         // Given: the shared marketing footer
@@ -163,6 +228,10 @@ public sealed class LandingPageContractTests
         home.ShouldContain("waiting for your first log line");
         home.ShouldNotContain("curl -X POST http://localhost:5080");
         home.ShouldNotContain("—");
+
+        var tail = ReadRepoFile("src/QikLog.Web/Components/Pages/Tail.razor");
+        tail.ShouldContain("<LiveTailPanel");
+        tail.ShouldContain("/tail/{Source}");
     }
 
     [Fact]
