@@ -17,6 +17,11 @@ graymatter short-term memory.
 
 ## Now
 
+- [ ] Mobile responsiveness: app/site not 100% responsive on phone
+      (Jamey, 8/17, from his own phone). Make the landing refresh
+      mobile-FIRST, not desktop-adapted -- audit both www and the
+      Blazor app on small viewports.
+
 - [ ] Confirm Railway provisioned app.qiklog.com and api.qiklog.com
       (warning triangle becomes checkmark in service Networking).
 - [ ] Test sign-in on https://app.qiklog.com once provisioned.
@@ -58,6 +63,46 @@ scripting the nameserver flip instead of the GoDaddy web UI.
       nameservers (shown in Cloudflare after zone creation).
 - [ ] After propagation: confirm qiklog.com, app.qiklog.com,
       api.qiklog.com, and sign-in all work.
+
+## Backlog: product ideas from 8/17 mobile session
+
+- [ ] Schema constraint to honor NOW (cheap now, breaking change
+      later): keep the log entry data model open to a
+      correlation/trace ID and a source-language tag, even unused,
+      so a future JavaScript hook module can trace a browser
+      error through to the C# request that caused it without a
+      schema migration. The JS module itself is holstered until the
+      wedge proves out (see MARKETING_NOTES wedge strategy).
+- [ ] User log-volume controls: account-level setting -- all /
+      critical-only / paused -- so users control what they spend.
+- [ ] Handshake-negotiated log level (mechanism for the above): the
+      connect/handshake response returns the account's current
+      setting; a compliant SDK/sink filters BEFORE sending (pause =
+      buffer or drop locally). Throttles at the source instead of
+      ingest-and-discard. Does NOT stop a non-compliant sender --
+      rate limiting / ingest quotas remain a needed second layer,
+      separate item, another day.
+- [ ] "Send to LLM" from a log entry: click an error line, get a
+      pre-built prompt (or direct send) to the user's LLM of choice
+      -- stack trace, message, surrounding lines. Pairs naturally
+      with the trace-ID item above (if an entry knows its source
+      location, the prompt writes itself).
+
+## Security: log data protection review (before charging real
+customers -- trust prerequisite, not a nice-to-have)
+
+- [ ] Confirm Postgres encryption at rest (Railway config check).
+      In-transit is already covered (HTTPS everywhere).
+- [ ] No redaction of secrets/PII inside log message content today
+      -- a real, common industry leak vector (keys, passwords,
+      tokens pasted into log lines). Minimum: a docs warning
+      ("don't log secrets"). Eventually: pattern-based scrubbing
+      (API-key-shaped strings etc).
+- [ ] Define retention/deletion policy: how long logs persist,
+      whether a user can purge their own data on demand.
+- [ ] Explicit test that tenant isolation holds for real
+      (non-demo-source) data -- likely true after the 8/16 tenant
+      claims work, but assert it, don't assume it.
 
 ## Backlog: SimService (isometric architecture diagrams)
 

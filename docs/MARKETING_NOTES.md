@@ -209,6 +209,53 @@ Compounds through other people seeing the product, not one person's
 profile decoration. This is the "gamify it" itch worth scratching,
 not badges.
 
+## Wedge strategy (Planning Center vs ACS precedent, 8/17)
+
+QikLog's wedge is zero-friction log tailing -- not "better
+observability," just the one thing the big suites (Splunk, Datadog,
+CloudWatch) treat as an afterthought, done painlessly: no agent, no
+config, no dashboard build, logs in the browser in under 300ms.
+Same playbook Planning Center ran against ACS: pick the narrow thing
+the incumbent overbuilds for, win it cleanly with the users the
+incumbent never fit (solo devs / small teams here; small churches
+there), then add modules AFTER the wedge has earned trust -- never
+before. The discipline is the strategy: Planning Center kept adding
+modules until they had everything ACS had and more, but only once
+the wedge was proven. Business-case-first rule exists for exactly
+this. The landing page stopwatch is the experiment that tells us
+whether the wedge is sharp enough to build anything on top of. The
+signal to watch is not "what module next," it's "does the wedge
+convert."
+
+Candidate next module once the wedge proves out: JavaScript hook
+with frontend-to-backend trace correlation (see TODO for the schema
+constraint to honor NOW so this stays possible later).
+
+## Scroll sequence: chevron timing + scene 2 content debate (8/17)
+
+Chevron refinement: the first down-chevron should NOT be visible on
+load -- it appears after a short delay or a page event, so the new
+motion catches the eye. Label copy: keep the Field Clinical voice.
+"ez to add" style slang breaks the tone every winning line has had
+(B headline, JWT expired 401). Use something precise and quiet like
+"watch it work" / "see it live" instead.
+
+OPEN DEBATE, not settled: Jamey floated scene 2 as a fake/staged
+tape-terminal recording of a NuGet install (env var or PowerShell
+for the token, then `nuget install QikLog`), followed by real log
+display. Bill's pushback: the NuGet sink does not exist yet, and the
+one rule held all weekend is scene 3 must be REAL (PR #14/#15 built
+the genuine iframe embed for exactly that). A staged install
+directly before the genuinely-live scene is the worst placement for
+a fake -- once "was that real?" enters a visitor's head it bleeds
+onto the real parts. Bill's counter: keep scene 2 anchored to curl
+(real, ships today), give it the tape-recorder terminal TREATMENT
+(presentation upgrade, fair game), and film the NuGet scene only
+once the sink is actually built. Also: the token-delivery question
+(env var vs PowerShell vs other) is an unresolved product decision,
+more evidence the engineering has to precede the film. Jamey has
+not ruled; decide before scene 2 gets built.
+
 ## Standing rules that apply here
 
 - Business case first. The empire is worth zero until QikLog has
