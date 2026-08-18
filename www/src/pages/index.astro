@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteNav from '../components/SiteNav.astro';
-import TailPreview from '../components/TailPreview.astro';
+import HeroPlayground from '../components/HeroPlayground.astro';
+import StatsRow from '../components/StatsRow.astro';
 import LiveTailEmbed from '../components/LiveTailEmbed.astro';
 import ScrollScene from '../components/ScrollScene.astro';
 import TapeTerminal from '../components/TapeTerminal.astro';
@@ -28,9 +29,10 @@ const description =
           <a href={tryUrl} class="btn btn-primary" data-enter="up" style="--enter-delay: 200ms">Try it now</a>
           <p class="price-hint" data-enter="up" style="--enter-delay: 300ms">$9/mo, cancel anytime.</p>
         </div>
-        <div class="stage" data-enter="right" style="--enter-delay: 200ms">
-          <TailPreview />
-        </div>
+      </div>
+      <div class="hero-play container" data-enter="up" style="--enter-delay: 200ms">
+        <HeroPlayground appUrl={appUrl} />
+        <StatsRow />
       </div>
     </section>
 
@@ -193,17 +195,24 @@ const description =
     scroll-snap-align: start;
     scroll-snap-stop: always;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.75rem;
     padding: 1.25rem 0 3.25rem;
   }
 
   .hero-grid {
     display: grid;
-    grid-template-columns: minmax(16rem, 0.85fr) minmax(28rem, 1.35fr);
+    grid-template-columns: minmax(16rem, 36rem);
     gap: 2.75rem 3.25rem;
     align-items: center;
     max-width: 68rem;
     width: 100%;
+  }
+
+  .hero-play {
+    width: 100%;
+    max-width: 68rem;
   }
 
   .copy {
@@ -423,6 +432,10 @@ const description =
     .hero-grid {
       grid-template-columns: 1fr;
       gap: 2rem;
+    }
+
+    .hero-play {
+      max-width: 100%;
     }
 
     .path-cards {

@@ -6,3 +6,11 @@
 <div class="ql-embed-root">
     @Body
 </div>
+<script>
+    window.qiklogEmbedNotify = function (messages) {
+        if (!Array.isArray(messages)) return;
+        for (const message of messages) {
+            window.parent.postMessage({ type: 'qiklog-log', message: message }, '*');
+        }
+    };
+</script>

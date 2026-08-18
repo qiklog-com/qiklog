@@ -1,0 +1,155 @@
+---
+interface Props {
+  title: string;
+  variant?: 'plain' | 'tape';
+}
+
+const { title, variant = 'plain' } = Astro.props;
+---
+<div class:list={['frame', { tape: variant === 'tape' }]} data-tape={variant === 'tape' ? '' : undefined}>
+  <div class="bar">
+    {variant === 'tape' ? (
+      <>
+        <div class="reels" aria-hidden="true">
+          <span class="reel"></span>
+          <span class="reel"></span>
+        </div>
+        <span class="rec"><span class="rec-dot"></span> REC</span>
+      </>
+    ) : (
+      <>
+        <div class="dots" aria-hidden="true">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <span class="title">{title}</span>
+      </>
+    )}
+  </div>
+  <div class="body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .frame {
+    background: var(--ql-ink);
+    color: var(--ql-paper);
+    border-radius: var(--ql-radius-sm);
+    box-shadow: var(--ql-shadow-panel);
+    overflow: hidden;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 2.1rem;
+    padding: 0.45rem 0.85rem;
+    border-bottom: 1px solid var(--ql-hairline);
+  }
+
+  .dots {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--ql-hairline);
+  }
+
+  .title {
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--ql-paper) 55%, transparent);
+  }
+
+  .reels {
+    display: flex;
+    gap: 0.65rem;
+  }
+
+  .reel {
+    width: 1.35rem;
+    height: 1.35rem;
+    border: 2px solid var(--ql-hairline);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, var(--ql-ink) 28%, transparent 30%),
+      conic-gradient(
+        from 0deg,
+        var(--ql-hairline) 0 12%,
+        transparent 12% 25%,
+        var(--ql-hairline) 25% 37%,
+        transparent 37% 50%,
+        var(--ql-hairline) 50% 62%,
+        transparent 62% 75%,
+        var(--ql-hairline) 75% 87%,
+        transparent 87% 100%
+      );
+  }
+
+  .frame.tape.is-typing .reel {
+    animation: spin 2.8s linear infinite;
+  }
+
+  .rec {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--ql-rust);
+  }
+
+  .rec-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--ql-rust);
+  }
+
+  .frame.tape.is-typing .rec-dot {
+    animation: rec-blink 1s steps(1, end) infinite;
+  }
+
+  .frame.tape.is-settled .rec-dot {
+    animation: none;
+    opacity: 1;
+  }
+
+  .body {
+    padding: 1.1rem 1.2rem 1.25rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes rec-blink {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0.25;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frame.tape.is-typing .reel,
+    .frame.tape.is-typing .rec-dot {
+      animation: none;
+    }
+  }
+</style>

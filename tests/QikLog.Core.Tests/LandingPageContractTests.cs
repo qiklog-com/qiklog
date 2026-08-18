@@ -16,7 +16,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("Try it now");
         index.ShouldContain("<SiteNav");
-        index.ShouldContain("<TailPreview");
+        index.ShouldContain("<HeroPlayground");
         index.ShouldContain("$9/mo, cancel anytime.");
         index.ShouldContain("PUBLIC_APP_URL");
         index.ShouldContain("const tryUrl = `${appUrl}/`");
@@ -188,13 +188,12 @@ public sealed class LandingPageContractTests
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
 
         // When: layout is inspected
-        // Then: the demo sits in a stage that takes the larger grid track, copy unchanged
-        index.ShouldContain("class=\"stage\"");
-        index.ShouldContain("<TailPreview");
+        // Then: copy stays; playground (input + deck + live panel) sits under it
+        index.ShouldContain("class=\"hero-play");
+        index.ShouldContain("<HeroPlayground");
         index.ShouldContain("See what your app is doing, live.");
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
-        index.ShouldContain("minmax(28rem, 1.35fr)");
-        index.ShouldContain("var(--ql-shadow)");
+        index.ShouldContain("Try it now");
         index.ShouldNotContain("minmax(16rem, 22rem)");
 
         preview.ShouldContain("JWT expired 401");
@@ -209,16 +208,21 @@ public sealed class LandingPageContractTests
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
         preview.ShouldContain("JWT expired 401");
-        preview.ShouldContain("ERROR demo");
+        preview.ShouldContain(">ERROR<");
+        preview.ShouldContain("log-level is-error");
+        preview.ShouldContain("log-source");
+        preview.ShouldContain("steps(15");
+        preview.ShouldContain("role=\"img\"");
+        preview.ShouldContain("<TerminalFrame");
         preview.ShouldNotContain("INFO demo");
         preview.ShouldNotContain("hello from curl");
         preview.ShouldNotContain("GET /checkout 200");
         preview.ShouldContain("#scene-1.is-in");
         preview.ShouldContain("prefers-reduced-motion");
-        preview.ShouldContain("var(--ql-ink)");
-        preview.ShouldContain("var(--ql-paper)");
         preview.ShouldContain("var(--ql-rust)");
-        preview.ShouldContain("var(--ql-font-mono)");
+        ReadRepoFile("www/src/styles/log-line.css").ShouldContain("var(--ql-font-mono)");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("var(--ql-ink)");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("var(--ql-paper)");
         preview.ShouldNotContain("#2E2A26");
         preview.ShouldNotContain("#B94700");
         preview.ShouldNotContain("—");
@@ -286,8 +290,10 @@ public sealed class LandingPageContractTests
         tape.ShouldContain("""{"source":"demo","level":"info","message":"hello from curl"}""");
         tape.ShouldContain("define:vars");
         tape.ShouldContain("data-tape-target");
-        tape.ShouldContain("REC");
         tape.ShouldContain("28");
+        tape.ShouldContain("<TerminalFrame");
+        tape.ShouldContain("variant=\"tape\"");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("REC");
         tape.ShouldNotContain("nuget install");
         tape.ShouldNotContain("/var/log");
         tape.ShouldNotContain("qiklog.io");
@@ -313,6 +319,11 @@ public sealed class LandingPageContractTests
         embed.ShouldContain("200 GET /api/orders 24.31ms");
         embed.ShouldContain("401 POST /api/checkout");
         embed.ShouldContain("Same panel as");
+        embed.ShouldContain("<TerminalFrame");
+        embed.ShouldContain("demo · tail");
+        embed.ShouldContain("log-level is-info");
+        embed.ShouldContain("log-level is-warn");
+        embed.ShouldContain("log-source");
         embed.ShouldNotContain("live-kicker");
         embed.ShouldNotContain("Real stream from source demo");
         embed.ShouldNotContain("live-pill");
@@ -349,6 +360,44 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
+    public void Given_terminal_chrome_When_read_Then_shared_frame_and_level_tokens()
+    {
+        // Given: landing terminals share one ink panel
+        var frame = ReadRepoFile("www/src/components/TerminalFrame.astro");
+        var css = ReadRepoFile("www/src/styles/global.css");
+        var levels = ReadRepoFile("www/src/styles/log-line.css");
+        var layout = ReadRepoFile("www/src/layouts/BaseLayout.astro");
+
+        // When / Then: chrome, panel shadow, severity fills that stay calm on info/debug
+        frame.ShouldContain("variant?: 'plain' | 'tape'");
+        frame.ShouldContain("class=\"dot\"");
+        frame.ShouldContain("class=\"title\"");
+        frame.ShouldContain("var(--ql-shadow-panel)");
+        frame.ShouldContain("background: var(--ql-ink)");
+        frame.ShouldContain("color: var(--ql-paper)");
+        frame.ShouldNotContain("#FF");
+        frame.ShouldNotContain("#0f0");
+        css.ShouldContain("--ql-shadow-panel:");
+        layout.ShouldContain("log-line.css");
+        levels.ShouldContain("--ql-level-error-bg");
+        levels.ShouldContain("--ql-level-warn-bg");
+        levels.ShouldContain("--ql-level-info-fg");
+        levels.ShouldContain("--ql-level-debug-fg");
+        levels.ShouldContain("#e07068");
+        levels.ShouldContain("#c9a227");
+        levels.ShouldContain("#7eb8e8");
+        levels.ShouldContain("#8a9aab");
+        levels.ShouldContain(".log-level.is-error");
+        levels.ShouldContain(".log-level.is-warn");
+        levels.ShouldContain(".log-level.is-info");
+        levels.ShouldContain("background: transparent");
+        levels.ShouldNotContain("message.match");
+        levels.ShouldNotContain("new RegExp");
+        frame.ShouldNotContain("—");
+        levels.ShouldNotContain("—");
+    }
+
+    [Fact]
     public void Given_cta_slide_When_read_Then_measured_close_and_quiet_entry_links()
     {
         // Given: scene 5 is the close
@@ -368,6 +417,56 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("cta-alt btn");
         index.ShouldContain("toggleAttribute('hidden'");
         index.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_hero_playground_When_read_Then_data_driven_deck_proxy_and_gated_stats()
+    {
+        // Given: ntfy-style hero send + code deck
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var playground = ReadRepoFile("www/src/components/HeroPlayground.astro");
+        var deck = ReadRepoFile("www/src/lib/code-deck.ts");
+        var message = ReadRepoFile("www/src/lib/demo-message.ts");
+        var stats = ReadRepoFile("www/src/lib/hero-stats.ts");
+        var proxy = ReadRepoFile("www/api/demo-send.js");
+        var panel = ReadRepoFile("src/QikLog.Web/Components/Shared/LiveTailPanel.razor");
+
+        // When / Then
+        index.ShouldContain("<HeroPlayground");
+        index.ShouldContain("<StatsRow");
+        index.ShouldContain("hero-play");
+        playground.ShouldContain("Send");
+        playground.ShouldNotContain("Simulate");
+        playground.ShouldContain("/api/demo-send");
+        playground.ShouldContain("could not reach the demo source");
+        playground.ShouldContain("2000");
+        playground.ShouldContain("3000");
+        playground.ShouldContain("arrived in");
+        playground.ShouldContain("prefers-reduced-motion");
+        playground.ShouldContain("demo · tail");
+        deck.ShouldContain("label: 'curl'");
+        deck.ShouldContain("label: 'C#'");
+        deck.ShouldContain("label: 'JavaScript'");
+        deck.ShouldContain("https://api.qiklog.com/v1/logs");
+        deck.ShouldContain("$QIKLOG_API_KEY");
+        deck.ShouldContain("YOUR_API_KEY");
+        deck.ShouldContain("Already on your machine.");
+        deck.ShouldContain("No install. Plain HttpClient.");
+        deck.ShouldContain("No install. Plain fetch.");
+        deck.ShouldContain("__MSG__");
+        message.ShouldContain("MAX_LENGTH = 120");
+        message.ShouldContain("escapeJson");
+        message.ShouldContain("escapeCSharp");
+        message.ShouldContain("escapeJavaScript");
+        proxy.ShouldContain("QIKLOG_DEMO_API_KEY");
+        proxy.ShouldContain("source: 'demo'");
+        proxy.ShouldNotContain("ql_");
+        stats.ShouldContain("showStreamCounter: false");
+        stats.ShouldContain("278ms");
+        stats.ShouldContain("median, terminal to browser, measured");
+        panel.ShouldContain("qiklogEmbedNotify");
+        index.ShouldNotContain("—");
+        playground.ShouldNotContain("—");
     }
 
     [Fact]
