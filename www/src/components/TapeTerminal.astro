@@ -1,20 +1,15 @@
 ---
+import TerminalFrame from './TerminalFrame.astro';
+
 const command =
   'curl -X POST https://api.qiklog.com/v1/logs \\\n' +
   '  -H "Content-Type: application/json" \\\n' +
   '  -H "Authorization: Bearer $QIKLOG_API_KEY" \\\n' +
   `  -d '{"source":"demo","level":"info","message":"hello from curl"}'`;
 ---
-<div class="tape" data-tape>
-  <div class="tape-chrome">
-    <div class="reels" aria-hidden="true">
-      <span class="reel"></span>
-      <span class="reel"></span>
-    </div>
-    <span class="rec"><span class="rec-dot"></span> REC</span>
-  </div>
+<TerminalFrame title="ingest" variant="tape">
   <pre class="tape-body"><code data-tape-target>{command}</code></pre>
-</div>
+</TerminalFrame>
 
 <script define:vars={{ command }}>
   const CHAR_MS = 28;
@@ -76,66 +71,6 @@ const command =
 </script>
 
 <style>
-  .tape {
-    padding: 1.1rem 1.2rem 1.25rem;
-    background: var(--ql-ink);
-    color: var(--ql-paper);
-    border-radius: var(--ql-radius-sm);
-    box-shadow: var(--ql-shadow);
-  }
-
-  .tape-chrome {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.9rem;
-  }
-
-  .reels {
-    display: flex;
-    gap: 0.65rem;
-  }
-
-  .reel {
-    width: 1.35rem;
-    height: 1.35rem;
-    border: 2px solid var(--ql-hairline);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at center, var(--ql-ink) 28%, transparent 30%),
-      conic-gradient(from 0deg, var(--ql-hairline) 0 12%, transparent 12% 25%, var(--ql-hairline) 25% 37%, transparent 37% 50%, var(--ql-hairline) 50% 62%, transparent 62% 75%, var(--ql-hairline) 75% 87%, transparent 87% 100%);
-  }
-
-  .tape.is-typing .reel {
-    animation: spin 2.8s linear infinite;
-  }
-
-  .rec {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-family: var(--ql-font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    color: var(--ql-rust);
-  }
-
-  .rec-dot {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: var(--ql-rust);
-  }
-
-  .tape.is-typing .rec-dot {
-    animation: rec-blink 1s steps(1, end) infinite;
-  }
-
-  .tape.is-settled .rec-dot {
-    animation: none;
-    opacity: 1;
-  }
-
   .tape-body {
     margin: 0;
     min-height: 7.5rem;
@@ -144,29 +79,5 @@ const command =
     line-height: 1.55;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes rec-blink {
-    0%,
-    49% {
-      opacity: 1;
-    }
-    50%,
-    100% {
-      opacity: 0.25;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .tape.is-typing .reel,
-    .tape.is-typing .rec-dot {
-      animation: none;
-    }
   }
 </style>

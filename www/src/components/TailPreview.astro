@@ -1,46 +1,24 @@
 ---
+import TerminalFrame from './TerminalFrame.astro';
+
 // Demo line option 3 (founder vote). Typewriter steps/max-width = message.length (15).
 const message = 'JWT expired 401';
 ---
-<div class="preview" role="img" aria-label={`Example log line: 14:02:11 ERROR demo ${message}`}>
-  <p class="chrome">demo</p>
-  <p class="line">
-    <span class="meta">14:02:11 ERROR demo</span>
-    <span class="msg">{message}</span><span class="cursor" aria-hidden="true"></span>
-  </p>
-</div>
+<TerminalFrame title="demo">
+  <div class="preview" role="img" aria-label={`Example log line: 14:02:11 ERROR demo ${message}`}>
+    <p class="log-line">
+      <span class="log-ts">14:02:11</span>
+      <span class="log-level is-error">ERROR</span>
+      <span class="log-source">demo</span>
+      <span class="log-msg msg">{message}</span><span class="cursor" aria-hidden="true"></span>
+    </p>
+  </div>
+</TerminalFrame>
 
 <style>
   .preview {
     width: 100%;
-    min-height: 11rem;
-    padding: 1.2rem 1.35rem 1.4rem;
-    background: var(--ql-ink);
-    color: var(--ql-paper);
-    font-family: var(--ql-font-mono);
-    font-size: 1.05rem;
-    line-height: 1.55;
-    border-radius: var(--ql-radius-sm);
-    box-shadow: var(--ql-shadow);
-  }
-
-  .chrome {
-    margin: 0 0 1rem;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ql-ink-caption);
-  }
-
-  .line {
-    margin: 0;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-
-  .meta {
-    color: var(--ql-hairline);
-    margin-right: 0.5ch;
+    min-height: 7.5rem;
   }
 
   .msg {

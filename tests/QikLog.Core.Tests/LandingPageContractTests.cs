@@ -209,16 +209,21 @@ public sealed class LandingPageContractTests
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
         preview.ShouldContain("JWT expired 401");
-        preview.ShouldContain("ERROR demo");
+        preview.ShouldContain(">ERROR<");
+        preview.ShouldContain("log-level is-error");
+        preview.ShouldContain("log-source");
+        preview.ShouldContain("steps(15");
+        preview.ShouldContain("role=\"img\"");
+        preview.ShouldContain("<TerminalFrame");
         preview.ShouldNotContain("INFO demo");
         preview.ShouldNotContain("hello from curl");
         preview.ShouldNotContain("GET /checkout 200");
         preview.ShouldContain("#scene-1.is-in");
         preview.ShouldContain("prefers-reduced-motion");
-        preview.ShouldContain("var(--ql-ink)");
-        preview.ShouldContain("var(--ql-paper)");
         preview.ShouldContain("var(--ql-rust)");
-        preview.ShouldContain("var(--ql-font-mono)");
+        ReadRepoFile("www/src/styles/log-line.css").ShouldContain("var(--ql-font-mono)");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("var(--ql-ink)");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("var(--ql-paper)");
         preview.ShouldNotContain("#2E2A26");
         preview.ShouldNotContain("#B94700");
         preview.ShouldNotContain("—");
@@ -286,8 +291,10 @@ public sealed class LandingPageContractTests
         tape.ShouldContain("""{"source":"demo","level":"info","message":"hello from curl"}""");
         tape.ShouldContain("define:vars");
         tape.ShouldContain("data-tape-target");
-        tape.ShouldContain("REC");
         tape.ShouldContain("28");
+        tape.ShouldContain("<TerminalFrame");
+        tape.ShouldContain("variant=\"tape\"");
+        ReadRepoFile("www/src/components/TerminalFrame.astro").ShouldContain("REC");
         tape.ShouldNotContain("nuget install");
         tape.ShouldNotContain("/var/log");
         tape.ShouldNotContain("qiklog.io");
@@ -313,6 +320,11 @@ public sealed class LandingPageContractTests
         embed.ShouldContain("200 GET /api/orders 24.31ms");
         embed.ShouldContain("401 POST /api/checkout");
         embed.ShouldContain("Same panel as");
+        embed.ShouldContain("<TerminalFrame");
+        embed.ShouldContain("demo · tail");
+        embed.ShouldContain("log-level is-info");
+        embed.ShouldContain("log-level is-warn");
+        embed.ShouldContain("log-source");
         embed.ShouldNotContain("live-kicker");
         embed.ShouldNotContain("Real stream from source demo");
         embed.ShouldNotContain("live-pill");
@@ -346,6 +358,44 @@ public sealed class LandingPageContractTests
         nav.ShouldContain("backdrop-filter");
         nav.ShouldContain("height: 60px");
         index.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_terminal_chrome_When_read_Then_shared_frame_and_level_tokens()
+    {
+        // Given: landing terminals share one ink panel
+        var frame = ReadRepoFile("www/src/components/TerminalFrame.astro");
+        var css = ReadRepoFile("www/src/styles/global.css");
+        var levels = ReadRepoFile("www/src/styles/log-line.css");
+        var layout = ReadRepoFile("www/src/layouts/BaseLayout.astro");
+
+        // When / Then: chrome, panel shadow, severity fills that stay calm on info/debug
+        frame.ShouldContain("variant?: 'plain' | 'tape'");
+        frame.ShouldContain("class=\"dot\"");
+        frame.ShouldContain("class=\"title\"");
+        frame.ShouldContain("var(--ql-shadow-panel)");
+        frame.ShouldContain("background: var(--ql-ink)");
+        frame.ShouldContain("color: var(--ql-paper)");
+        frame.ShouldNotContain("#FF");
+        frame.ShouldNotContain("#0f0");
+        css.ShouldContain("--ql-shadow-panel:");
+        layout.ShouldContain("log-line.css");
+        levels.ShouldContain("--ql-level-error-bg");
+        levels.ShouldContain("--ql-level-warn-bg");
+        levels.ShouldContain("--ql-level-info-fg");
+        levels.ShouldContain("--ql-level-debug-fg");
+        levels.ShouldContain("#e07068");
+        levels.ShouldContain("#c9a227");
+        levels.ShouldContain("#7eb8e8");
+        levels.ShouldContain("#8a9aab");
+        levels.ShouldContain(".log-level.is-error");
+        levels.ShouldContain(".log-level.is-warn");
+        levels.ShouldContain(".log-level.is-info");
+        levels.ShouldContain("background: transparent");
+        levels.ShouldNotContain("message.match");
+        levels.ShouldNotContain("new RegExp");
+        frame.ShouldNotContain("—");
+        levels.ShouldNotContain("—");
     }
 
     [Fact]

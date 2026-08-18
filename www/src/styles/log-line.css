@@ -1,0 +1,75 @@
+/*
+ * Severity chips for log lines on --ql-ink (#2E2A26).
+ * Fills vs paper, and info/debug text vs ink, are at least 4.5:1.
+ * Messages stay plain: no regex, no in-message coloring.
+ */
+:root {
+  --ql-level-error-bg: #e07068;
+  --ql-level-warn-bg: #c9a227;
+  --ql-level-info-fg: #7eb8e8;
+  --ql-level-debug-fg: #8a9aab;
+}
+
+.log-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.55rem;
+  margin: 0;
+  font-family: var(--ql-font-mono);
+  line-height: 1.55;
+}
+
+.log-ts {
+  color: var(--ql-hairline);
+}
+
+.log-level {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--ql-font-mono);
+  line-height: 1.2;
+}
+
+.log-level.is-error {
+  color: var(--ql-paper);
+  background: var(--ql-level-error-bg);
+}
+
+.log-level.is-warn {
+  color: var(--ql-paper);
+  background: var(--ql-level-warn-bg);
+}
+
+.log-level.is-info,
+.log-level.is-debug {
+  padding: 0.08rem 0.35rem;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ql-paper) 28%, transparent);
+}
+
+.log-level.is-info {
+  color: var(--ql-level-info-fg);
+}
+
+.log-level.is-debug {
+  color: var(--ql-level-debug-fg);
+}
+
+.log-source {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--ql-hairline);
+  border-radius: 3px;
+  color: color-mix(in srgb, var(--ql-paper) 75%, transparent);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.log-msg {
+  color: var(--ql-paper);
+}
