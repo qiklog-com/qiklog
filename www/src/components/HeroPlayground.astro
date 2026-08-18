@@ -1,0 +1,319 @@
+---
+import TerminalFrame from './TerminalFrame.astro';
+import LiveTailEmbed from './LiveTailEmbed.astro';
+import { DECK_TABS } from '../lib/code-deck';
+
+interface Props {
+  appUrl: string;
+}
+
+const { appUrl } = Astro.props;
+const tabsJson = JSON.stringify(DECK_TABS);
+---
+<div class="play" data-playground>
+  <div class="play-left">
+    <form class="send" data-send-form>
+      <label class="sr-only" for="demo-message">Log message</label>
+      <input
+        id="demo-message"
+        class="send-input"
+        type="text"
+        name="message"
+        maxlength="120"
+        value="hello from the browser"
+        autocomplete="off"
+        data-message
+      />
+      <button type="submit" class="btn btn-primary send-btn" data-send>Send</button>
+      <p class="send-status" data-status aria-live="polite"></p>
+    </form>
+
+    <div class="deck">
+      <div class="tabs" role="tablist" aria-label="Language samples">
+        {DECK_TABS.map((tab, i) => (
+          <button
+            type="button"
+            class:list={['tab', { active: i === 0 }]}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+            data-tab={tab.id}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <TerminalFrame title="sample">
+        <div class="sample-wrap">
+          <button type="button" class="copy" data-copy>Copy</button>
+          <pre class="sample"><code data-sample></code></pre>
+        </div>
+      </TerminalFrame>
+      <p class="install" data-install></p>
+    </div>
+  </div>
+
+  <div class="play-right" id="hero-live-panel" data-panel="demo · tail">
+    <LiveTailEmbed appUrl={appUrl} source="demo" />
+  </div>
+
+  <div id="deck-config" hidden data-json={tabsJson}></div>
+</div>
+
+<script>
+  import { sanitize, escapeFor } from '../lib/demo-message';
+
+  const root = document.querySelector('[data-playground]');
+  const form = root?.querySelector('[data-send-form]');
+  const input = root?.querySelector('[data-message]');
+  const sendBtn = root?.querySelector('[data-send]');
+  const status = root?.querySelector('[data-status]');
+  const sample = root?.querySelector('[data-sample]');
+  const install = root?.querySelector('[data-install]');
+  const copyBtn = root?.querySelector('[data-copy]');
+  const raw = document.getElementById('deck-config')?.getAttribute('data-json') ?? '[]';
+  const tabs = JSON.parse(raw);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let activeId = tabs[0]?.id ?? 'curl';
+  let lastSend = 0;
+  const WAIT_MS = 3000;
+  const COOLDOWN_MS = 2000;
+
+  function currentMessage() {
+    return sanitize(input instanceof HTMLInputElement ? input.value : '');
+  }
+
+  function render() {
+    const tab = tabs.find((t) => t.id === activeId) ?? tabs[0];
+    if (!tab || !sample || !install) return;
+    const escaped = escapeFor(tab.escape, currentMessage());
+    sample.textContent = tab.template.replaceAll('__MSG__', escaped);
+    install.textContent = tab.install;
+    root?.querySelectorAll('[data-tab]').forEach((btn) => {
+      const on = btn.getAttribute('data-tab') === activeId;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+
+  root?.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeId = btn.getAttribute('data-tab') ?? activeId;
+      render();
+    });
+  });
+
+  input?.addEventListener('input', render);
+
+  copyBtn?.addEventListener('click', async () => {
+    const text = sample?.textContent ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copied';
+      window.setTimeout(() => {
+        copyBtn.textContent = 'Copy';
+      }, 1200);
+    } catch {
+      copyBtn.textContent = 'Copy failed';
+    }
+  });
+
+  function waitForArrival(message) {
+    return new Promise((resolve) => {
+      const timer = window.setTimeout(() => {
+        window.removeEventListener('message', onMessage);
+        resolve(false);
+      }, WAIT_MS);
+
+      function onMessage(event) {
+        const data = event.data;
+        if (!data || data.type !== 'qiklog-log') return;
+        if (data.message !== message) return;
+        window.clearTimeout(timer);
+        window.removeEventListener('message', onMessage);
+        resolve(true);
+      }
+
+      window.addEventListener('message', onMessage);
+    });
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!(sendBtn instanceof HTMLButtonElement)) return;
+    const now = Date.now();
+    if (now - lastSend < COOLDOWN_MS) return;
+    const message = currentMessage();
+    if (!message) {
+      setStatus('Type a message first.');
+      return;
+    }
+
+    lastSend = now;
+    sendBtn.disabled = true;
+    setStatus('Sending…');
+
+    if (window.matchMedia('(max-width: 720px)').matches) {
+      document.getElementById('hero-live-panel')?.scrollIntoView({
+        behavior: reduce ? 'auto' : 'smooth',
+        block: 'center',
+      });
+    }
+
+    const started = performance.now();
+    try {
+      const res = await fetch('/api/demo-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      if (!res.ok) throw new Error('send failed');
+      const arrived = await waitForArrival(message);
+      const ms = Math.round(performance.now() - started);
+      setStatus(arrived ? `arrived in ${ms}ms` : 'could not reach the demo source');
+    } catch {
+      setStatus('could not reach the demo source');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  });
+
+  render();
+</script>
+
+<style>
+  .play {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.75rem 2.25rem;
+    align-items: start;
+    width: 100%;
+  }
+
+  .play-right {
+    margin-top: 2.75rem;
+  }
+
+  .send {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.65rem 0.75rem;
+    margin: 0 0 1.1rem;
+    align-items: center;
+  }
+
+  .send-input {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    background: var(--ql-paper);
+    color: var(--ql-ink);
+    font-family: var(--ql-font-mono);
+    font-size: 0.9rem;
+  }
+
+  .send-input:focus {
+    outline: 2px solid var(--ql-rust);
+    outline-offset: 1px;
+  }
+
+  .send-btn {
+    padding: 0.7rem 1.2rem;
+  }
+
+  .send-status {
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 1.2em;
+    font-family: var(--ql-font-mono);
+    font-size: 0.82rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1.1rem;
+    margin: 0 0 0.65rem;
+  }
+
+  .tab {
+    padding: 0.2rem 0 0.35rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    font-family: var(--ql-font-mono);
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+    cursor: pointer;
+  }
+
+  .tab.active {
+    color: var(--ql-ink);
+    border-bottom-color: var(--ql-rust);
+  }
+
+  .sample-wrap {
+    position: relative;
+  }
+
+  .copy {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    background: transparent;
+    color: var(--ql-ink-caption);
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  .sample {
+    margin: 0;
+    min-height: 9.5rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding-right: 3.5rem;
+  }
+
+  .install {
+    margin: 0.65rem 0 0;
+    font-size: 0.82rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  @media (max-width: 720px) {
+    .play {
+      grid-template-columns: 1fr;
+    }
+
+    .play-right {
+      margin-top: 0;
+    }
+
+    .send {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

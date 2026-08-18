@@ -16,7 +16,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
         index.ShouldContain("Try it now");
         index.ShouldContain("<SiteNav");
-        index.ShouldContain("<TailPreview");
+        index.ShouldContain("<HeroPlayground");
         index.ShouldContain("$9/mo, cancel anytime.");
         index.ShouldContain("PUBLIC_APP_URL");
         index.ShouldContain("const tryUrl = `${appUrl}/`");
@@ -188,13 +188,12 @@ public sealed class LandingPageContractTests
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
 
         // When: layout is inspected
-        // Then: the demo sits in a stage that takes the larger grid track, copy unchanged
-        index.ShouldContain("class=\"stage\"");
-        index.ShouldContain("<TailPreview");
+        // Then: copy stays; playground (input + deck + live panel) sits under it
+        index.ShouldContain("class=\"hero-play");
+        index.ShouldContain("<HeroPlayground");
         index.ShouldContain("See what your app is doing, live.");
         index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
-        index.ShouldContain("minmax(28rem, 1.35fr)");
-        index.ShouldContain("var(--ql-shadow)");
+        index.ShouldContain("Try it now");
         index.ShouldNotContain("minmax(16rem, 22rem)");
 
         preview.ShouldContain("JWT expired 401");
@@ -418,6 +417,56 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("cta-alt btn");
         index.ShouldContain("toggleAttribute('hidden'");
         index.ShouldNotContain("—");
+    }
+
+    [Fact]
+    public void Given_hero_playground_When_read_Then_data_driven_deck_proxy_and_gated_stats()
+    {
+        // Given: ntfy-style hero send + code deck
+        var index = ReadRepoFile("www/src/pages/index.astro");
+        var playground = ReadRepoFile("www/src/components/HeroPlayground.astro");
+        var deck = ReadRepoFile("www/src/lib/code-deck.ts");
+        var message = ReadRepoFile("www/src/lib/demo-message.ts");
+        var stats = ReadRepoFile("www/src/lib/hero-stats.ts");
+        var proxy = ReadRepoFile("www/api/demo-send.js");
+        var panel = ReadRepoFile("src/QikLog.Web/Components/Shared/LiveTailPanel.razor");
+
+        // When / Then
+        index.ShouldContain("<HeroPlayground");
+        index.ShouldContain("<StatsRow");
+        index.ShouldContain("hero-play");
+        playground.ShouldContain("Send");
+        playground.ShouldNotContain("Simulate");
+        playground.ShouldContain("/api/demo-send");
+        playground.ShouldContain("could not reach the demo source");
+        playground.ShouldContain("2000");
+        playground.ShouldContain("3000");
+        playground.ShouldContain("arrived in");
+        playground.ShouldContain("prefers-reduced-motion");
+        playground.ShouldContain("demo · tail");
+        deck.ShouldContain("label: 'curl'");
+        deck.ShouldContain("label: 'C#'");
+        deck.ShouldContain("label: 'JavaScript'");
+        deck.ShouldContain("https://api.qiklog.com/v1/logs");
+        deck.ShouldContain("$QIKLOG_API_KEY");
+        deck.ShouldContain("YOUR_API_KEY");
+        deck.ShouldContain("Already on your machine.");
+        deck.ShouldContain("No install. Plain HttpClient.");
+        deck.ShouldContain("No install. Plain fetch.");
+        deck.ShouldContain("__MSG__");
+        message.ShouldContain("MAX_LENGTH = 120");
+        message.ShouldContain("escapeJson");
+        message.ShouldContain("escapeCSharp");
+        message.ShouldContain("escapeJavaScript");
+        proxy.ShouldContain("QIKLOG_DEMO_API_KEY");
+        proxy.ShouldContain("source: 'demo'");
+        proxy.ShouldNotContain("ql_");
+        stats.ShouldContain("showStreamCounter: false");
+        stats.ShouldContain("278ms");
+        stats.ShouldContain("median, terminal to browser, measured");
+        panel.ShouldContain("qiklogEmbedNotify");
+        index.ShouldNotContain("—");
+        playground.ShouldNotContain("—");
     }
 
     [Fact]
