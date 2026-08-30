@@ -61,3 +61,4 @@ clients/android/**/build/
 clients/android/local.properties
 clients/ios/**/xcuserdata/
 clients/ios/**/DerivedData/
+.vercel
