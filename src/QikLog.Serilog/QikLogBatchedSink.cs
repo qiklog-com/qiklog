@@ -9,7 +9,7 @@ namespace QikLog.Serilog;
 
 /// <summary>
 /// Batched sink: one POST /v1/logs per event, same contract as <c>qiklog send</c>.
-/// Failures are written to <see cref="SelfLog"/> and never thrown to the host.
+/// Failures are written to <see cref="SelfLog"/> and dropped (no retry). Never thrown to the host.
 /// </summary>
 internal sealed class QikLogBatchedSink : IBatchedLogEventSink, IDisposable
 {

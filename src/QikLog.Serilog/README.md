@@ -32,8 +32,11 @@ Log.Information("hello from serilog");
 ```
 
 `apiKey` is sent as `Authorization: Bearer`, matching the CLI. Events are batched
-(50, or 2 seconds) and posted one-at-a-time to `POST /v1/logs`. Ingest failures
-are written to Serilog SelfLog; they do not throw into your app.
+(50, or 2 seconds) and posted one-at-a-time to `POST /v1/logs`.
+
+On ingest failure (4xx, 5xx, or network error) the event is written to Serilog
+SelfLog and **dropped**. There is no retry, backoff, or re-queue. Enable SelfLog
+if you need to see those failures; do not treat this sink as a delivery guarantee.
 
 ```csharp
 Serilog.Debugging.SelfLog.Enable(Console.Error);

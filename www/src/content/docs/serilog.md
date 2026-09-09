@@ -35,8 +35,10 @@ Log.Information("hello from serilog");
 `apiKey` is sent as `Authorization: Bearer`. `source` is the QikLog stream name
 (use `demo` to see lines on the landing live panel and `/tail/demo`).
 
-Events flush in batches of 50 or every 2 seconds. Ingest failures go to Serilog
-SelfLog; they do not throw into your app.
+Events flush in batches of 50 or every 2 seconds, then each event is posted as
+its own `POST /v1/logs`. On ingest failure (4xx, 5xx, or network error) the
+event is written to Serilog SelfLog and **dropped** — no retry, backoff, or
+re-queue. Do not treat this sink as a delivery guarantee.
 
 ```csharp
 Serilog.Debugging.SelfLog.Enable(Console.Error);
