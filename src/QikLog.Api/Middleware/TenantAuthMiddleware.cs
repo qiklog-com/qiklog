@@ -10,7 +10,6 @@ namespace QikLog.Api.Middleware;
 /// <summary>Enforces JWT and/or API-key authentication and sets <see cref="ITenantContext"/>.</summary>
 public sealed class TenantAuthMiddleware(
     RequestDelegate next,
-    TenantAuthenticationService authentication,
     IOptions<AuthEnforcementOptions> enforcementOptions,
     IOptions<ManagementOptions> managementOptions,
     ILogger<TenantAuthMiddleware> log)
@@ -55,6 +54,7 @@ public sealed class TenantAuthMiddleware(
         }
 
         var applyRateLimit = context.Request.Path.StartsWithSegments("/v1/logs", StringComparison.OrdinalIgnoreCase);
+        var authentication = context.RequestServices.GetRequiredService<TenantAuthenticationService>();
         var (success, failure) = await authentication.AuthenticateAsync(
             context,
             authMode,
