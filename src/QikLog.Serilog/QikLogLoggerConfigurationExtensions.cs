@@ -10,7 +10,7 @@ public static class QikLogLoggerConfigurationExtensions
 {
     /// <summary>
     /// Send log events to QikLog via <c>POST /v1/logs</c> (same JSON and Bearer
-    /// key as <c>qiklog send</c>). Failures are written to Serilog SelfLog only.
+    /// key as <c>qiklog send</c>). Failures are written to Serilog SelfLog and dropped.
     /// </summary>
     /// <param name="loggerSinkConfiguration">The Serilog <c>WriteTo</c> configuration.</param>
     /// <param name="apiUrl">API origin, e.g. <c>https://api.qiklog.com</c>.</param>

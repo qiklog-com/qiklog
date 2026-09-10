@@ -135,6 +135,33 @@ public sealed class QikLogSinkTests
     }
 
     [Fact]
+    public void Given_429_response_When_logging_Then_selflog_records_and_event_is_not_retried()
+    {
+        // Given: per-key ingest rate limit (same 429 the live API returns)
+        var handler = new RecordingHandler { Status = HttpStatusCode.TooManyRequests };
+        var selfLog = new StringWriter();
+        SelfLog.Enable(selfLog);
+
+        try
+        {
+            using var log = CreateLogger(handler, batchSize: 1);
+
+            // When
+            Should.NotThrow(() => log.Information("over the limit"));
+            Should.NotThrow(() => log.Dispose());
+
+            // Then: one POST, no retry, event is gone
+            handler.Requests.Count.ShouldBe(1);
+            selfLog.ToString().ShouldContain("429");
+            selfLog.ToString().ShouldContain("QikLog sink ingest failed");
+        }
+        finally
+        {
+            SelfLog.Disable();
+        }
+    }
+
+    [Fact]
     public void Pack_target_and_readme_exist_for_local_nupkg()
     {
         // Given / When
@@ -152,6 +179,8 @@ public sealed class QikLogSinkTests
         readme.ShouldContain("dotnet add package QikLog.Serilog");
         readme.ShouldContain("WriteTo.QikLog");
         readme.ShouldContain("https://api.qiklog.com");
+        readme.ShouldContain("dropped");
+        readme.ShouldContain("no retry");
         readme.ShouldNotContain("—");
     }
 

@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\QikLog.Api\QikLog.Api.csproj" />
+    <ProjectReference Include="..\..\src\QikLog.Serilog\QikLog.Serilog.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />

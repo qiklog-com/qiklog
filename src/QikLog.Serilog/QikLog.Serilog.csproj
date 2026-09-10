@@ -24,6 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="QikLog.Serilog.Tests" />
+    <InternalsVisibleTo Include="QikLog.Api.Tests" />
     <InternalsVisibleTo Include="QikLog.Smoke.Tests" />
   </ItemGroup>
 </Project>
