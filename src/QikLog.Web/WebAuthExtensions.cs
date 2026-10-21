@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -21,11 +22,16 @@ internal static class WebAuthExtensions
         var auth = configuration.GetSection(QikLogAuthOptions.SectionName).Get<QikLogAuthOptions>() ?? new();
 
         // AuthorizeView in layouts/pages always needs cascading auth state, even when OIDC is off.
-        services.AddAuthorization();
         services.AddCascadingAuthenticationState();
 
         if (!auth.Enabled || string.IsNullOrWhiteSpace(auth.Authority))
         {
+            // Local demo: nothing to sign in to, so [Authorize] pages stay open.
+            services.AddAuthorization(options =>
+                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAssertion(_ => true)
+                    .Build());
+
             // Anonymous-only: satisfies AuthenticationStateProvider for AuthorizeView NotAuthorized paths.
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie();
@@ -44,6 +50,7 @@ internal static class WebAuthExtensions
                 options.UseInMemoryDatabase("QikLogWebAuth"));
         }
 
+        services.AddAuthorization();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<TenantProvisioner>();
 
