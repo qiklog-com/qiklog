@@ -27,7 +27,7 @@ Example shape: `ql_a1b2c3d4_xYz9...` — the full secret is shown **once** at cr
 
 ## Create a key (dashboard)
 
-Open **Manage → API keys** at `/manage` on the web app, click **Create API key**, and save the plaintext from the dialog.
+Sign in, open **Manage → API keys** at `/manage` on the web app, click **Create API key**, and save the plaintext from the dialog. The key belongs to your organization's workspace; logs sent with it are visible only to you and your organization.
 
 ## Create a key (CLI / curl)
 
@@ -81,7 +81,7 @@ dotnet run --project src/QikLog.Cli -- send -s demo -m "hello"
 ## Security notes
 
 - Keys are stored as **Argon2id** hashes; only a lookup prefix is stored in plain text.
-- Revocation UI is coming with source management (#13). Until then, deactivate keys in the database or rotate by creating a new key.
+- Revoke a key from **Manage → API keys → Revoke**. Ingest with a revoked key returns **401**. To rotate, create a new key, switch your apps to it, then revoke the old one.
 - Never commit keys to git or paste them into public tickets.
 
 ## Rate limits
