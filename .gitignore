@@ -61,3 +61,8 @@ clients/android/**/build/
 clients/android/local.properties
 clients/ios/**/xcuserdata/
 clients/ios/**/DerivedData/
+
+# Claude Code local overrides
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/agent-memory-local/
