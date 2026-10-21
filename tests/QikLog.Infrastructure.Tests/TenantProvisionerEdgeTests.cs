@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using QikLog.Infrastructure.Data;
-using QikLog.Infrastructure.Tenants;
 using Shouldly;
 using Xunit;
 
@@ -9,19 +7,6 @@ namespace QikLog.Infrastructure.Tests;
 
 public sealed class TenantProvisionerEdgeTests
 {
-    [Fact]
-    public async Task EnsureTenant_null_org_creates_tenant_with_null_ZitadelOrgId()
-    {
-        await using var db = CreateDb();
-        var provisioner = new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance);
-
-        var id = await provisioner.EnsureTenantAsync(null, "Solo", CancellationToken.None);
-
-        var row = await db.Tenants.SingleAsync(t => t.Id == id);
-        row.ZitadelOrgId.ShouldBeNull();
-        row.Name.ShouldBe("Solo");
-    }
-
     [Fact]
     public async Task EnsureTenant_claim_keeps_name_when_displayName_whitespace()
     {
@@ -37,7 +22,7 @@ public sealed class TenantProvisionerEdgeTests
         });
         await db.SaveChangesAsync();
 
-        var provisioner = new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance);
+        var provisioner = TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: "org-keep");
         await provisioner.EnsureTenantAsync("org-keep", "   ", CancellationToken.None);
 
         (await db.Tenants.SingleAsync()).Name.ShouldBe("Bootstrap Keep");
@@ -45,7 +30,7 @@ public sealed class TenantProvisionerEdgeTests
     }
 
     [Fact]
-    public async Task EnsureTenant_claims_oldest_unclaimed_bootstrap()
+    public async Task EnsureTenant_bootstrap_org_claims_oldest_unclaimed()
     {
         await using var db = CreateDb();
         var older = Guid.NewGuid();
@@ -69,7 +54,7 @@ public sealed class TenantProvisionerEdgeTests
             });
         await db.SaveChangesAsync();
 
-        var provisioner = new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance);
+        var provisioner = TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: "org-old");
         var id = await provisioner.EnsureTenantAsync("org-old", "Claimed", CancellationToken.None);
         id.ShouldBe(older);
         (await db.Tenants.SingleAsync(t => t.Id == newer)).ZitadelOrgId.ShouldBeNull();
@@ -79,11 +64,22 @@ public sealed class TenantProvisionerEdgeTests
     public async Task EnsureTenant_trims_org_id_and_display_name()
     {
         await using var db = CreateDb();
-        var provisioner = new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance);
+        var provisioner = TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null);
         var id = await provisioner.EnsureTenantAsync("  org-trim  ", "  Trimmed Co  ", CancellationToken.None);
         var row = await db.Tenants.SingleAsync(t => t.Id == id);
         row.ZitadelOrgId.ShouldBe("org-trim");
         row.Name.ShouldBe("Trimmed Co");
+    }
+
+    [Fact]
+    public async Task EnsureTenant_lookup_uses_trimmed_org_id()
+    {
+        await using var db = CreateDb();
+        var provisioner = TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null);
+        var first = await provisioner.EnsureTenantAsync("org-pad", "Pad", CancellationToken.None);
+        var second = await provisioner.EnsureTenantAsync(" org-pad ", "Pad", CancellationToken.None);
+        second.ShouldBe(first);
+        (await db.Tenants.CountAsync()).ShouldBe(1);
     }
 
     private static QikLogDbContext CreateDb()
