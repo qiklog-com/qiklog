@@ -8,16 +8,27 @@ Works the same in the Claude Code CLI, the Claude Desktop Code tab, and Happy.
 | bill | infra: `infra/`, `scripts/`, workflows, Dockerfiles | `claude --agent bill` |
 | reviewer | read-only PR review | `@reviewer` inside any session |
 
-## Parallel work without collisions
+## Run the crew (recommended: agent view)
+
+Agent view (`claude agents`, Claude Code v2.1.139+, research preview) shows every replicant on one screen: working, waiting on you, or done. Sessions run in the background, keep going when you close the terminal, and get their own worktree under `.claude/worktrees/` before editing.
 
 ```bash
-git worktree add ../qiklog-garfield -b milestone-1-self-serve main
-git worktree add ../qiklog-bill -b azure-move main
-cd ../qiklog-garfield && claude --agent garfield
-cd ../qiklog-bill && claude --agent bill
+cd ~/dev/qiklog
+claude --agent bill --bg --name bill "Read your memory and continue your mission."
+claude --agent garfield --bg --name garfield "Read your memory and continue Milestone 1."
+claude agents --cwd ~/dev/qiklog     # the dashboard
 ```
 
-In the Desktop Code tab, open the folder and tick the worktree checkbox instead.
+- Enter or → attaches to a replicant; ← on an empty prompt detaches (it keeps running).
+- Inside agent view, start one with `@bill <task>` or `@garfield <task>`.
+- Commit before deleting a session in agent view; its Claude-created worktree is deleted with it.
+- Each running replicant uses your Claude plan quota independently.
+
+### Manual worktrees (alternative)
+
+```bash
+git worktree add ../qiklog-bill -b azure-move main && cd ../qiklog-bill && claude --agent bill
+```
 
 ## Pieces
 
