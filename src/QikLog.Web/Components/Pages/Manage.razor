@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Authorize]
 @inject QikLog.Web.Services.QikLogApiClient Api
+@inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 
 <PageTitle>Manage · QikLog</PageTitle>
 
@@ -13,8 +14,8 @@
     </FluentStack>
 
     <p style="margin: 0; opacity: 0.75; font-size: 0.9rem;">
-        Invite beta — source and key management need OIDC sign-in (coming soon). Ship logs with
-        <code>QIKLOG_API_KEY</code> and watch them on <code>/tail/{source}</code>.
+        Create an API key, export it as <code>QIKLOG_API_KEY</code>, send a log line, then open
+        <code>/tail/{source}</code>. Sources appear on first ingest.
     </p>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -128,9 +129,7 @@
     <FluentDialogHeader><h3>Source ready</h3></FluentDialogHeader>
     <FluentDialogBody>
         <p>Use source <code>@_newSourceName</code> when ingesting, then open the tail page.</p>
-        <pre style="font-size: 0.8rem; overflow-x: auto; padding: 0.75rem; background: var(--neutral-fill-secondary-rest); border-radius: 4px;">curl -X POST http://localhost:5080/v1/logs \
-  -H "Content-Type: application/json" \
-  -d '{"source":"@_newSourceName","level":"info","message":"hello"}'</pre>
+        <pre style="font-size: 0.8rem; overflow-x: auto; padding: 0.75rem; background: var(--neutral-fill-secondary-rest); border-radius: 4px;">@QikLog.Web.Services.IngestSnippet.Curl(Options.Value.ApiBaseUrl, _newSourceName)</pre>
     </FluentDialogBody>
     <FluentDialogFooter>
         <FluentButton Appearance="Appearance.Outline" OnClick="@(() => _newSourceHelpHidden = true)">Close</FluentButton>
@@ -195,9 +194,9 @@
         }
         catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException)
         {
-            // Invite beta: management routes are JWT-only while OIDC is off, so these
-            // calls 401. Surface that instead of leaving the page spinning.
-            _error = "Sources and API keys need a signed-in session. Use Sign in, then Refresh. Ingest still works with QIKLOG_API_KEY.";
+            // Management routes are JWT-only. A 401 here means the saved access token is
+            // missing or expired; surface that instead of leaving the page spinning.
+            _error = "Could not load sources and API keys. Your session may have expired: sign out, sign in again, then Refresh.";
             _sources = [];
             _keys = [];
         }
