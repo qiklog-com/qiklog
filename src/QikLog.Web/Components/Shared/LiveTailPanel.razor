@@ -5,6 +5,8 @@
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 @inject QikLog.Web.Services.QikLogApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@using QikLog.Web.Services
 @inject IJSRuntime JS
 @inject ILogger<LiveTailPanel> Log
 
@@ -219,16 +221,20 @@
     private async Task ConnectAsync()
     {
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
-        var hubApiKey = Options.Value.HubApiKey?.Trim();
-        // Embeds must not inherit a visitor's expired OIDC cookie; that 401s and
-        // skips the shared hub key. Compact always uses HubApiKey.
-        var accessToken = Compact
-            ? null
-            : HttpContextAccessor.HttpContext is { } http
-                ? await http.GetTokenAsync("access_token")
-                : null;
+        // Signed-in state from AuthenticationStateProvider: HttpContext can be null on an
+        // interactive circuit, and treating a signed-in user as anonymous would hand
+        // them the hub key. The token itself still comes from the auth cookie.
+        var authState = await AuthState.GetAuthenticationStateAsync();
+        var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        // Embeds always show the demo source with the hub key, never the visitor's token.
+        var accessToken = !Compact && isAuthenticated && HttpContextAccessor.HttpContext is { } http
+            ? await http.GetTokenAsync("access_token")
+            : null;
 
-        _hub = BuildHub(baseUrl, accessToken, hubApiKey);
+        // No hub-key retry for signed-in users: the hub key is the bootstrap tenant's
+        // credential, and falling back to it would show them another tenant's logs.
+        var credential = ApiCredentialPolicy.Choose(isAuthenticated, accessToken, Options.Value.HubApiKey, isEmbed: Compact);
+        _hub = BuildHub(baseUrl, credential);
 
         try
         {
@@ -236,27 +242,9 @@
             await _hub.InvokeAsync("Subscribe", Source);
             _connectionError = null;
         }
-        catch (Exception first)
+        catch (Exception ex)
         {
-            if (!string.IsNullOrWhiteSpace(accessToken) && !string.IsNullOrWhiteSpace(hubApiKey))
-            {
-                await _hub.DisposeAsync();
-                _hub = BuildHub(baseUrl, accessToken: null, hubApiKey);
-                try
-                {
-                    await _hub.StartAsync();
-                    await _hub.InvokeAsync("Subscribe", Source);
-                    _connectionError = null;
-                    StateHasChanged();
-                    return;
-                }
-                catch (Exception retry)
-                {
-                    first = retry;
-                }
-            }
-
-            _connectionError = DescribeFailure(first);
+            _connectionError = DescribeFailure(ex, signedIn: isAuthenticated && !Compact);
             await _hub.DisposeAsync();
             _hub = null;
         }
@@ -264,21 +252,19 @@
         StateHasChanged();
     }
 
-    private HubConnection BuildHub(string baseUrl, string? accessToken, string? hubApiKey)
+    private HubConnection BuildHub(string baseUrl, ApiCredential credential)
     {
         var hub = new HubConnectionBuilder()
             .WithUrl($"{baseUrl}/hubs/logs", options =>
             {
-                if (!string.IsNullOrWhiteSpace(accessToken))
-                {
-                    options.AccessTokenProvider = () => Task.FromResult(accessToken)!;
-                }
-                else if (!string.IsNullOrWhiteSpace(hubApiKey))
-                {
-                    options.Headers["X-QikLog-API-Key"] = hubApiKey;
-                    // Bearer survives proxies that strip custom headers on negotiate/WebSocket.
-                    options.AccessTokenProvider = () => Task.FromResult<string?>(hubApiKey);
-                }
+                if (credential.Kind == ApiCredentialKind.None || credential.Value is not { } value)
+                    return;
+
+                options.AccessTokenProvider = () => Task.FromResult<string?>(value);
+                // Hub key also goes in the header; Bearer survives proxies that strip
+                // custom headers on negotiate/WebSocket.
+                if (credential.Kind == ApiCredentialKind.HubApiKey)
+                    options.Headers["X-QikLog-API-Key"] = value;
             })
             .WithAutomaticReconnect()
             .Build();
@@ -290,9 +276,11 @@
         return hub;
     }
 
-    private static string DescribeFailure(Exception ex) =>
+    private static string DescribeFailure(Exception ex, bool signedIn) =>
         ex.Message.Contains("401", StringComparison.Ordinal)
-            ? "The API rejected this connection. Live tail needs a signed-in session or a configured hub API key; history above is still shown when available."
+            ? signedIn
+                ? "Your session has expired. Sign out and sign in again to resume the live tail."
+                : "The API rejected this connection. Sign in to tail your own sources."
             : $"Could not reach the log stream: {ex.Message}";
 
     private void ClearBuffer()
