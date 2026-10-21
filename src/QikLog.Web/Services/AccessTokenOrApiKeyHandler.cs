@@ -5,8 +5,8 @@ using Microsoft.Extensions.Options;
 namespace QikLog.Web.Services;
 
 /// <summary>
-/// Prefers the signed-in user's OIDC access token for API calls; falls back to the
-/// shared hub API key so anonymous demo tail/history still works in invite beta.
+/// Attaches the credential chosen by <see cref="ApiCredentialPolicy"/>: the signed-in
+/// user's OIDC access token, or the shared hub API key for anonymous demo viewing only.
 /// </summary>
 internal sealed class AccessTokenOrApiKeyHandler(
     IHttpContextAccessor httpContextAccessor,
@@ -16,24 +16,29 @@ internal sealed class AccessTokenOrApiKeyHandler(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var httpContext = httpContextAccessor.HttpContext;
-        if (httpContext?.User.Identity?.IsAuthenticated == true)
-        {
-            var accessToken = await httpContext.GetTokenAsync("access_token");
-            if (!string.IsNullOrWhiteSpace(accessToken))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                request.Headers.Remove("X-QikLog-API-Key");
-                return await base.SendAsync(request, cancellationToken);
-            }
-        }
+        if (request.Headers.Authorization is not null || request.Headers.Contains("X-QikLog-API-Key"))
+            return await base.SendAsync(request, cancellationToken);
 
-        var hubApiKey = options.Value.HubApiKey;
-        if (!string.IsNullOrWhiteSpace(hubApiKey)
-            && !request.Headers.Contains("X-QikLog-API-Key")
-            && request.Headers.Authorization is null)
+        // No HttpContext (possible on an interactive circuit) means we cannot tell whether
+        // the caller is signed in. Fail closed rather than assume anonymous and attach
+        // the bootstrap tenant's hub key.
+        if (httpContextAccessor.HttpContext is not { } httpContext)
+            return await base.SendAsync(request, cancellationToken);
+
+        var isAuthenticated = httpContext.User.Identity?.IsAuthenticated == true;
+        var accessToken = isAuthenticated
+            ? await httpContext.GetTokenAsync("access_token")
+            : null;
+
+        var credential = ApiCredentialPolicy.Choose(isAuthenticated, accessToken, options.Value.HubApiKey, isEmbed: false);
+        switch (credential.Kind)
         {
-            request.Headers.Add("X-QikLog-API-Key", hubApiKey.Trim());
+            case ApiCredentialKind.AccessToken:
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", credential.Value);
+                break;
+            case ApiCredentialKind.HubApiKey:
+                request.Headers.Add("X-QikLog-API-Key", credential.Value);
+                break;
         }
 
         return await base.SendAsync(request, cancellationToken);
