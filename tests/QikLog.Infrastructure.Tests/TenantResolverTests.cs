@@ -142,7 +142,7 @@ public sealed class TenantResolverTests
     private static TenantResolver CreateResolver(QikLogDbContext db) =>
         new(
             db,
-            new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance),
+            TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null),
             Options.Create(new QikLogAuthOptions()));
 
     private static QikLogDbContext CreateDb()

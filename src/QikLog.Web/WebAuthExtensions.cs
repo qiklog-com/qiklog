@@ -89,6 +89,14 @@ internal static class WebAuthExtensions
                     var orgId = TenantClaims.TryGetOrgId(context.Principal, auth);
                     var name = TenantClaims.GetDisplayName(context.Principal);
 
+                    // No org means no tenant boundary. Refuse rather than create an unowned
+                    // tenant row (see TenantProvisioner).
+                    if (string.IsNullOrWhiteSpace(orgId))
+                    {
+                        context.Fail("Sign-in did not include a Zitadel organization id.");
+                        return;
+                    }
+
                     await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
                     var provisioner = scope.ServiceProvider.GetRequiredService<TenantProvisioner>();
                     var tenantId = await provisioner.EnsureTenantAsync(
