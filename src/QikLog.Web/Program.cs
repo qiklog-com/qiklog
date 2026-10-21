@@ -79,12 +79,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
+// Always on: [Authorize] pages need the authorization middleware even when OIDC is off
+// (then the default policy allows everyone; see AddQikLogWebAuth).
+app.UseAuthentication();
+app.UseAuthorization();
+
 var webAuth = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<QikLogAuthOptions>>().Value;
-if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
-{
-    app.UseAuthentication();
-    app.UseAuthorization();
-}
 
 app.UseAntiforgery();
 
@@ -112,6 +112,9 @@ app.MapRazorComponents<App>()
     });
 
 app.Run();
+
+// Exposed for WebApplicationFactory in QikLog.Web.Tests.
+public partial class Program;
 
 public sealed class QikLogOptions
 {

@@ -5,6 +5,9 @@
     <UserSecretsId>qiklog-web-dev</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="QikLog.Web.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\QikLog.Core\QikLog.Core.csproj" />
     <ProjectReference Include="..\QikLog.Infrastructure\QikLog.Infrastructure.csproj" />
   </ItemGroup>

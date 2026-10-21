@@ -27,4 +27,11 @@ public sealed class QikLogAuthOptions
 
     /// <summary>Claim type for Zitadel organization ID (default Zitadel org claim).</summary>
     public string OrganizationClaim { get; set; } = "urn:zitadel:iam:org:id";
+
+    /// <summary>
+    /// Zitadel org id allowed to claim the invite-beta bootstrap tenant (the row created
+    /// with no org that holds the hub API key). Unset = nobody claims it; every org that
+    /// signs in gets a fresh tenant.
+    /// </summary>
+    public string? BootstrapOrgId { get; set; }
 }
