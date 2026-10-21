@@ -25,8 +25,11 @@ In the Desktop Code tab, open the folder and tick the worktree checkbox instead.
 - `.claude/rules/` path-scoped rules (`dotnet.md`, `infra.md`) and always-on `secrets.md`.
 - `.claude/skills/ship` `/ship [tag]`: test, push, PR, reviewer pass. Never merges.
 - `.claude/skills/handoff` `/handoff`: end-of-session memory update and five-line status.
+- `.claude/skills/verify-live` `/verify-live [target]`: prove what is actually deployed from live calls, and list every doc claim that disagrees.
 - `.claude/hooks/guard-bash.sh` blocks force-push/push to main, secret reads, and repo deletion; asks Jamey before cloud deletes, DNS, billable creates, publishes, merges, and hosted-DB access.
+- `.claude/hooks/session-start.sh` repo self-gate: prints the remote and branch at session start and shouts if it is the wrong repo or `main`.
+- `.claude/hooks/char-gate.sh` rejects untypable characters (em dashes, curly quotes, ellipsis glyphs) in files Claude writes. Emoji are fine.
 - `.claude/agent-memory/<name>/MEMORY.md` each replicant's persistent notes (committed).
 - `CLAUDE.local.md`, `.claude/settings.local.json` personal overrides (gitignored).
 
-The hook uses `jq` if present, otherwise `python3`.
+The bash guard uses `jq` if present, otherwise `python3`. The char gate needs `python3`.
