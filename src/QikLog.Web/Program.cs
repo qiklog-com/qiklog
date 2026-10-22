@@ -112,6 +112,18 @@ if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
     });
 }
 
+// Readiness probe (Container Apps). Anonymous: probes never sign in. Web can start before
+// the migrate job / API has created data_protection_keys, so readiness waits for that table.
+app.MapGet("/healthz", async (IServiceProvider services, CancellationToken cancellationToken) =>
+{
+    await using var scope = services.CreateAsyncScope();
+    var keyStore = hasPostgres ? scope.ServiceProvider.GetRequiredService<QikLogDbContext>() : null;
+    var result = await DataProtectionKeyStoreProbe.CheckAsync(keyStore, cancellationToken);
+    var body = new { status = result.IsReady ? "ok" : "degraded", dataProtectionKeys = result.Status };
+    return result.IsReady ? Results.Ok(body) : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
+})
+.AllowAnonymous();
+
 // Marketing www iframes /embed/tail/{source}. Default is frame-ancestors 'self',
 // which blocks www.qiklog.com. Policy is applied by interactive server render mode.
 app.MapRazorComponents<App>()
@@ -122,6 +134,9 @@ app.MapRazorComponents<App>()
     });
 
 app.Run();
+
+/// <summary>Exposed for WebApplicationFactory in QikLog.Web.Tests.</summary>
+public partial class Program;
 
 public sealed class QikLogOptions
 {
