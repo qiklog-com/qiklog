@@ -32,13 +32,10 @@ internal static class WebAuthExtensions
             return services;
         }
 
+        // Program.cs registers the Postgres context (also used for Data Protection keys).
+        // Dev without a database gets an in-memory one so tenant provisioning still works.
         var connectionString = configuration.GetConnectionString("Postgres");
-        if (!string.IsNullOrWhiteSpace(connectionString))
-        {
-            services.AddDbContext<QikLogDbContext>(options =>
-                options.UseNpgsql(connectionString));
-        }
-        else if (environment.IsDevelopment())
+        if (string.IsNullOrWhiteSpace(connectionString) && environment.IsDevelopment())
         {
             services.AddDbContext<QikLogDbContext>(options =>
                 options.UseInMemoryDatabase("QikLogWebAuth"));
