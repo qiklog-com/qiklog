@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using QikLog.Infrastructure.Auth;
@@ -23,6 +24,16 @@ public sealed class LowRateLimitWebApplicationFactory : QikLogApiWebApplicationF
                 ["QikLog:Ingest:RateLimitPerMinute"] = "2"
             });
         });
+
+        // Pin the limiter's clock mid-minute so the three requests can't straddle a minute boundary.
+        builder.ConfigureTestServices(services =>
+            services.AddSingleton(new ApiKeyRateLimiter(new PinnedTimeProvider(
+                new DateTimeOffset(2026, 1, 1, 12, 0, 30, TimeSpan.Zero)))));
+    }
+
+    private sealed class PinnedTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
     }
 }
 
