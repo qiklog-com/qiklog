@@ -295,6 +295,12 @@ www-docker: ## Build and run marketing site in nginx (http://localhost:4321)
 	@docker compose --profile www up --build -d www
 	$(call ok,www container listening on http://localhost:4321)
 
+.PHONY: diagrams
+diagrams: ## Render docs/diagrams/*.dsl → www/public/diagrams/ (tools/sketchdsl)
+	$(call banner,diagrams)
+	@cd $(ROOT) && node tools/sketchdsl/dsl.mjs docs/diagrams/qiklog-azure.dsl -o www/public/diagrams/qiklog-azure.svg --theme ink
+	$(call ok,diagrams rendered → www/public/diagrams/)
+
 # ── CI parity ─────────────────────────────────────────────────────────────────
 .PHONY: ci
 ci: build test build-images ## Restore, build, test, and build Docker images
