@@ -13,7 +13,7 @@ Nothing here is wired into the build, the solution, CI, or deploys.
 | Folder | What | Where the code will live |
 | --- | --- | --- |
 | [agent-family/](agent-family/) | AI-agent features on top of QikLog: run traces, cost meter, query, alerts, PII scrub, .NET toolkit | **This repo**, as modules inside the existing projects |
-| [x402/](x402/) | Generic HTTP 402 / x402 payment middleware for ASP.NET Core | **Its own repo and NuGet package**; QikLog consumes it like any other dependency |
+| x402 | Generic HTTP 402 / x402 payment middleware for ASP.NET Core | **Moved to [qiklog-com/x402-dotnet](https://github.com/qiklog-com/x402-dotnet)** (private). QikLog will consume it as a NuGet package and supply only its free-tier policy, usage counters, and tenant mapping. |
 
 ## agent-family: triage
 
@@ -32,4 +32,5 @@ Nothing here is wired into the build, the solution, CI, or deploys.
 - Modules in existing projects, one deployable API. Split a service out only if it needs to scale on its own. (Infra: every extra Container App costs money and adds a pipeline.)
 - Tests follow `docs/TESTING.md`: the `.feature` files are the spec; scenarios get written as xUnit `Given_X_When_Y_Then_Z`. Reqnroll only if Jamey approves it.
 - Ship new endpoints behind config flags, off by default.
+- The packs still describe x402 middleware inline ("x402 middleware" sections). Treat those as superseded: QikLog builds no 402 logic of its own; it uses `qiklog-com/x402-dotnet`.
 - Open design question before any x402 code: the packs say "no API key when a valid payment is presented". That leaves the tenant who owns the data, and who can read it, undefined.
