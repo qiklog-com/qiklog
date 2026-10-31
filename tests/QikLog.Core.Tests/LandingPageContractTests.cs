@@ -133,6 +133,10 @@ public sealed class LandingPageContractTests
         panel.ShouldContain("X-QikLog-API-Key");
         panel.ShouldContain("AccessTokenProvider");
         panel.ShouldContain("ql-live-status");
+        panel.ShouldContain("ql-stage");
+        panel.ShouldContain("Opening night.");
+        panel.ShouldContain("waiting for your first event");
+        panel.ShouldContain("That is your app, live.");
         panel.ShouldNotContain("Appearance.Accent");
         panel.ShouldNotContain("FluentBadge");
         var brand = ReadRepoFile("src/QikLog.Web/wwwroot/brand/brand.css");
