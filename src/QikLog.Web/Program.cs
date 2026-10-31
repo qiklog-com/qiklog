@@ -56,6 +56,7 @@ builder.Services.AddHttpClient<QikLogApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
 }).AddHttpMessageHandler<AccessTokenOrApiKeyHandler>();
+builder.Services.AddTransient<IQikLogApiClient>(sp => sp.GetRequiredService<QikLogApiClient>());
 
 var app = builder.Build();
 

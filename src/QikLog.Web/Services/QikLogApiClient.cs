@@ -6,7 +6,7 @@ using QikLog.Core.Management;
 
 namespace QikLog.Web.Services;
 
-public sealed class QikLogApiClient(HttpClient http)
+public sealed class QikLogApiClient(HttpClient http) : IQikLogApiClient
 {
     // The API serialises LogLevel with LogLevelJsonConverter, so the client needs the
     // same converter; without it "level":"info" fails to bind and history reads throw.
