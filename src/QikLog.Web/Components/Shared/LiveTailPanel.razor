@@ -13,7 +13,7 @@
   One SignalR client implementation; pages only choose chrome density.
 *@
 
-<div class="@(Compact ? "ql-live-tail ql-live-tail-compact" : "ql-live-tail")">
+<div class="@(Compact ? "ql-live-tail ql-live-tail-compact ql-stage" : "ql-live-tail ql-stage")">
     <FluentStack Orientation="Orientation.Vertical" VerticalGap="@(Compact ? 8 : 12)" Class="@(Compact ? null : "ql-page-wide")">
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center">
             @if (!Compact)
@@ -23,11 +23,13 @@
             }
             else
             {
-                <span class="ql-live-badge" aria-live="polite">LIVE</span>
                 <code class="ql-live-source">@Source</code>
                 <FluentSpacer />
             }
-            <span class="ql-live-status" data-state="@StatusText">@StatusText</span>
+            <span class="@LiveBadgeClass" data-state="@LiveState" aria-live="polite">
+                <span class="ql-stage-live-dot" aria-hidden="true"></span>
+                @LiveLabel
+            </span>
             @if (!Compact)
             {
                 <FluentSwitch @bind-Value="@AutoScroll">Auto-scroll</FluentSwitch>
@@ -50,22 +52,48 @@
             </FluentMessageBar>
         }
 
-        <FluentCard Style="padding: 0; background: var(--ql-surface-ink); color: var(--ql-text-fg); border: 1px solid var(--ql-surface-border);">
-            <div id="tail-viewport" class="ql-tail-viewport" style="@ViewportStyle">
+        <FluentCard Class="ql-stage-card">
+            <div id="tail-viewport" class="ql-tail-viewport ql-stage-viewport" style="@ViewportStyle">
                 @if (_entries.Count == 0)
                 {
-                    <div style="opacity: 0.6; padding: 1rem;">
-                        Waiting for logs on source <code>@Source</code>...
-                    </div>
+                    @if (Compact)
+                    {
+                        <div class="ql-stage-opening-compact">
+                            <span>waiting for your first event</span>
+                            <span class="ql-stage-cursor" aria-hidden="true"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ql-stage-opening">
+                            <div>
+                                <h3 class="ql-stage-opening-title">Opening night.</h3>
+                                <ol class="ql-stage-opening-steps">
+                                    <li>Install <code>QikLog.Serilog</code>: <code>dotnet add package QikLog.Serilog</code></li>
+                                    <li>Wire the sink: <code>WriteTo.QikLog(apiUrl, apiKey, "@Source")</code></li>
+                                    <li>Send the key as <code>Authorization: Bearer</code></li>
+                                </ol>
+                            </div>
+                            <div class="ql-stage-opening-wait">
+                                <span>waiting for your first event</span>
+                                <span class="ql-stage-cursor" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {
                     @foreach (var row in _entries)
                     {
-                        <div @key="row.Sequence" style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
-                            <span style="opacity: 0.5; white-space: nowrap;">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
-                            <span style="@LevelStyle(row.Entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(row.Entry.Level)</span>
-                            <span style="white-space: pre-wrap; word-break: break-word;">@row.Entry.Message</span>
+                        <div @key="row.Sequence" class="@RowClass(row)">
+                            <span class="ql-stage-time">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
+                            <span class="@LevelClass(row.Entry.Level)">@LevelLabel(row.Entry.Level)</span>
+                            <span class="ql-stage-source">@row.Entry.Source</span>
+                            <span class="ql-stage-msg">@row.Entry.Message</span>
+                            @if (row.Opening)
+                            {
+                                <div class="ql-stage-first-caption">That is your app, live.</div>
+                            }
                         </div>
                     }
                 }
@@ -76,11 +104,11 @@
         {
             <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="opacity: 0.7; font-size: 0.85rem;">
                 <span>@_entries.Count entries buffered</span>
-                <span>&middot;</span>
+                <span>|</span>
                 <span>Buffer cap: @BufferCap (oldest drop)</span>
                 @if (_historyLoaded > 0)
                 {
-                    <span>&middot;</span>
+                    <span>|</span>
                     <span>@_historyLoaded history rows loaded</span>
                 }
             </FluentStack>
@@ -104,7 +132,7 @@
     private const int BufferCap = 500;
     private const int FlushIntervalMs = 100;
 
-    private sealed record LogRow(long Sequence, LogEntry Entry);
+    private sealed record LogRow(long Sequence, LogEntry Entry, bool Arrive = false, bool Opening = false);
 
     private readonly List<LogRow> _entries = [];
     private readonly ConcurrentQueue<LogEntry> _incoming = new();
@@ -120,17 +148,30 @@
     private string? _connectionError;
     private string? _historyError;
 
-    private string ViewportStyle =>
-        $"height: {ViewportHeight}; overflow-y: auto; padding: 1rem; font-family: var(--ql-font-mono); font-size: 0.85rem; line-height: 1.5;";
+    private string ViewportStyle => $"--ql-stage-height: {ViewportHeight};";
 
-    private string StatusText => _hub?.State switch
+    private bool IsLive => _hub?.State == HubConnectionState.Connected;
+
+    private string LiveLabel => _hub?.State switch
+    {
+        HubConnectionState.Connected => "LIVE",
+        HubConnectionState.Connecting => "RECONNECTING",
+        HubConnectionState.Reconnecting => "RECONNECTING",
+        _ => "PAUSED"
+    };
+
+    private string LiveState => _hub?.State switch
     {
         HubConnectionState.Connected => "connected",
-        HubConnectionState.Connecting => "connecting",
+        HubConnectionState.Connecting => "reconnecting",
         HubConnectionState.Reconnecting => "reconnecting",
-        HubConnectionState.Disconnected => "disconnected",
-        _ => _connectionError is null ? "connecting" : "disconnected"
+        _ => "disconnected"
     };
+
+    private string LiveBadgeClass =>
+        IsLive
+            ? "ql-stage-live ql-stage-live-on ql-live-status"
+            : "ql-stage-live ql-stage-live-off ql-live-status";
 
 
     protected override async Task OnInitializedAsync()
@@ -173,9 +214,11 @@
                 return;
 
             var appended = 0;
+            var wasEmpty = _entries.Count == 0;
             while (_incoming.TryDequeue(out var entry))
             {
-                _entries.Add(new LogRow(++_sequence, entry));
+                var opening = wasEmpty && appended == 0;
+                _entries.Add(new LogRow(++_sequence, entry, Arrive: !opening, Opening: opening));
                 if (Compact)
                     _notifyQueue.Add(entry.Message);
                 appended++;
@@ -339,16 +382,29 @@
         _ => level.ToString().ToUpperInvariant()
     };
 
-    private static string LevelStyle(LogLevel level) => level switch
+    private static string LevelClass(LogLevel level) => level switch
     {
-        LogLevel.Trace => "color: var(--ql-level-trace);",
-        LogLevel.Debug => "color: var(--ql-level-debug);",
-        LogLevel.Info => "color: var(--ql-level-info);",
-        LogLevel.Warning => "color: var(--ql-level-warning);",
-        LogLevel.Error => "color: var(--ql-level-error);",
-        LogLevel.Critical => "color: var(--ql-level-critical); text-shadow: 0 0 4px var(--ql-accent-teal-glow);",
-        _ => ""
+        LogLevel.Warning => "ql-stage-lvl ql-stage-lvl-wrn",
+        LogLevel.Error or LogLevel.Critical => "ql-stage-lvl ql-stage-lvl-err",
+        LogLevel.Info => "ql-stage-lvl ql-stage-lvl-inf",
+        _ => "ql-stage-lvl ql-stage-lvl-dbg"
     };
+
+    private static string RowClass(LogRow row)
+    {
+        var tone = row.Entry.Level switch
+        {
+            LogLevel.Warning => "ql-stage-row-wrn",
+            LogLevel.Error or LogLevel.Critical => "ql-stage-row-err",
+            _ => ""
+        };
+
+        var extras = row.Opening
+            ? "ql-stage-first"
+            : row.Arrive ? "ql-stage-row-arrive" : "";
+
+        return $"ql-stage-row {tone} {extras}".Trim();
+    }
 
     public async ValueTask DisposeAsync()
     {
