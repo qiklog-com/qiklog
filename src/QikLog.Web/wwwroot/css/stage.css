@@ -86,6 +86,15 @@
   padding: 0.2rem 0.45rem;
   transform-origin: center center;
   cursor: default;
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.ql-stage-row:hover {
+  background: var(--ql-panel);
+}
+
+.ql-stage-row-err:hover {
+  box-shadow: 0 0 30px var(--ql-err-glow);
 }
 
 .ql-stage-time {
@@ -229,13 +238,10 @@
 
   .ql-stage-row:hover {
     transform: scale(1.008);
-    background: var(--ql-panel);
-    transition: transform 140ms ease, background 140ms ease;
   }
 
   .ql-stage-row-err:hover {
     transform: scale(1.016);
-    box-shadow: 0 0 30px var(--ql-err-glow);
   }
 }
 
@@ -257,10 +263,8 @@
 @keyframes ql-stage-first-glow {
   0% {
     box-shadow: 0 0 44px var(--ql-first-glow);
-    border-color: var(--ql-first-border);
   }
   100% {
     box-shadow: none;
-    border-color: transparent;
   }
 }

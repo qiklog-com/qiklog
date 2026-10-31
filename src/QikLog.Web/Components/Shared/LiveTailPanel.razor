@@ -2,8 +2,10 @@
 @using System.Collections.Concurrent
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.JSInterop
+@using QikLog.Web.Stage
+@using QikLog.Web.Services
 @inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
-@inject QikLog.Web.Services.QikLogApiClient Api
+@inject IQikLogApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject ILogger<LiveTailPanel> Log
@@ -54,7 +56,7 @@
 
         <FluentCard Class="ql-stage-card">
             <div id="tail-viewport" class="ql-tail-viewport ql-stage-viewport" style="@ViewportStyle">
-                @if (_entries.Count == 0)
+                @if (_buffer.Count == 0)
                 {
                     @if (Compact)
                     {
@@ -83,11 +85,11 @@
                 }
                 else
                 {
-                    @foreach (var row in _entries)
+                    @foreach (var row in _buffer.Rows)
                     {
-                        <div @key="row.Sequence" class="@RowClass(row)">
+                        <div @key="row.Sequence" class="@StagePresentation.RowClass(row)">
                             <span class="ql-stage-time">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
-                            <span class="@LevelClass(row.Entry.Level)">@LevelLabel(row.Entry.Level)</span>
+                            <span class="@StagePresentation.LevelClass(row.Entry.Level)">@StagePresentation.LevelLabel(row.Entry.Level)</span>
                             <span class="ql-stage-source">@row.Entry.Source</span>
                             <span class="ql-stage-msg">@row.Entry.Message</span>
                             @if (row.Opening)
@@ -103,9 +105,9 @@
         @if (!Compact)
         {
             <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" Style="opacity: 0.7; font-size: 0.85rem;">
-                <span>@_entries.Count entries buffered</span>
+                <span>@_buffer.Count entries buffered</span>
                 <span>|</span>
-                <span>Buffer cap: @BufferCap (oldest drop)</span>
+                <span>Buffer cap: @StageBuffer.Cap (oldest drop)</span>
                 @if (_historyLoaded > 0)
                 {
                     <span>|</span>
@@ -129,17 +131,13 @@
     [Parameter]
     public string ViewportHeight { get; set; } = "70vh";
 
-    private const int BufferCap = 500;
     private const int FlushIntervalMs = 100;
 
-    private sealed record LogRow(long Sequence, LogEntry Entry, bool Arrive = false, bool Opening = false);
-
-    private readonly List<LogRow> _entries = [];
+    private readonly StageBuffer _buffer = new();
     private readonly ConcurrentQueue<LogEntry> _incoming = new();
     private readonly List<string> _notifyQueue = [];
     private readonly CancellationTokenSource _cts = new();
     private Task? _flushLoop;
-    private long _sequence;
 
     private HubConnection? _hub;
     private bool AutoScroll { get; set; } = true;
@@ -152,21 +150,9 @@
 
     private bool IsLive => _hub?.State == HubConnectionState.Connected;
 
-    private string LiveLabel => _hub?.State switch
-    {
-        HubConnectionState.Connected => "LIVE",
-        HubConnectionState.Connecting => "RECONNECTING",
-        HubConnectionState.Reconnecting => "RECONNECTING",
-        _ => "PAUSED"
-    };
+    private string LiveLabel => StagePresentation.MapHubState(_hub?.State).Label;
 
-    private string LiveState => _hub?.State switch
-    {
-        HubConnectionState.Connected => "connected",
-        HubConnectionState.Connecting => "reconnecting",
-        HubConnectionState.Reconnecting => "reconnecting",
-        _ => "disconnected"
-    };
+    private string LiveState => StagePresentation.MapHubState(_hub?.State).State;
 
     private string LiveBadgeClass =>
         IsLive
@@ -213,21 +199,18 @@
             if (_cts.IsCancellationRequested)
                 return;
 
-            var appended = 0;
-            var wasEmpty = _entries.Count == 0;
+            var batch = new List<LogEntry>();
             while (_incoming.TryDequeue(out var entry))
             {
-                var opening = wasEmpty && appended == 0;
-                _entries.Add(new LogRow(++_sequence, entry, Arrive: !opening, Opening: opening));
+                batch.Add(entry);
                 if (Compact)
                     _notifyQueue.Add(entry.Message);
-                appended++;
             }
 
-            if (appended == 0)
+            if (batch.Count == 0)
                 return;
 
-            TrimToCap();
+            _buffer.AppendLive(batch);
             StateHasChanged();
             _ = NotifyParentAsync();
         });
@@ -253,15 +236,18 @@
         }
     }
 
-    private void TrimToCap()
+    /// <summary>Test hook: apply live arrivals without SignalR.</summary>
+    internal void AppendLiveForTests(IEnumerable<LogEntry> entries)
     {
-        if (_entries.Count > BufferCap)
-            _entries.RemoveRange(0, _entries.Count - BufferCap);
+        _buffer.AppendLive(entries);
     }
 
     private async Task ConnectAsync()
     {
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            return;
+
         var hubApiKey = Options.Value.HubApiKey?.Trim();
         // Embeds must not inherit a visitor's expired OIDC cookie; that 401s and
         // skips the shared hub key. Compact always uses HubApiKey.
@@ -344,7 +330,7 @@
         {
         }
 
-        _entries.Clear();
+        _buffer.Clear();
         _historyLoaded = 0;
         StateHasChanged();
     }
@@ -353,12 +339,8 @@
     {
         try
         {
-            var history = await Api.GetSourceHistoryAsync(Source, BufferCap, CancellationToken.None);
-
-            foreach (var entry in history)
-                _entries.Add(new LogRow(++_sequence, entry));
-
-            TrimToCap();
+            var history = await Api.GetSourceHistoryAsync(Source, StageBuffer.Cap, CancellationToken.None);
+            _buffer.LoadHistory(history);
             _historyLoaded = history.Count;
         }
         catch (Exception ex)
@@ -369,41 +351,6 @@
                 : $"Stored history could not be read: {ex.Message}";
             Log.LogWarning(ex, "History load failed for source {Source}", Source);
         }
-    }
-
-    private static string LevelLabel(LogLevel level) => level switch
-    {
-        LogLevel.Trace => "TRACE",
-        LogLevel.Debug => "DEBUG",
-        LogLevel.Info => "INFO",
-        LogLevel.Warning => "WARN",
-        LogLevel.Error => "ERROR",
-        LogLevel.Critical => "CRIT",
-        _ => level.ToString().ToUpperInvariant()
-    };
-
-    private static string LevelClass(LogLevel level) => level switch
-    {
-        LogLevel.Warning => "ql-stage-lvl ql-stage-lvl-wrn",
-        LogLevel.Error or LogLevel.Critical => "ql-stage-lvl ql-stage-lvl-err",
-        LogLevel.Info => "ql-stage-lvl ql-stage-lvl-inf",
-        _ => "ql-stage-lvl ql-stage-lvl-dbg"
-    };
-
-    private static string RowClass(LogRow row)
-    {
-        var tone = row.Entry.Level switch
-        {
-            LogLevel.Warning => "ql-stage-row-wrn",
-            LogLevel.Error or LogLevel.Critical => "ql-stage-row-err",
-            _ => ""
-        };
-
-        var extras = row.Opening
-            ? "ql-stage-first"
-            : row.Arrive ? "ql-stage-row-arrive" : "";
-
-        return $"ql-stage-row {tone} {extras}".Trim();
     }
 
     public async ValueTask DisposeAsync()
