@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace QikLog.Infrastructure.Data;
 
-public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) : DbContext(options)
+public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<LogEntryEntity> LogEntries => Set<LogEntryEntity>();
 
@@ -10,8 +11,13 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
 
     public DbSet<TenantEntity> Tenants => Set<TenantEntity>();
 
+    /// <summary>Web's ASP.NET Core Data Protection key ring (auth cookies, antiforgery).</summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<DataProtectionKey>().ToTable("data_protection_keys");
+
         var tenant = modelBuilder.Entity<TenantEntity>();
         tenant.ToTable("tenants");
         tenant.HasKey(t => t.Id);

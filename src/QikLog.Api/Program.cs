@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Data;
+using QikLog.Infrastructure.Deployment;
 using CoreLogLevel = QikLog.Core.LogLevel;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// One-off migration job (Container Apps Job): migrate, then exit 0/1 without serving.
+if (MigrateOnlyMode.IsRequested(args, app.Configuration))
+    return await MigrateOnlyMode.RunAsync(app.Services, app.Logger, CancellationToken.None);
+
+// Fallback: still migrate on normal startup.
 await app.Services.MigrateQikLogDatabaseAsync();
 
 // Behind TLS-terminating proxies (Railway) the container sees plain HTTP.
@@ -223,7 +229,8 @@ app.MapGet("/v1/sources/{source}/logs", async (
 app.MapHub<LogHub>("/hubs/logs");
 app.MapQikLogObservability();
 
-app.Run();
+await app.RunAsync();
+return 0;
 
 /// <summary>Logger category for POST /v1/logs.</summary>
 internal sealed class IngestEndpoint;

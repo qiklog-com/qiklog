@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using QikLog.Infrastructure.Auth;
+using QikLog.Infrastructure.Data;
+using QikLog.Infrastructure.DataProtection;
 using QikLog.Web;
 using QikLog.Web.Components;
 using QikLog.Web.Services;
@@ -18,13 +20,21 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.AddFilter("Microsoft.AspNetCore.Antiforgery", LogLevel.Warning);
 }
 
-// Blazor antiforgery + interactive circuits need stable keys across container restarts.
+// Shared Postgres (same database as the API, which applies migrations on startup).
+var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
+var hasPostgres = !string.IsNullOrWhiteSpace(postgresConnectionString);
+if (hasPostgres)
+{
+    builder.Services.AddDbContext<QikLogDbContext>(options =>
+        options.UseNpgsql(postgresConnectionString));
+}
+
+// Auth cookies, antiforgery and Blazor circuits need one key ring shared by every instance
+// and revision. Container disk is wiped on restart, so keys live in Postgres when we have it;
+// local dev without a database keeps them on disk.
 var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"]
     ?? Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
-Directory.CreateDirectory(dataProtectionKeysPath);
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
-    .SetApplicationName("QikLog.Web");
+builder.Services.AddQikLogDataProtection(persistToDatabase: hasPostgres, dataProtectionKeysPath);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -102,6 +112,18 @@ if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
     });
 }
 
+// Readiness probe (Container Apps). Anonymous: probes never sign in. Web can start before
+// the migrate job / API has created data_protection_keys, so readiness waits for that table.
+app.MapGet("/healthz", async (IServiceProvider services, CancellationToken cancellationToken) =>
+{
+    await using var scope = services.CreateAsyncScope();
+    var keyStore = hasPostgres ? scope.ServiceProvider.GetRequiredService<QikLogDbContext>() : null;
+    var result = await DataProtectionKeyStoreProbe.CheckAsync(keyStore, cancellationToken);
+    var body = new { status = result.IsReady ? "ok" : "degraded", dataProtectionKeys = result.Status };
+    return result.IsReady ? Results.Ok(body) : Results.Json(body, statusCode: StatusCodes.Status503ServiceUnavailable);
+})
+.AllowAnonymous();
+
 // Marketing www iframes /embed/tail/{source}. Default is frame-ancestors 'self',
 // which blocks www.qiklog.com. Policy is applied by interactive server render mode.
 app.MapRazorComponents<App>()
@@ -112,6 +134,9 @@ app.MapRazorComponents<App>()
     });
 
 app.Run();
+
+/// <summary>Exposed for WebApplicationFactory in QikLog.Web.Tests.</summary>
+public partial class Program;
 
 public sealed class QikLogOptions
 {
