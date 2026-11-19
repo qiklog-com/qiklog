@@ -465,6 +465,12 @@ public sealed class LandingPageContractTests
         stats.ShouldContain("278ms");
         stats.ShouldContain("median, terminal to browser, measured");
         panel.ShouldContain("qiklogEmbedNotify");
+        panel.ShouldContain("(object)batch");
+        panel.ShouldContain("NotifyEmbed");
+        var embed = ReadRepoFile("src/QikLog.Web/Components/Pages/EmbedTail.razor");
+        embed.ShouldContain("NotifyEmbed=\"true\"");
+        var home = ReadRepoFile("src/QikLog.Web/Components/Pages/Home.razor");
+        home.ShouldNotContain("NotifyEmbed");
         index.ShouldNotContain("—");
         playground.ShouldNotContain("—");
     }
