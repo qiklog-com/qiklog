@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IIngestContext, IngestContext>();
         services.AddSingleton<ApiKeyHasher>();
         services.AddSingleton<ApiKeyRateLimiter>();
+        services.TryAddSingleton(TimeProvider.System);
 
         if (environment.IsEnvironment("Testing"))
         {
@@ -39,6 +41,7 @@ public static class DependencyInjection
             services.AddScoped<IApiKeyService, ApiKeyService>();
             services.AddScoped<ISourceCatalog, SourceCatalogService>();
             services.AddScoped<IUsageLimitService, UsageLimitService>();
+            services.AddScoped<ITenantBillingService, TenantBillingService>();
             RegisterTenantServices(services);
             return services;
         }
@@ -51,6 +54,7 @@ public static class DependencyInjection
             services.AddSingleton<IApiKeyService, NullApiKeyService>();
             services.AddSingleton<ISourceCatalog, NullSourceCatalog>();
             services.AddSingleton<IUsageLimitService, NullUsageLimitService>();
+            services.AddSingleton<ITenantBillingService, NullTenantBillingService>();
             return services;
         }
 
@@ -62,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<ISourceCatalog, SourceCatalogService>();
         services.AddScoped<IUsageLimitService, UsageLimitService>();
+        services.AddScoped<ITenantBillingService, TenantBillingService>();
         RegisterTenantServices(services);
         return services;
     }
