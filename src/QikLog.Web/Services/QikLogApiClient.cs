@@ -50,6 +50,45 @@ public sealed class QikLogApiClient(HttpClient http)
         var response = await http.PostAsync($"/v1/keys/{id}/revoke", null, cancellationToken);
         return response.IsSuccessStatusCode;
     }
+
+    /// <summary>Current plan and this month's usage, or null when the API refuses.</summary>
+    public async Task<BillingStatusDto?> GetBillingStatusAsync(CancellationToken cancellationToken)
+    {
+        var response = await http.GetAsync("/v1/billing/status", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<BillingStatusDto>(JsonOptions, cancellationToken);
+    }
+
+    /// <summary>Stripe Checkout URL for Pro, or null when checkout is unavailable.</summary>
+    public Task<string?> StartCheckoutAsync(CancellationToken cancellationToken) =>
+        PostForUrlAsync("/v1/billing/checkout", cancellationToken);
+
+    /// <summary>Stripe Customer Portal URL, or null when there is no billing account.</summary>
+    public Task<string?> OpenBillingPortalAsync(CancellationToken cancellationToken) =>
+        PostForUrlAsync("/v1/billing/portal", cancellationToken);
+
+    private async Task<string?> PostForUrlAsync(string path, CancellationToken cancellationToken)
+    {
+        var response = await http.PostAsync(path, null, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var body = await response.Content.ReadFromJsonAsync<UrlResponse>(JsonOptions, cancellationToken);
+        return string.IsNullOrWhiteSpace(body?.Url) ? null : body.Url;
+    }
+
+    private sealed record UrlResponse(string? Url);
+}
+
+public sealed record BillingStatusDto(
+    [property: JsonPropertyName("plan")] string Plan,
+    [property: JsonPropertyName("usedThisMonth")] long UsedThisMonth,
+    [property: JsonPropertyName("monthlyLimit")] long MonthlyLimit,
+    [property: JsonPropertyName("hasBillingAccount")] bool HasBillingAccount)
+{
+    public bool IsPro => string.Equals(Plan, "pro", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed record CreateApiKeyResponse(

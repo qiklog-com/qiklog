@@ -1,15 +1,55 @@
 @page "/billing"
 @rendermode InteractiveServer
+@inject QikLog.Web.Services.QikLogApiClient Api
+@inject NavigationManager NavigationManager
+@implements IDisposable
 <PageTitle>Billing · QikLog</PageTitle>
 
 <AuthorizeView>
     <Authorized>
         <FluentCard Style="max-width: 560px; margin: 2rem auto; padding: 2rem;">
             <h2 style="margin-top: 0;">Billing</h2>
-            <p>Upgrade to <strong>Pro $9/mo</strong> for higher ingest limits and production-ready defaults.</p>
-            <FluentButton Appearance="Appearance.Accent" OnClick="StartCheckout" Disabled="@_busy">
-                Upgrade with Stripe
-            </FluentButton>
+
+            @if (_justPaid)
+            {
+                <FluentMessageBar Intent="MessageIntent.Success" Title="Payment received." AllowDismiss="false">
+                    Pro can take a few seconds to show up here.
+                </FluentMessageBar>
+            }
+
+            @if (_status is null)
+            {
+                <p data-billing-loading>@(_loaded ? "Plan details are unavailable right now." : "Loading your plan…")</p>
+            }
+            else
+            {
+                <p data-billing-plan>
+                    You're on <strong>@(_status.IsPro ? "Pro" : "Free")</strong>.
+                    @_status.UsedThisMonth.ToString("N0") of @_status.MonthlyLimit.ToString("N0") log lines used this month.
+                </p>
+
+                @if (_status.IsPro)
+                {
+                    <p>Change your card, download invoices, or cancel anytime. Cancelling keeps Pro until the end of the period you paid for.</p>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="OpenPortal" Disabled="@_busy">
+                        Manage billing
+                    </FluentButton>
+                }
+                else
+                {
+                    <p>Pro is <strong>$9/mo</strong> for 500,000 log lines a month. Cancel anytime. Your logs stay readable on every plan.</p>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="StartCheckout" Disabled="@_busy">
+                        Upgrade to Pro
+                    </FluentButton>
+                    @if (_status.HasBillingAccount)
+                    {
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="OpenPortal" Disabled="@_busy" Style="margin-left: 0.5rem;">
+                            Billing history
+                        </FluentButton>
+                    }
+                }
+            }
+
             @if (!string.IsNullOrEmpty(_error))
             {
                 <p style="margin-top: 1rem; opacity: 0.85;">@_error</p>
@@ -25,34 +65,92 @@
 </AuthorizeView>
 
 @code {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
+    private const int PollAttempts = 6;
+
+    private readonly CancellationTokenSource _cts = new();
+    private QikLog.Web.Services.BillingStatusDto? _status;
+    private bool _loaded;
     private bool _busy;
+    private bool _justPaid;
     private string? _error;
 
-    [Inject] private IHttpClientFactory HttpClientFactory { get; set; } = null!;
-    [Inject] private Microsoft.Extensions.Options.IOptions<QikLogOptions> Options { get; set; } = null!;
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        _justPaid = uri.Query.Contains("success=1", StringComparison.Ordinal);
+        await LoadStatusAsync();
+    }
 
-    private async Task StartCheckout()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_justPaid)
+            return;
+
+        // Stripe often redirects back before its webhook lands. Check a few times, then
+        // drop ?success=1 so a reload doesn't claim a payment that never arrived.
+        try
+        {
+            for (var i = 0; i < PollAttempts && _status is not { IsPro: true }; i++)
+            {
+                await Task.Delay(PollInterval, _cts.Token);
+                await LoadStatusAsync();
+                StateHasChanged();
+            }
+
+            NavigationManager.NavigateTo("/billing", forceLoad: false, replace: true);
+        }
+        catch (OperationCanceledException)
+        {
+            // Page closed.
+        }
+    }
+
+    private async Task LoadStatusAsync()
+    {
+        try
+        {
+            _status = await Api.GetBillingStatusAsync(_cts.Token);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            if (_cts.IsCancellationRequested)
+                return;
+            _status = null;
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private Task StartCheckout() => GoToStripeAsync(
+        Api.StartCheckoutAsync,
+        "Checkout isn't available right now. If you already have Pro, use Manage billing.");
+
+    private Task OpenPortal() => GoToStripeAsync(
+        Api.OpenBillingPortalAsync,
+        "The billing portal isn't available right now. Please try again in a minute.");
+
+    private async Task GoToStripeAsync(Func<CancellationToken, Task<string?>> getUrl, string failure)
     {
         _busy = true;
         _error = null;
         try
         {
-            var client = HttpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(Options.Value.ApiBaseUrl.TrimEnd('/') + "/");
-            var response = await client.PostAsync("/v1/billing/checkout", null);
-            if (!response.IsSuccessStatusCode)
+            var url = await getUrl(_cts.Token);
+            if (url is null)
             {
-                _error = "Checkout is not configured. Set QikLog:Stripe in the API.";
+                _error = failure;
                 return;
             }
 
-            var doc = await response.Content.ReadFromJsonAsync<CheckoutResponse>();
-            if (!string.IsNullOrEmpty(doc?.Url))
-                NavigationManager.NavigateTo(doc.Url, forceLoad: true);
+            NavigationManager.NavigateTo(url, forceLoad: true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
         {
-            _error = ex.Message;
+            if (!_cts.IsCancellationRequested)
+                _error = failure;
         }
         finally
         {
@@ -60,7 +158,9 @@
         }
     }
 
-    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
-
-    private sealed record CheckoutResponse(string? Url);
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+    }
 }
