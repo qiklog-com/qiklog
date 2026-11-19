@@ -476,10 +476,17 @@ public sealed class LandingPageContractTests
 
         home.ShouldContain("Try it now");
         home.ShouldContain("/tail/demo");
-        home.ShouldContain("ApiBaseUrl");
+        home.ShouldContain("DemoSampleText");
+        home.ShouldContain("Sign in to get your own key");
         home.ShouldContain("waiting for your first log line");
+        home.ShouldNotContain("HubApiKey");
         home.ShouldNotContain("curl -X POST http://localhost:5080");
         home.ShouldNotContain("—");
+
+        var samples = ReadRepoFile("src/QikLog.Web/Demo/DemoSampleText.cs");
+        samples.ShouldContain("$QIKLOG_API_KEY");
+        samples.ShouldContain("YOUR_API_KEY");
+        samples.ShouldNotContain("HubApiKey");
 
         var tail = ReadRepoFile("src/QikLog.Web/Components/Pages/Tail.razor");
         tail.ShouldContain("<LiveTailPanel");

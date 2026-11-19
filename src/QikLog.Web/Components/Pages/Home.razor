@@ -1,6 +1,5 @@
 @page "/"
 @rendermode InteractiveServer
-@inject Microsoft.Extensions.Options.IOptions<QikLogOptions> Options
 
 <PageTitle>QikLog</PageTitle>
 
@@ -14,6 +13,11 @@
         <section class="ql-demo-pane">
             <h2 class="ql-section-title">Send a line</h2>
             <pre class="ql-terminal"><span class="ql-terminal-prompt">$</span> @_curl</pre>
+            <pre class="ql-terminal">@_csharp</pre>
+            <pre class="ql-terminal">@_javascript</pre>
+            <p class="ql-muted">
+                <a href="/login">Sign in to get your own key</a>
+            </p>
             <p class="ql-muted">
                 Workspace is the shared demo source. Treat anything you send as public.
             </p>
@@ -33,29 +37,8 @@
 </div>
 
 @code {
-    private string _curl = "";
-
-    protected override void OnInitialized()
-    {
-        var opts = Options.Value;
-        var api = string.IsNullOrWhiteSpace(opts.ApiBaseUrl)
-            ? "http://127.0.0.1:5080"
-            : opts.ApiBaseUrl.TrimEnd('/');
-        var payload = """{"source":"demo","level":"info","message":"hello from curl"}""";
-        if (!string.IsNullOrWhiteSpace(opts.HubApiKey))
-        {
-            _curl =
-                $"curl -X POST {api}/v1/logs \\\n" +
-                "  -H \"Content-Type: application/json\" \\\n" +
-                $"  -H \"Authorization: Bearer {opts.HubApiKey}\" \\\n" +
-                $"  -d '{payload}'";
-        }
-        else
-        {
-            _curl =
-                $"curl -X POST {api}/v1/logs \\\n" +
-                "  -H \"Content-Type: application/json\" \\\n" +
-                $"  -d '{payload}'";
-        }
-    }
+    // Placeholders only. The configured key stays on the server.
+    private string _curl = QikLog.Web.Demo.DemoSampleText.Curl;
+    private string _csharp = QikLog.Web.Demo.DemoSampleText.CSharp;
+    private string _javascript = QikLog.Web.Demo.DemoSampleText.JavaScript;
 }
