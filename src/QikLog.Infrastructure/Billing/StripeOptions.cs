@@ -15,4 +15,7 @@ public sealed class StripeOptions
     public string SuccessUrl { get; set; } = "http://localhost:5081/billing?success=1";
 
     public string CancelUrl { get; set; } = "http://localhost:5081/billing?canceled=1";
+
+    /// <summary>Where the Stripe Customer Portal sends people back to.</summary>
+    public string PortalReturnUrl { get; set; } = "http://localhost:5081/billing";
 }

@@ -65,5 +65,7 @@ internal static class ProtectedApiRoutes
         || path.StartsWithSegments("/healthz", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/metrics", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase);
+        || path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase)
+        // Stripe authenticates with the Stripe-Signature header, verified in the endpoint.
+        || path.Equals(BillingEndpoints.WebhookPath, StringComparison.OrdinalIgnoreCase);
 }

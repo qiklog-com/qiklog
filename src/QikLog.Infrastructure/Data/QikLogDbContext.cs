@@ -10,6 +10,8 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
 
     public DbSet<TenantEntity> Tenants => Set<TenantEntity>();
 
+    public DbSet<ProcessedStripeEventEntity> ProcessedStripeEvents => Set<ProcessedStripeEventEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var tenant = modelBuilder.Entity<TenantEntity>();
@@ -19,6 +21,16 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
         tenant.Property(t => t.ZitadelOrgId).HasMaxLength(64);
         tenant.Property(t => t.Plan).HasMaxLength(32).IsRequired();
         tenant.HasIndex(t => t.ZitadelOrgId).IsUnique();
+        tenant.Property(t => t.StripeCustomerId).HasMaxLength(64);
+        tenant.Property(t => t.StripeSubscriptionId).HasMaxLength(64);
+        tenant.HasIndex(t => t.StripeCustomerId);
+        tenant.HasIndex(t => t.StripeSubscriptionId);
+
+        var stripeEvent = modelBuilder.Entity<ProcessedStripeEventEntity>();
+        stripeEvent.ToTable("processed_stripe_events");
+        stripeEvent.HasKey(e => e.EventId);
+        stripeEvent.Property(e => e.EventId).HasMaxLength(255);
+        stripeEvent.Property(e => e.Type).HasMaxLength(128).IsRequired();
 
         var apiKey = modelBuilder.Entity<ApiKeyEntity>();
         apiKey.ToTable("api_keys");
