@@ -104,6 +104,12 @@ internal static class WebAuthExtensions
                         return;
                     }
 
+                    if (auth.IsSharedDefaultOrg(orgId))
+                    {
+                        context.Fail("Sign-ups must create their own organization; the shared default organization is not allowed.");
+                        return;
+                    }
+
                     await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
                     var provisioner = scope.ServiceProvider.GetRequiredService<TenantProvisioner>();
                     var tenantId = await provisioner.EnsureTenantAsync(

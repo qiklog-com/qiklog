@@ -22,6 +22,11 @@ public sealed class TenantProvisioner(
 
         var orgId = zitadelOrgId.Trim();
 
+        // Defense in depth: callers check first, but never create a tenant for the shared
+        // default org, whose members would all land in one tenant.
+        if (authOptions.Value.IsSharedDefaultOrg(orgId))
+            throw new InvalidOperationException("Refusing to provision a tenant for the shared Zitadel default organization.");
+
         var existing = await db.Tenants
             .FirstOrDefaultAsync(t => t.ZitadelOrgId == orgId, cancellationToken);
         if (existing is not null)

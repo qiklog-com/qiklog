@@ -157,10 +157,34 @@ public sealed class TenantProvisionerTests
         row.ZitadelOrgId.ShouldBe("org-new");
     }
 
-    internal static TenantProvisioner CreateProvisioner(QikLogDbContext db, string? bootstrapOrgId) =>
+    [Fact]
+    public async Task Given_the_shared_default_org_When_provisioning_Then_it_is_refused_and_nothing_is_created()
+    {
+        // Given: the Zitadel default org is configured
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, defaultOrgId: "org-default");
+
+        // When / Then: provisioning for it throws and no tenant row exists
+        await Should.ThrowAsync<InvalidOperationException>(
+            () => provisioner.EnsureTenantAsync(" org-default ", "Anyone", CancellationToken.None));
+        (await db.Tenants.CountAsync()).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Given_a_default_org_is_configured_When_another_org_signs_in_Then_it_gets_a_tenant()
+    {
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, defaultOrgId: "org-default");
+
+        var id = await provisioner.EnsureTenantAsync("org-acme", "Acme", CancellationToken.None);
+
+        (await db.Tenants.SingleAsync(t => t.Id == id)).ZitadelOrgId.ShouldBe("org-acme");
+    }
+
+    internal static TenantProvisioner CreateProvisioner(QikLogDbContext db, string? bootstrapOrgId, string? defaultOrgId = null) =>
         new(
             db,
-            Options.Create(new QikLogAuthOptions { BootstrapOrgId = bootstrapOrgId }),
+            Options.Create(new QikLogAuthOptions { BootstrapOrgId = bootstrapOrgId, DefaultOrgId = defaultOrgId }),
             NullLogger<TenantProvisioner>.Instance);
 
     private static void SeedUnclaimedBootstrap(QikLogDbContext db)
