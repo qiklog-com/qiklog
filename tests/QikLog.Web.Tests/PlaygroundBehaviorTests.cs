@@ -32,6 +32,9 @@ public sealed class PlaygroundBehaviorTests : TestContext
         sent.Level.ShouldBe(LogLevel.Error);
         sent.Message.ShouldBe("hellothere");
         cut.Markup.ShouldNotContain("ql_demo_secret_value");
+        cut.Find("[data-level=error]").GetAttribute("aria-pressed").ShouldBe("true");
+        cut.Find("[data-level=info]").GetAttribute("aria-pressed").ShouldBe("false");
+        cut.Find("[data-tab=curl]").GetAttribute("aria-selected").ShouldBe("true");
     }
 
     [Fact]

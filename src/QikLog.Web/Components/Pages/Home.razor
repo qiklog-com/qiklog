@@ -35,7 +35,7 @@
                     <button type="button"
                             class="ql-chip"
                             data-level="@DemoLevels.Wire(chip.Level)"
-                            aria-pressed="@(_level == chip.Level)"
+                            aria-pressed="@(_level == chip.Level ? "true" : "false")"
                             @onclick="() => _level = chip.Level">
                         @chip.Label
                     </button>
@@ -57,7 +57,7 @@
                             class="ql-tab"
                             role="tab"
                             data-tab="@tab.Id"
-                            aria-selected="@(_tab == tab.Tab)"
+                            aria-selected="@(_tab == tab.Tab ? "true" : "false")"
                             @onclick="() => _tab = tab.Tab">
                         @tab.Label
                     </button>
