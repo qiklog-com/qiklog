@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Microsoft.FluentUI.AspNetCore.Components;
 using QikLog.Infrastructure.Auth;
 using QikLog.Web;
 using QikLog.Web.Components;
+using QikLog.Web.Demo;
 using QikLog.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,8 +58,21 @@ builder.Services.AddHttpClient<QikLogApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
 }).AddHttpMessageHandler<AccessTokenOrApiKeyHandler>();
+builder.Services.AddHttpClient<IDemoIngest, DemoIngestClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+});
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<DemoIpWindow>();
+builder.Services.AddScoped<DemoSession>();
+builder.Services.AddScoped<DemoRateGate>();
+builder.Services.AddSingleton<IDemoPacer, DemoPacer>();
 
 var app = builder.Build();
+
+DemoCredentials.LogFallbackIfNeeded(
+    app.Services.GetRequiredService<IOptions<QikLogOptions>>().Value,
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("QikLog.Web.Demo"));
 
 // Behind TLS-terminating proxies (Railway, most PaaS) the container receives plain
 // HTTP; without honoring X-Forwarded-Proto the OIDC redirect_uri is built as
@@ -119,4 +134,7 @@ public sealed class QikLogOptions
 
     /// <summary>Optional API key for SignalR hub + history when API auth enforcement is enabled.</summary>
     public string? HubApiKey { get; set; }
+
+    /// <summary>Try-it-now credential. Not used by the signed-in dashboard.</summary>
+    public DemoOptions Demo { get; set; } = new();
 }

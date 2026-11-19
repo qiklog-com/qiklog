@@ -265,6 +265,115 @@ h1:focus,
     min-width: 0;
 }
 
+.ql-playground-input {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 0.75rem;
+    padding: 0.65rem 0.75rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.875rem;
+    color: var(--ql-text-ink);
+    background: var(--ql-paper);
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-md);
+}
+
+.ql-playground-chips,
+.ql-playground-actions,
+.ql-playground-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ql-chip,
+.ql-tab,
+.ql-playground-actions button {
+    font-family: var(--ql-font-sans);
+    font-size: 0.875rem;
+    color: var(--ql-text-ink);
+    background: var(--ql-paper);
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+}
+
+.ql-chip[aria-pressed="true"],
+.ql-tab[aria-selected="true"] {
+    color: var(--ql-accent-rust);
+    border-color: var(--ql-accent-rust);
+}
+
+.ql-playground-actions button[data-primary="true"] {
+    color: var(--ql-paper);
+    background: var(--ql-accent-rust);
+    border-color: var(--ql-accent-rust);
+}
+
+.ql-chip:focus-visible,
+.ql-tab:focus-visible,
+.ql-playground-actions button:focus-visible,
+.ql-playground-input:focus-visible {
+    outline: 2px solid var(--ql-accent-rust);
+    outline-offset: 2px;
+}
+
+.ql-playground-actions button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.ql-playground-status,
+.ql-playground-best {
+    min-height: 1.4em;
+    margin: 0 0 0.75rem;
+    color: var(--ql-text-ink-muted);
+    font-family: var(--ql-font-mono);
+    font-size: 0.8125rem;
+}
+
+.ql-playground-nudge {
+    margin: 1rem 0 0;
+    padding: 0.875rem 1rem;
+    color: var(--ql-text-ink);
+    background: var(--ql-paper-elev1);
+    border: 1px solid var(--ql-paper-border);
+    border-radius: var(--ql-radius-md);
+}
+
+.ql-playground-nudge a {
+    color: var(--ql-accent-rust);
+}
+
+.ql-tail-latency {
+    color: var(--ql-text-fg-dim);
+    white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+    .ql-playground.ql-page-wide {
+        padding: 1.25rem 1rem 2.5rem;
+    }
+
+    .ql-playground .ql-hero-title {
+        font-size: 2rem;
+    }
+
+    .ql-playground .ql-playground-actions button {
+        flex: 1 1 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ql-playground,
+    .ql-playground * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
 .ql-tail-wait {
     display: flex;
     align-items: center;

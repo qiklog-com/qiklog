@@ -475,11 +475,20 @@ public sealed class LandingPageContractTests
         var home = ReadRepoFile("src/QikLog.Web/Components/Pages/Home.razor");
 
         home.ShouldContain("Try it now");
-        home.ShouldContain("/tail/demo");
-        home.ShouldContain("ApiBaseUrl");
-        home.ShouldContain("waiting for your first log line");
+        home.ShouldContain("This tail is just yours. It disappears when you leave.");
+        home.ShouldContain("Sign in to get your own key");
+        home.ShouldContain("UseDemoCredential");
+        home.ShouldNotContain("HubApiKey");
+        home.ShouldNotContain("Treat anything you send as public");
+        home.ShouldNotContain("/tail/demo");
         home.ShouldNotContain("curl -X POST http://localhost:5080");
         home.ShouldNotContain("—");
+
+        var samples = ReadRepoFile("src/QikLog.Web/Demo/DemoCodeSamples.cs");
+        samples.ShouldContain("$QIKLOG_API_KEY");
+        samples.ShouldContain("YOUR_API_KEY");
+        samples.ShouldContain("__MSG__");
+        samples.ShouldNotContain("HubApiKey");
 
         var tail = ReadRepoFile("src/QikLog.Web/Components/Pages/Tail.razor");
         tail.ShouldContain("<LiveTailPanel");
