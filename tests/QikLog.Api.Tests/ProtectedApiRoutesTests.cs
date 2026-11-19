@@ -31,6 +31,7 @@ public sealed class ProtectedApiRoutesTests
     [InlineData("/metrics")]
     [InlineData("/openapi/v1.json")]
     [InlineData("/scalar/v1")]
+    [InlineData("/v1/billing/webhook")]
     public void IsPublic_true_for_observability_and_docs(string path)
     {
         ProtectedApiRoutes.IsPublic(new PathString(path)).ShouldBeTrue();
@@ -40,6 +41,10 @@ public sealed class ProtectedApiRoutesTests
     [InlineData("/v1/logs")]
     [InlineData("/v1/keys")]
     [InlineData("/tail/demo")]
+    [InlineData("/v1/billing/checkout")]
+    [InlineData("/v1/billing/portal")]
+    [InlineData("/v1/billing/status")]
+    [InlineData("/v1/billing/webhook/extra")]
     public void IsPublic_false_for_product_routes(string path)
     {
         ProtectedApiRoutes.IsPublic(new PathString(path)).ShouldBeFalse();
