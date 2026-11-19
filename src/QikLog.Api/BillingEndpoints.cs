@@ -141,7 +141,10 @@ internal static class BillingEndpoints
             var portal = await new PortalSessionService().CreateAsync(new PortalSessionCreateOptions
             {
                 Customer = customerId,
-                ReturnUrl = options.Value.PortalReturnUrl
+                ReturnUrl = options.Value.PortalReturnUrl,
+                Configuration = string.IsNullOrWhiteSpace(options.Value.PortalConfigurationId)
+                    ? null
+                    : options.Value.PortalConfigurationId
             }, cancellationToken: ct);
 
             log.LogInformation("Created Stripe portal session for tenant {TenantId}", tenantId);
