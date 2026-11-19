@@ -58,6 +58,15 @@ builder.Services.AddHttpClient<QikLogApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
 }).AddHttpMessageHandler<AccessTokenOrApiKeyHandler>();
+builder.Services.AddHttpClient<IDemoIngest, DemoIngestClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+});
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<DemoIpWindow>();
+builder.Services.AddScoped<DemoSession>();
+builder.Services.AddScoped<DemoRateGate>();
+builder.Services.AddSingleton<IDemoPacer, DemoPacer>();
 
 var app = builder.Build();
 

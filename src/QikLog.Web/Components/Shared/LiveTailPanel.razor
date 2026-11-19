@@ -7,6 +7,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject ILogger<LiveTailPanel> Log
+@using QikLog.Web.Demo
 
 @*
   Shared live-tail panel used by /tail/{source} and /embed/tail/{source}.
@@ -66,6 +67,10 @@
                             <span style="opacity: 0.5; white-space: nowrap;">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
                             <span style="@LevelStyle(row.Entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(row.Entry.Level)</span>
                             <span style="white-space: pre-wrap; word-break: break-word;">@row.Entry.Message</span>
+                            @if (!string.IsNullOrEmpty(row.Note))
+                            {
+                                <span class="ql-tail-latency">@row.Note</span>
+                            }
                         </div>
                     }
                 }
@@ -101,10 +106,25 @@
     [Parameter]
     public string ViewportHeight { get; set; } = "70vh";
 
+    /// <summary>
+    /// When true, subscribe with the server-side demo credential instead of the
+    /// visitor's token or the shared hub key. The credential is not rendered.
+    /// </summary>
+    [Parameter]
+    public bool UseDemoCredential { get; set; }
+
+    /// <summary>Called on the server when a line arrives over SignalR, before it is painted.</summary>
+    [Parameter]
+    public EventCallback<LogEntry> LineArrived { get; set; }
+
+    /// <summary>Optional note for a row, resolved once when the row is appended.</summary>
+    [Parameter]
+    public Func<LogEntry, string?>? NoteFor { get; set; }
+
     private const int BufferCap = 500;
     private const int FlushIntervalMs = 100;
 
-    private sealed record LogRow(long Sequence, LogEntry Entry);
+    private sealed record LogRow(long Sequence, LogEntry Entry, string? Note);
 
     private readonly List<LogRow> _entries = [];
     private readonly ConcurrentQueue<LogEntry> _incoming = new();
@@ -175,7 +195,7 @@
             var appended = 0;
             while (_incoming.TryDequeue(out var entry))
             {
-                _entries.Add(new LogRow(++_sequence, entry));
+                _entries.Add(new LogRow(++_sequence, entry, NoteFor?.Invoke(entry)));
                 if (Compact)
                     _notifyQueue.Add(entry.Message);
                 appended++;
@@ -218,11 +238,17 @@
 
     private async Task ConnectAsync()
     {
+        if (string.IsNullOrWhiteSpace(Options.Value.ApiBaseUrl))
+            return;
+
         var baseUrl = Options.Value.ApiBaseUrl.TrimEnd('/');
-        var hubApiKey = Options.Value.HubApiKey?.Trim();
-        // Embeds must not inherit a visitor's expired OIDC cookie; that 401s and
-        // skips the shared hub key. Compact always uses HubApiKey.
-        var accessToken = Compact
+        var hubApiKey = UseDemoCredential
+            ? DemoCredentials.Resolve(Options.Value)
+            : Options.Value.HubApiKey?.Trim();
+        // Embeds and the playground must not inherit a visitor's expired OIDC
+        // cookie. Compact uses the hub key. The playground sets UseDemoCredential
+        // and subscribes with the server-side demo credential instead.
+        var accessToken = UseDemoCredential || Compact
             ? null
             : HttpContextAccessor.HttpContext is { } http
                 ? await http.GetTokenAsync("access_token")
@@ -283,7 +309,12 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hub.On<LogEntry>("LogReceived", _incoming.Enqueue);
+        hub.On<LogEntry>("LogReceived", entry =>
+        {
+            if (LineArrived.HasDelegate)
+                _ = LineArrived.InvokeAsync(entry);
+            _incoming.Enqueue(entry);
+        });
         hub.Reconnected += _ => InvokeAsync(StateHasChanged);
         hub.Reconnecting += _ => InvokeAsync(StateHasChanged);
         hub.Closed += _ => InvokeAsync(StateHasChanged);
@@ -313,7 +344,7 @@
             var history = await Api.GetSourceHistoryAsync(Source, BufferCap, CancellationToken.None);
 
             foreach (var entry in history)
-                _entries.Add(new LogRow(++_sequence, entry));
+                _entries.Add(new LogRow(++_sequence, entry, null));
 
             TrimToCap();
             _historyLoaded = history.Count;
@@ -349,6 +380,13 @@
         LogLevel.Critical => "color: var(--ql-level-critical); text-shadow: 0 0 4px var(--ql-accent-teal-glow);",
         _ => ""
     };
+
+    /// <summary>Appends a row the way a flushed SignalR line would. Tests use this.</summary>
+    internal void AppendForTests(LogEntry entry)
+    {
+        _entries.Add(new LogRow(++_sequence, entry, NoteFor?.Invoke(entry)));
+        StateHasChanged();
+    }
 
     public async ValueTask DisposeAsync()
     {

@@ -1,3 +1,4 @@
+using QikLog.Core;
 using Shouldly;
 using Xunit;
 

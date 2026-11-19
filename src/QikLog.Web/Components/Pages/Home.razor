@@ -1,44 +1,258 @@
 @page "/"
 @rendermode InteractiveServer
+@implements IDisposable
+@using Microsoft.Extensions.Options
+@using QikLog.Core
+@using QikLog.Web.Components.Shared
+@using QikLog.Web.Demo
+@inject IOptions<QikLogOptions> Options
+@inject DemoSession Session
+@inject DemoRateGate Rate
+@inject IDemoIngest Ingest
+@inject IDemoPacer Pacer
+@inject TimeProvider Time
 
 <PageTitle>QikLog</PageTitle>
 
-<div class="ql-page-wide">
+<div class="ql-page-wide ql-playground">
     <h1 class="ql-hero-title">Try it now</h1>
-    <p class="ql-lede">
-        Copy the curl. The tail on the right is already waiting for source <code>demo</code>.
-    </p>
+    <p class="ql-lede">Type a line. It shows up on your tail.</p>
 
     <div class="ql-demo-split">
         <section class="ql-demo-pane">
             <h2 class="ql-section-title">Send a line</h2>
-            <pre class="ql-terminal"><span class="ql-terminal-prompt">$</span> @_curl</pre>
-            <pre class="ql-terminal">@_csharp</pre>
-            <pre class="ql-terminal">@_javascript</pre>
+            <input id="ql-playground-message"
+                   class="ql-playground-input"
+                   maxlength="120"
+                   autocomplete="off"
+                   aria-label="Message"
+                   @bind="_draft"
+                   @bind:event="oninput" />
+
+            <div class="ql-playground-chips" role="group" aria-label="Level">
+                @foreach (var chip in _chips)
+                {
+                    <button type="button"
+                            class="ql-chip"
+                            data-level="@DemoLevels.Wire(chip.Level)"
+                            aria-pressed="@(_level == chip.Level)"
+                            @onclick="() => _level = chip.Level">
+                        @chip.Label
+                    </button>
+                }
+            </div>
+
+            <div class="ql-playground-actions">
+                <button type="button" data-action="send" data-primary="true" disabled="@SendDisabled" @onclick="SendAsync">Send</button>
+                <button type="button" data-action="simulate" disabled="@BurstDisabled" @onclick="SimulateAsync">Simulate traffic</button>
+            </div>
+
+            <p class="ql-playground-status" role="status">@StatusText</p>
+            <p class="ql-muted">This tail is just yours. It disappears when you leave.</p>
+
+            <div class="ql-playground-tabs" role="tablist" aria-label="Code sample">
+                @foreach (var tab in _tabs)
+                {
+                    <button type="button"
+                            class="ql-tab"
+                            role="tab"
+                            data-tab="@tab.Id"
+                            aria-selected="@(_tab == tab.Tab)"
+                            @onclick="() => _tab = tab.Tab">
+                        @tab.Label
+                    </button>
+                }
+            </div>
+            <pre class="ql-terminal">@if (_tab == DemoCodeTab.Curl) { <span class="ql-terminal-prompt">$ </span> }@Sample</pre>
             <p class="ql-muted">
                 <a href="/login">Sign in to get your own key</a>
             </p>
-            <p class="ql-muted">
-                Workspace is the shared demo source. Treat anything you send as public.
-            </p>
+            @if (Session.Accepted >= 3)
+            {
+                <p class="ql-playground-nudge">
+                    That's QikLog. <a href="/login">Get your own key</a>: free up to 10,000 lines a month.
+                </p>
+            }
         </section>
         <section class="ql-demo-pane">
             <h2 class="ql-section-title">Live tail</h2>
-            <a class="ql-tail-wait" href="/tail/demo">
-                <span class="ql-tail-wait-label">waiting for your first log line</span>
-                <span class="ql-cursor" aria-hidden="true"></span>
-            </a>
-            <p class="ql-muted">
-                <a href="/tail/demo">Open live tail for demo</a>
-                · <a href="/manage">Manage sources and keys</a>
-            </p>
+            <LiveTailPanel Source="@Session.Source"
+                           Compact="true"
+                           UseDemoCredential="true"
+                           ViewportHeight="16rem"
+                           LineArrived="OnLine"
+                           NoteFor="NoteFor" />
+            @if (Session.Latency.BestMs is int best)
+            {
+                <p class="ql-playground-best">your best: @best ms</p>
+            }
         </section>
     </div>
 </div>
 
 @code {
-    // Placeholders only. The configured key stays on the server.
-    private string _curl = QikLog.Web.Demo.DemoSampleText.Curl;
-    private string _csharp = QikLog.Web.Demo.DemoSampleText.CSharp;
-    private string _javascript = QikLog.Web.Demo.DemoSampleText.JavaScript;
+    private static readonly (string Label, LogLevel Level)[] _chips =
+    [
+        ("Info", LogLevel.Info),
+        ("Warn", LogLevel.Warning),
+        ("Error", LogLevel.Error),
+        ("Critical", LogLevel.Critical)
+    ];
+
+    private static readonly (string Id, string Label, DemoCodeTab Tab)[] _tabs =
+    [
+        ("curl", "curl", DemoCodeTab.Curl),
+        ("csharp", "C#", DemoCodeTab.CSharp),
+        ("javascript", "JavaScript", DemoCodeTab.JavaScript)
+    ];
+
+    private readonly CancellationTokenSource _cts = new();
+    private PeriodicTimer? _timer;
+    private string _draft = "";
+    private string? _status;
+    private LogLevel _level = LogLevel.Info;
+    private DemoCodeTab _tab = DemoCodeTab.Curl;
+
+    private string Sample =>
+        DemoCodeSamples.Render(_tab, Session.Source, DemoLevels.Wire(_level), DemoMessage.Sanitize(_draft));
+
+    private bool SendDisabled =>
+        DemoMessage.Sanitize(_draft).Length == 0 || !Rate.PeekManual().Allowed;
+
+    private bool BurstDisabled => !Rate.PeekBurst().Allowed;
+
+    private string? StatusText
+    {
+        get
+        {
+            if (_status is not null)
+                return _status;
+
+            var burst = Rate.PeekBurst();
+            if (!burst.Allowed && burst.Kind is DemoLimitKind.CircuitCap or DemoLimitKind.IpCap)
+                return burst.Message;
+
+            if (DemoMessage.Sanitize(_draft).Length > 0)
+            {
+                var send = Rate.PeekManual();
+                if (!send.Allowed)
+                    return send.Message;
+            }
+
+            if (!burst.Allowed && burst.Kind == DemoLimitKind.BurstCooling)
+                return burst.Message;
+
+            return null;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Test doubles skip the tick. A background render fights bunit's dispatcher.
+        if (Pacer is not DemoPacer)
+            return;
+
+        _timer = new PeriodicTimer(TimeSpan.FromMilliseconds(250));
+        _ = TickAsync();
+    }
+
+    private async Task TickAsync()
+    {
+        try
+        {
+            while (_timer is not null && await _timer.WaitForNextTickAsync(_cts.Token))
+                await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        var message = DemoMessage.Sanitize(_draft);
+        if (message.Length == 0)
+            return;
+
+        if (!Configured)
+        {
+            _status = "Demo ingest is not configured.";
+            return;
+        }
+
+        var limit = Rate.TryManual();
+        if (!limit.Allowed)
+        {
+            _status = limit.Message;
+            return;
+        }
+
+        _status = null;
+        await PostAsync(_level, message);
+    }
+
+    private async Task SimulateAsync()
+    {
+        if (!Configured)
+        {
+            _status = "Demo ingest is not configured.";
+            return;
+        }
+
+        var limit = Rate.TryBurst();
+        if (!limit.Allowed)
+        {
+            _status = limit.Message;
+            return;
+        }
+
+        _status = null;
+        try
+        {
+            for (var i = 0; i < DemoScript.Lines.Count; i++)
+            {
+                if (i > 0)
+                    await Pacer.PauseAsync(DemoScript.Gap, _cts.Token);
+
+                var line = DemoScript.Lines[i];
+                if (!await PostAsync(line.Level, line.Message))
+                    _status = "Couldn't send that line. Try again.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task<bool> PostAsync(LogLevel level, string message)
+    {
+        Session.Latency.MarkSent(level, message, Time.GetTimestamp());
+        var ok = await Ingest.SendAsync(Session.Source, level, message, _cts.Token);
+        if (ok)
+            Session.Accepted++;
+        else if (_status is null)
+            _status = "Couldn't send that line. Try again.";
+
+        return ok;
+    }
+
+    private bool Configured => !string.IsNullOrWhiteSpace(DemoCredentials.Resolve(Options.Value));
+
+    private Task OnLine(LogEntry entry)
+    {
+        Session.Latency.Observe(entry.Level, entry.Message, Time.GetTimestamp(), Time);
+        return Task.CompletedTask;
+    }
+
+    private string? NoteFor(LogEntry entry) => Session.Latency.Take(entry.Level, entry.Message);
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _timer?.Dispose();
+        _cts.Dispose();
+    }
 }
