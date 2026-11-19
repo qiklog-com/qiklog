@@ -117,6 +117,14 @@
     [Parameter]
     public EventCallback<LogEntry> LineArrived { get; set; }
 
+    /// <summary>
+    /// When true, tell the parent window each flushed message via
+    /// <c>qiklogEmbedNotify</c>. Only the marketing iframe sets this.
+    /// The playground is compact and must not call that function.
+    /// </summary>
+    [Parameter]
+    public bool NotifyEmbed { get; set; }
+
     /// <summary>Optional note for a row, resolved once when the row is appended.</summary>
     [Parameter]
     public Func<LogEntry, string?>? NoteFor { get; set; }
@@ -196,7 +204,7 @@
             while (_incoming.TryDequeue(out var entry))
             {
                 _entries.Add(new LogRow(++_sequence, entry, NoteFor?.Invoke(entry)));
-                if (Compact)
+                if (NotifyEmbed)
                     _notifyQueue.Add(entry.Message);
                 appended++;
             }
@@ -212,14 +220,21 @@
 
     private async Task NotifyParentAsync()
     {
-        if (!Compact || _notifyQueue.Count == 0)
+        if (!NotifyEmbed || _notifyQueue.Count == 0)
             return;
 
         var batch = _notifyQueue.ToArray();
         _notifyQueue.Clear();
         try
         {
-            await JS.InvokeVoidAsync("qiklogEmbedNotify", batch);
+            // Cast so the string[] is one argument. params object[] would
+            // otherwise hand each message to the function separately, and
+            // the script bails out because the first argument is not an array.
+            await JS.InvokeVoidAsync("qiklogEmbedNotify", (object)batch);
+        }
+        catch (JSException)
+        {
+            // The parent page has no listener. The row is already on screen.
         }
         catch (JSDisconnectedException)
         {
