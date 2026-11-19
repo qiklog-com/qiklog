@@ -1,7 +1,17 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        @* Full-page requests to [Authorize] pages are challenged by endpoint authorization
+           (302 to Zitadel). This covers in-app navigation on an interactive circuit. *@
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <FluentCard Style="max-width: 420px; margin: 3rem auto; padding: 2rem;">
+                    <h2 style="margin-top: 0;">Sign in required</h2>
+                    <p style="opacity: 0.8;">Sign in to manage your sources and API keys.</p>
+                    <FluentAnchor Appearance="Appearance.Accent" Href="/login">Sign in</FluentAnchor>
+                </FluentCard>
+            </NotAuthorized>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
 </Router>

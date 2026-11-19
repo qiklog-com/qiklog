@@ -42,6 +42,9 @@ public sealed class TenantResolver(
         if (string.IsNullOrWhiteSpace(orgId))
             return new TenantResolution(TenantResolutionStatus.TenantNotFound);
 
+        if (authOptions.Value.IsSharedDefaultOrg(orgId))
+            return new TenantResolution(TenantResolutionStatus.TenantNotFound);
+
         var name = TenantClaims.GetDisplayName(principal);
         var provisionedId = await provisioner.EnsureTenantAsync(orgId, name, cancellationToken);
         return new TenantResolution(TenantResolutionStatus.Success, provisionedId);

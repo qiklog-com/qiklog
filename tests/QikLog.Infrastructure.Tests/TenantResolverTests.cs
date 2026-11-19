@@ -133,6 +133,23 @@ public sealed class TenantResolverTests
         (await db.Tenants.SingleAsync(t => t.Id == result.TenantId)).Name.ShouldBe(expectedName);
     }
 
+    [Fact]
+    public async Task Resolve_principal_from_shared_default_org_returns_TenantNotFound_and_creates_nothing()
+    {
+        await using var db = CreateDb();
+        var options = new QikLogAuthOptions { DefaultOrgId = "org-default" };
+        var resolver = new TenantResolver(
+            db,
+            TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null, defaultOrgId: "org-default"),
+            Options.Create(options));
+        var principal = Authenticated((options.OrganizationClaim, "org-default"));
+
+        var result = await resolver.ResolveFromPrincipalAsync(principal, CancellationToken.None);
+
+        result.Status.ShouldBe(TenantResolutionStatus.TenantNotFound);
+        (await db.Tenants.CountAsync()).ShouldBe(0);
+    }
+
     private static ClaimsPrincipal Authenticated(params (string Type, string Value)[] claims)
     {
         var identity = new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)), "test");
@@ -142,7 +159,7 @@ public sealed class TenantResolverTests
     private static TenantResolver CreateResolver(QikLogDbContext db) =>
         new(
             db,
-            new TenantProvisioner(db, NullLogger<TenantProvisioner>.Instance),
+            TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null),
             Options.Create(new QikLogAuthOptions()));
 
     private static QikLogDbContext CreateDb()
