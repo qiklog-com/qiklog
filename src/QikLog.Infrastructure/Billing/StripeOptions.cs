@@ -18,4 +18,11 @@ public sealed class StripeOptions
 
     /// <summary>Where the Stripe Customer Portal sends people back to.</summary>
     public string PortalReturnUrl { get; set; } = "http://localhost:5081/billing";
+
+    /// <summary>
+    /// Customer Portal configuration id (bpc_...). Optional: when empty Stripe uses the
+    /// account's default portal configuration, which only exists after it has been saved
+    /// once in the dashboard. scripts/stripe-setup.sh creates one and sets this.
+    /// </summary>
+    public string? PortalConfigurationId { get; set; }
 }

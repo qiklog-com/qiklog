@@ -29,8 +29,22 @@ Plans: **Free** 10,000 log lines a month, **Pro** $9/month for 500,000. Limits c
 | `QikLog__Stripe__SuccessUrl` | `https://app.qiklog.com/billing?success=1` |
 | `QikLog__Stripe__CancelUrl` | `https://app.qiklog.com/billing?canceled=1` |
 | `QikLog__Stripe__PortalReturnUrl` | `https://app.qiklog.com/billing` |
+| `QikLog__Stripe__PortalConfigurationId` | `bpc_…` (optional; without it Stripe needs a saved default portal config) |
 
-## Stripe dashboard
+## Fast path: `scripts/stripe-setup.sh`
+
+```sh
+stripe login                      # once; opens the browser
+scripts/stripe-setup.sh           # test mode
+scripts/stripe-setup.sh --live    # after the Stripe account is activated
+```
+
+It creates or reuses the Pro product and price, replaces the webhook endpoint (its secret is only
+shown at creation), creates a Customer Portal configuration, asks you to paste the secret key, and
+sets all `QikLog__Stripe__*` variables on the Railway api service. Nothing secret is printed. The
+failed-payment setting below still has to be set by hand.
+
+## Stripe dashboard (manual path)
 
 1. Developers → Webhooks → Add endpoint: `https://api.qiklog.com/v1/billing/webhook`.
 2. Events: `checkout.session.completed`, `customer.subscription.created`,
