@@ -630,6 +630,25 @@ public sealed class LandingPageContractTests
         return dir!;
     }
 
+    [Fact]
+    public void Given_code_samples_When_rendered_Then_they_are_highlighted_and_escaped()
+    {
+        // Given: the hero's curl / C# / JavaScript sample includes the visitor's own message
+        var hl = ReadRepoFile("www/src/lib/highlight.ts");
+        var hero = ReadRepoFile("www/src/components/HeroPlayground.astro");
+
+        // Then: the sample goes through the highlighter, which escapes every token
+        hero.ShouldContain("sample.innerHTML = highlight(");
+        hero.ShouldNotContain("sample.innerHTML = tab.template");
+        hl.ShouldContain("escapeHtml");
+        hl.ShouldContain("&lt;");
+        foreach (var cls in new[] { "tok-cmd", "tok-flag", "tok-url", "tok-str", "tok-key", "tok-kw" })
+            hero.ShouldContain(cls);
+
+        // And: the live result panel has no fake window chrome
+        ReadRepoFile("www/src/components/LiveTailEmbed.astro").ShouldNotContain("<TerminalFrame");
+    }
+
     private static string ReadRepoFile(string relativePath)
     {
         var path = Path.Combine(RepoRoot().FullName, relativePath);
