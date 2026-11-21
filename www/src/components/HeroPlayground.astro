@@ -61,6 +61,7 @@ const tabsJson = JSON.stringify(DECK_TABS);
 
 <script>
   import { sanitize, escapeFor } from '../lib/demo-message';
+  import { highlight, langForTab } from '../lib/highlight';
 
   const root = document.querySelector('[data-playground]');
   const form = root?.querySelector('[data-send-form]');
@@ -87,7 +88,8 @@ const tabsJson = JSON.stringify(DECK_TABS);
     const tab = tabs.find((t) => t.id === activeId) ?? tabs[0];
     if (!tab || !sample || !install) return;
     const escaped = escapeFor(tab.escape, currentMessage());
-    sample.textContent = tab.template.replaceAll('__MSG__', escaped);
+    // highlight() escapes every token, so the visitor's message cannot inject markup.
+    sample.innerHTML = highlight(tab.template.replaceAll('__MSG__', escaped), langForTab(tab.id));
     install.textContent = tab.install;
     root?.querySelectorAll('[data-tab]').forEach((btn) => {
       const on = btn.getAttribute('data-tab') === activeId;
@@ -285,6 +287,18 @@ const tabsJson = JSON.stringify(DECK_TABS);
     overflow-wrap: anywhere;
     padding-right: 3.5rem;
   }
+
+  /* Syntax colors on --ql-ink (#2E2A26); each is at least 4.5:1 against it. */
+  .sample :global(.tok-cmd) { color: #f2a65a; font-weight: 600; }
+  .sample :global(.tok-flag) { color: #e8875a; }
+  .sample :global(.tok-url) { color: #8fd1a6; }
+  .sample :global(.tok-str) { color: #e6c07b; }
+  .sample :global(.tok-key) { color: #7eb8e8; }
+  .sample :global(.tok-kw) { color: #d6a1e0; }
+  .sample :global(.tok-type) { color: #8fd1c9; }
+  .sample :global(.tok-num) { color: #f0a0a0; }
+  .sample :global(.tok-var) { color: #e8a0c8; }
+  .sample :global(.tok-punct) { color: #a99f94; }
 
   .install {
     margin: 0.65rem 0 0;
