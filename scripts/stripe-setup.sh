@@ -22,16 +22,30 @@ APP_URL="${QIKLOG_APP_URL:-https://app.qiklog.com}"
 RAILWAY_SERVICE="${RAILWAY_SERVICE:-api}"
 WEBHOOK_URL="$API_URL/v1/billing/webhook"
 PRICE_LOOKUP_KEY="qiklog_pro_monthly"
+# The API version Stripe.net 47.0.0 (src/QikLog.Api) is built for. Every call here and the
+# webhook endpoint use it, so events arrive in the shape the API parses. Without it Stripe
+# uses the account's default version, which on an older account can be years behind.
+# Bump this together with the Stripe.net package.
+STRIPE_API_VERSION="${STRIPE_API_VERSION:-2024-10-28.acacia}"
 EVENTS=(checkout.session.completed customer.subscription.created customer.subscription.updated customer.subscription.deleted)
 
 say()  { printf '→ %s\n' "$1"; }
 ok()   { printf '✓ %s\n' "$1"; }
 fail() { printf '✗ %s\n' "$1" >&2; exit 1; }
 
-json() { python3 -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.argv[1]))" "$1"; }
+# json EXPR: evaluate EXPR against the Stripe response in `d`. A Stripe error object is
+# printed as its message and fails the step.
+json() {
+  python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+if isinstance(d, dict) and "error" in d:
+    sys.exit("Stripe said: " + str(d["error"].get("message", d["error"])))
+print(eval(sys.argv[1]))' "$1"
+}
 # ${arr[@]+...}: macOS ships bash 3.2, where expanding an empty array under `set -u` is an
 # "unbound variable" error that kills the script.
-stripe_cli() { stripe "$@" ${MODE_FLAG[@]+"${MODE_FLAG[@]}"}; }
+stripe_cli() { stripe "$@" --stripe-version "$STRIPE_API_VERSION" ${MODE_FLAG[@]+"${MODE_FLAG[@]}"}; }
 
 command -v stripe  >/dev/null || fail "stripe CLI not found (brew install stripe/stripe-cli/stripe)"
 command -v railway >/dev/null || fail "railway CLI not found"
@@ -46,15 +60,12 @@ railway status >/dev/null 2>&1 || fail "railway is not linked here. Run: railway
 # Any later failure names the line instead of exiting silently.
 trap 'printf "✗ stopped at line %s (exit %s). Nothing after this step ran.\n" "$LINENO" "$?" >&2' ERR
 
-echo "QikLog Stripe setup ($MODE mode) → $WEBHOOK_URL"
+echo "QikLog Stripe setup ($MODE mode, API $STRIPE_API_VERSION) → $WEBHOOK_URL"
 
 # 1. Product
 say "Pro product"
-PRODUCT_ID=$(stripe_cli products search --query "metadata['qiklog_plan']:'pro'" | json "d['data'][0]['id'] if d['data'] else ''")
-if [[ -z "$PRODUCT_ID" ]]; then
-  # A product made by hand in the dashboard has no metadata; match it by name.
-  PRODUCT_ID=$(stripe_cli products list --limit 100 -d "active=true" | json "next((p['id'] for p in d['data'] if p['name']=='QikLog Pro'), '')")
-fi
+# Ours by metadata, else one made by hand in the dashboard and named "QikLog Pro".
+PRODUCT_ID=$(stripe_cli products list --limit 100 -d "active=true" | json "next((p['id'] for p in d['data'] if p.get('metadata',{}).get('qiklog_plan')=='pro'), None) or next((p['id'] for p in d['data'] if p['name']=='QikLog Pro'), '')")
 if [[ -z "$PRODUCT_ID" ]]; then
   PRODUCT_ID=$(stripe_cli products create --name "QikLog Pro" \
     -d "description=500,000 log lines a month, live tail, API keys." \
@@ -93,7 +104,7 @@ done
 EVENT_ARGS=()
 for e in "${EVENTS[@]}"; do EVENT_ARGS+=(-d "enabled_events[]=$e"); done
 WEBHOOK_JSON=$(stripe_cli webhook_endpoints create --url "$WEBHOOK_URL" "${EVENT_ARGS[@]}" \
-  -d "description=QikLog plan changes")
+  -d "api_version=$STRIPE_API_VERSION" -d "description=QikLog plan changes")
 WEBHOOK_ID=$(printf '%s' "$WEBHOOK_JSON" | json "d['id']")
 WEBHOOK_SECRET=$(printf '%s' "$WEBHOOK_JSON" | json "d['secret']")
 unset WEBHOOK_JSON
