@@ -29,19 +29,32 @@ ok()   { printf '✓ %s\n' "$1"; }
 fail() { printf '✗ %s\n' "$1" >&2; exit 1; }
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.argv[1]))" "$1"; }
-stripe_cli() { stripe "$@" "${MODE_FLAG[@]}"; }
+# ${arr[@]+...}: macOS ships bash 3.2, where expanding an empty array under `set -u` is an
+# "unbound variable" error that kills the script.
+stripe_cli() { stripe "$@" ${MODE_FLAG[@]+"${MODE_FLAG[@]}"}; }
 
 command -v stripe  >/dev/null || fail "stripe CLI not found (brew install stripe/stripe-cli/stripe)"
 command -v railway >/dev/null || fail "railway CLI not found"
 command -v python3 >/dev/null || fail "python3 not found"
-stripe_cli products list --limit 1 >/dev/null 2>&1 || fail "stripe CLI is not logged in for $MODE mode. Run: stripe login"
+if ! LOGIN_CHECK=$(stripe_cli products list --limit 1 2>&1); then
+  printf '%s\n' "$LOGIN_CHECK" | tail -3 >&2
+  fail "stripe CLI cannot reach your account in $MODE mode. Run: stripe login"
+fi
+unset LOGIN_CHECK
 railway status >/dev/null 2>&1 || fail "railway is not linked here. Run: railway link"
+
+# Any later failure names the line instead of exiting silently.
+trap 'printf "✗ stopped at line %s (exit %s). Nothing after this step ran.\n" "$LINENO" "$?" >&2' ERR
 
 echo "QikLog Stripe setup ($MODE mode) → $WEBHOOK_URL"
 
 # 1. Product
 say "Pro product"
 PRODUCT_ID=$(stripe_cli products search --query "metadata['qiklog_plan']:'pro'" | json "d['data'][0]['id'] if d['data'] else ''")
+if [[ -z "$PRODUCT_ID" ]]; then
+  # A product made by hand in the dashboard has no metadata; match it by name.
+  PRODUCT_ID=$(stripe_cli products list --limit 100 -d "active=true" | json "next((p['id'] for p in d['data'] if p['name']=='QikLog Pro'), '')")
+fi
 if [[ -z "$PRODUCT_ID" ]]; then
   PRODUCT_ID=$(stripe_cli products create --name "QikLog Pro" \
     -d "description=500,000 log lines a month, live tail, API keys." \
@@ -54,6 +67,10 @@ fi
 # 2. Price: $9/month, found by lookup key so re-runs reuse it
 say "Pro price (\$9/month)"
 PRICE_ID=$(stripe_cli prices list -d "lookup_keys[]=$PRICE_LOOKUP_KEY" -d "active=true" | json "d['data'][0]['id'] if d['data'] else ''")
+if [[ -z "$PRICE_ID" ]]; then
+  # Or an existing $9/month price on that product (made by hand, no lookup key).
+  PRICE_ID=$(stripe_cli prices list --product "$PRODUCT_ID" -d "active=true" --limit 100 | json "next((p['id'] for p in d['data'] if p['unit_amount']==900 and p['currency']=='usd' and (p.get('recurring') or {}).get('interval')=='month' and (p.get('recurring') or {}).get('interval_count',1)==1), '')")
+fi
 if [[ -z "$PRICE_ID" ]]; then
   PRICE_ID=$(stripe_cli prices create --product "$PRODUCT_ID" --unit-amount 900 --currency usd \
     -d "recurring[interval]=month" -d "lookup_key=$PRICE_LOOKUP_KEY" | json "d['id']")
