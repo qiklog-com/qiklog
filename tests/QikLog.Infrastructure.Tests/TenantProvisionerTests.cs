@@ -181,10 +181,97 @@ public sealed class TenantProvisionerTests
         (await db.Tenants.SingleAsync(t => t.Id == id)).ZitadelOrgId.ShouldBe("org-acme");
     }
 
-    internal static TenantProvisioner CreateProvisioner(QikLogDbContext db, string? bootstrapOrgId, string? defaultOrgId = null) =>
+    // ---- Self-serve sign-up: personal tenants in the sign-up org ----
+
+    [Fact]
+    public async Task Given_two_strangers_in_the_signup_org_When_each_signs_in_Then_each_gets_their_own_tenant()
+    {
+        // Given: everyone who self-registers lands in one shared sign-up org
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup");
+
+        // When: two different users from that org sign in
+        var alice = await provisioner.EnsureTenantAsync("org-signup", "user-alice", "Alice", CancellationToken.None);
+        var bob = await provisioner.EnsureTenantAsync("org-signup", "user-bob", "Bob", CancellationToken.None);
+
+        // Then: separate tenants, so neither can see the other's logs
+        alice.ShouldNotBe(bob);
+        (await db.Tenants.SingleAsync(t => t.Id == alice)).ZitadelUserId.ShouldBe("user-alice");
+        (await db.Tenants.SingleAsync(t => t.Id == bob)).ZitadelUserId.ShouldBe("user-bob");
+    }
+
+    [Fact]
+    public async Task Given_a_signup_user_with_a_tenant_When_they_sign_in_again_Then_they_get_the_same_tenant()
+    {
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup");
+
+        var first = await provisioner.EnsureTenantAsync("org-signup", "user-alice", "Alice", CancellationToken.None);
+        var again = await provisioner.EnsureTenantAsync("org-signup", " user-alice ", "Alice", CancellationToken.None);
+
+        again.ShouldBe(first);
+        (await db.Tenants.CountAsync()).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Given_the_signup_org_When_no_user_id_is_present_Then_it_is_refused_and_nothing_is_created()
+    {
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup");
+
+        await Should.ThrowAsync<ArgumentException>(
+            () => provisioner.EnsureTenantAsync("org-signup", "Anyone", CancellationToken.None));
+        (await db.Tenants.CountAsync()).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Given_a_signup_org_is_configured_When_users_of_another_org_sign_in_Then_they_share_that_org_tenant()
+    {
+        // Given: Jamey's own org is not the sign-up org
+        await using var db = CreateDb();
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup");
+
+        // When: two members of org-jamey sign in
+        var first = await provisioner.EnsureTenantAsync("org-jamey", "user-jamey", "Jamey", CancellationToken.None);
+        var second = await provisioner.EnsureTenantAsync("org-jamey", "user-teammate", "Teammate", CancellationToken.None);
+
+        // Then: org tenants are unchanged, one per org
+        second.ShouldBe(first);
+        (await db.Tenants.SingleAsync(t => t.Id == first)).ZitadelUserId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Given_personal_tenants_exist_When_the_bootstrap_org_signs_in_Then_it_never_claims_a_personal_tenant()
+    {
+        // Given: an unclaimed bootstrap row, plus a personal tenant created earlier
+        await using var db = CreateDb();
+        SeedUnclaimedBootstrap(db);
+        var provisioner = CreateProvisioner(db, bootstrapOrgId: "org-jamey", signupOrgId: "org-signup");
+        var personal = await provisioner.EnsureTenantAsync("org-signup", "user-alice", "Alice", CancellationToken.None);
+
+        // When: the bootstrap org signs in
+        var claimed = await provisioner.EnsureTenantAsync("org-jamey", "user-jamey", "Jamey", CancellationToken.None);
+
+        // Then: it claims the bootstrap row, and Alice's tenant is untouched
+        claimed.ShouldBe(BootstrapId);
+        var alice = await db.Tenants.SingleAsync(t => t.Id == personal);
+        alice.ZitadelOrgId.ShouldBe("org-signup");
+        alice.ZitadelUserId.ShouldBe("user-alice");
+    }
+
+    internal static TenantProvisioner CreateProvisioner(
+        QikLogDbContext db,
+        string? bootstrapOrgId,
+        string? defaultOrgId = null,
+        string? signupOrgId = null) =>
         new(
             db,
-            Options.Create(new QikLogAuthOptions { BootstrapOrgId = bootstrapOrgId, DefaultOrgId = defaultOrgId }),
+            Options.Create(new QikLogAuthOptions
+            {
+                BootstrapOrgId = bootstrapOrgId,
+                DefaultOrgId = defaultOrgId,
+                SignupOrgId = signupOrgId
+            }),
             NullLogger<TenantProvisioner>.Instance);
 
     private static void SeedUnclaimedBootstrap(QikLogDbContext db)

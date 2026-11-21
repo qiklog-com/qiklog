@@ -150,6 +150,43 @@ public sealed class TenantResolverTests
         (await db.Tenants.CountAsync()).ShouldBe(0);
     }
 
+    [Fact]
+    public async Task Resolve_signup_org_principals_returns_a_personal_tenant_per_user()
+    {
+        await using var db = CreateDb();
+        var options = new QikLogAuthOptions { SignupOrgId = "org-signup" };
+        var resolver = new TenantResolver(
+            db,
+            TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup"),
+            Options.Create(options));
+
+        var alice = await resolver.ResolveFromPrincipalAsync(
+            Authenticated((options.OrganizationClaim, "org-signup"), ("sub", "user-alice")), CancellationToken.None);
+        var bob = await resolver.ResolveFromPrincipalAsync(
+            Authenticated((options.OrganizationClaim, "org-signup"), ("sub", "user-bob")), CancellationToken.None);
+
+        alice.Status.ShouldBe(TenantResolutionStatus.Success);
+        bob.Status.ShouldBe(TenantResolutionStatus.Success);
+        alice.TenantId.ShouldNotBe(bob.TenantId);
+    }
+
+    [Fact]
+    public async Task Resolve_signup_org_principal_without_sub_returns_TenantNotFound()
+    {
+        await using var db = CreateDb();
+        var options = new QikLogAuthOptions { SignupOrgId = "org-signup" };
+        var resolver = new TenantResolver(
+            db,
+            TenantProvisionerTests.CreateProvisioner(db, bootstrapOrgId: null, signupOrgId: "org-signup"),
+            Options.Create(options));
+
+        var result = await resolver.ResolveFromPrincipalAsync(
+            Authenticated((options.OrganizationClaim, "org-signup")), CancellationToken.None);
+
+        result.Status.ShouldBe(TenantResolutionStatus.TenantNotFound);
+        (await db.Tenants.CountAsync()).ShouldBe(0);
+    }
+
     private static ClaimsPrincipal Authenticated(params (string Type, string Value)[] claims)
     {
         var identity = new ClaimsIdentity(claims.Select(c => new Claim(c.Type, c.Value)), "test");

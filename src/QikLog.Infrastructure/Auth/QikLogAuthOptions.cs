@@ -42,6 +42,20 @@ public sealed class QikLogAuthOptions
     /// </summary>
     public string? DefaultOrgId { get; set; }
 
+    /// <summary>
+    /// Zitadel org that self-registration puts new users into (registration is enabled on
+    /// this org only). Its members share one org, so each of them gets a personal tenant
+    /// keyed by their Zitadel user id instead of one tenant for the whole org.
+    /// Unset = no self-serve sign-up.
+    /// </summary>
+    public string? SignupOrgId { get; set; }
+
+    /// <summary>True when <paramref name="orgId"/> is the sign-up org (personal tenants).</summary>
+    public bool IsSignupOrg(string? orgId) =>
+        !string.IsNullOrWhiteSpace(SignupOrgId)
+        && !string.IsNullOrWhiteSpace(orgId)
+        && string.Equals(orgId.Trim(), SignupOrgId.Trim(), StringComparison.Ordinal);
+
     /// <summary>True when <paramref name="orgId"/> is the shared default org and must be refused.</summary>
     public bool IsSharedDefaultOrg(string? orgId) =>
         !string.IsNullOrWhiteSpace(DefaultOrgId)

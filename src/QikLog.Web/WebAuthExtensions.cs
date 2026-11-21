@@ -112,8 +112,16 @@ internal static class WebAuthExtensions
 
                     await using var scope = context.HttpContext.RequestServices.CreateAsyncScope();
                     var provisioner = scope.ServiceProvider.GetRequiredService<TenantProvisioner>();
+                    var userId = TenantClaims.TryGetUserId(context.Principal);
+                    if (auth.IsSignupOrg(orgId) && userId is null)
+                    {
+                        context.Fail("Sign-in did not include a user id.");
+                        return;
+                    }
+
                     var tenantId = await provisioner.EnsureTenantAsync(
                         orgId,
+                        userId,
                         name,
                         context.HttpContext.RequestAborted);
 

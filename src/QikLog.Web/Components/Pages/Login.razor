@@ -1,12 +1,23 @@
 @page "/login"
 @rendermode InteractiveServer
+@inject Microsoft.Extensions.Options.IOptions<QikLog.Infrastructure.Auth.QikLogAuthOptions> AuthOptions
 
 <PageTitle>Sign in · QikLog</PageTitle>
 
 <FluentCard Style="max-width: 420px; margin: 3rem auto; padding: 2rem;">
     <h2 style="margin-top: 0;">Sign in</h2>
     <p style="opacity: 0.8;">
-        Continues to Zitadel SSO. After sign-in you can create API keys on Manage and tail your own sources.
+        After sign-in you can create API keys on Manage and tail your own sources.
     </p>
-    <FluentAnchor Appearance="Appearance.Accent" Href="/challenge">Continue with SSO</FluentAnchor>
+    <FluentAnchor Appearance="Appearance.Accent" Href="/challenge">Sign in</FluentAnchor>
+    @if (SignupEnabled)
+    {
+        <p style="margin: 1.5rem 0 0.5rem;" data-signup>New to QikLog? Free up to 10,000 log lines a month.</p>
+        <FluentAnchor Appearance="Appearance.Outline" Href="/signup">Create a free account</FluentAnchor>
+    }
 </FluentCard>
+
+@code {
+    private bool SignupEnabled =>
+        AuthOptions.Value.Enabled && !string.IsNullOrWhiteSpace(AuthOptions.Value.SignupOrgId);
+}

@@ -46,7 +46,11 @@ public sealed class TenantResolver(
             return new TenantResolution(TenantResolutionStatus.TenantNotFound);
 
         var name = TenantClaims.GetDisplayName(principal);
-        var provisionedId = await provisioner.EnsureTenantAsync(orgId, name, cancellationToken);
+        var userId = TenantClaims.TryGetUserId(principal);
+        if (authOptions.Value.IsSignupOrg(orgId) && userId is null)
+            return new TenantResolution(TenantResolutionStatus.TenantNotFound);
+
+        var provisionedId = await provisioner.EnsureTenantAsync(orgId, userId, name, cancellationToken);
         return new TenantResolution(TenantResolutionStatus.Success, provisionedId);
     }
 }
