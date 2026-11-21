@@ -13,7 +13,7 @@ public sealed class LandingPageContractTests
 
         // Visible H1 + lede: outcome for the visitor's app (Option B).
         index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
         index.ShouldContain("Try it now");
         index.ShouldContain("<SiteNav");
         index.ShouldContain("<HeroPlayground");
@@ -24,18 +24,18 @@ public sealed class LandingPageContractTests
         // Meta / OG defaults match the same outcome framing (not the old tool-speed pitch).
         index.ShouldContain("description =");
         index.ShouldContain(
-            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.");
+            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No account needed to try.");
         layout.ShouldContain(
-            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.");
+            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No account needed to try.");
         layout.ShouldNotContain("log tailing that works in seconds");
 
         index.ShouldNotContain("Log tailing that works in seconds");
         index.ShouldNotContain("Add logs to your app in seconds");
         index.ShouldNotContain("QikLog Pro");
         index.ShouldNotContain("Upgrade");
-        index.ShouldNotContain("/signup");
+        index.ShouldContain("/signup");
         ReadRepoFile("www/src/components/Lockup.astro").ShouldContain("qiklog-mark.svg");
-        index.ShouldContain("Get started");
+        index.ShouldContain("Create a free account");
         index.ShouldNotContain("GET STARTED", Case.Sensitive);
         index.ShouldNotContain("Open app");
         index.ShouldNotContain("coming soon");
@@ -73,13 +73,18 @@ public sealed class LandingPageContractTests
     {
         var pricing = ReadRepoFile("www/src/pages/pricing.astro");
         pricing.ShouldContain("<PricingCard");
-        pricing.ShouldContain("/manage");
+        pricing.ShouldContain("/billing");
+        pricing.ShouldContain("/signup");
 
         var card = ReadRepoFile("www/src/components/PricingCard.astro");
-        card.ShouldContain("QikLog Pro");
+        card.ShouldContain("Free");
+        card.ShouldContain("10,000 log lines a month");
         card.ShouldContain("$9");
-        card.ShouldContain("Upgrade");
-        card.ShouldContain("Live log tailing for developers. Unlimited sources, real time streaming, API keys.");
+        card.ShouldContain("500,000 log lines a month");
+        card.ShouldContain("Upgrade to Pro");
+        card.ShouldContain("Create a free account");
+        // Checkout is live (2026-11-21); the old disclaimer must not come back.
+        card.ShouldNotContain("Checkout is not live");
         card.ShouldNotContain("checkout.stripe.com");
         card.ShouldNotContain("—");
 
@@ -106,12 +111,13 @@ public sealed class LandingPageContractTests
         index.ShouldContain("id=\"scene-3\"");
         index.ShouldContain("id=\"scene-4\"");
         index.ShouldContain("id=\"scene-5\"");
-        index.ShouldContain("One POST. From anywhere.");
-        index.ShouldContain("It's already streaming.");
+        // Scene 2 and 3 titles removed 2026-11-21: the tape and the live panel carry those scenes.
+        index.ShouldNotContain("One POST. From anywhere.");
+        index.ShouldNotContain("It's already streaming.");
         index.ShouldContain("No dashboard to configure.");
         index.ShouldContain("<LiveTailEmbed");
         index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
         index.ShouldContain("prefers-reduced-motion");
         index.ShouldContain("IntersectionObserver");
         index.ShouldContain("scrollIntoView");
@@ -192,7 +198,7 @@ public sealed class LandingPageContractTests
         index.ShouldContain("class=\"hero-play");
         index.ShouldContain("<HeroPlayground");
         index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No signup.");
+        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
         index.ShouldContain("Try it now");
         index.ShouldNotContain("minmax(16rem, 22rem)");
 
@@ -240,8 +246,10 @@ public sealed class LandingPageContractTests
         nav.ShouldContain("/login");
         nav.ShouldContain("Pricing");
         nav.ShouldContain("Docs");
-        nav.ShouldNotContain("btn-primary");
-        nav.ShouldNotContain("/signup");
+        // Sign up is the one filled button in the nav (2026-11-21).
+        nav.ShouldContain("Sign up");
+        nav.ShouldContain("/signup");
+        nav.ShouldContain("btn-primary");
     }
 
     [Fact]
@@ -280,7 +288,7 @@ public sealed class LandingPageContractTests
 
         // When / Then: real production curl, tape treatment, caption last
         index.ShouldContain("INGEST");
-        index.ShouldContain("One POST. From anywhere.");
+        index.ShouldNotContain("One POST. From anywhere.");
         index.ShouldContain("<TapeTerminal");
         index.ShouldContain("All you need is a path to send.");
         index.ShouldContain("data-enter=\"left\"");
@@ -310,7 +318,7 @@ public sealed class LandingPageContractTests
 
         // When / Then: lazy iframe to demo; placeholder lines are HTTP logs, not file tails
         index.ShouldContain("LIVE");
-        index.ShouldContain("It's already streaming.");
+        index.ShouldNotContain("It's already streaming.");
         index.ShouldContain("source=\"demo\"");
         index.ShouldContain("data-enter=\"right\"");
         index.ShouldContain("--enter-delay: 480ms");
@@ -319,8 +327,9 @@ public sealed class LandingPageContractTests
         embed.ShouldContain("200 GET /api/orders 24.31ms");
         embed.ShouldContain("401 POST /api/checkout");
         embed.ShouldContain("Same panel as");
-        embed.ShouldContain("<TerminalFrame");
-        embed.ShouldContain("demo · tail");
+        // No window chrome around the real app panel (2026-11-21).
+        embed.ShouldNotContain("<TerminalFrame");
+        embed.ShouldNotContain("demo · tail");
         embed.ShouldContain("log-level is-info");
         embed.ShouldContain("log-level is-warn");
         embed.ShouldContain("log-source");
@@ -351,7 +360,7 @@ public sealed class LandingPageContractTests
         index.ShouldNotContain("&lt;/&gt;");
         index.ShouldNotContain("path-icon\" aria-hidden=\"true\">[]");
         index.ShouldContain("Prebuilt .NET integration included.");
-        index.ShouldContain("Get started");
+        index.ShouldContain("Create a free account");
         index.ShouldNotContain("GET STARTED", Case.Sensitive);
         index.ShouldContain("<SiteFooter");
         nav.ShouldContain("backdrop-filter");
@@ -482,7 +491,8 @@ public sealed class LandingPageContractTests
 
         home.ShouldContain("Try it now");
         home.ShouldContain("This tail is just yours. It disappears when you leave.");
-        home.ShouldContain("Sign in to get your own key");
+        home.ShouldContain("Create a free account to get your own key");
+        home.ShouldContain("href=\"/signup\"");
         home.ShouldContain("UseDemoCredential");
         home.ShouldNotContain("HubApiKey");
         home.ShouldNotContain("Treat anything you send as public");

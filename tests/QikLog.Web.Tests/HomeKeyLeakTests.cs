@@ -31,6 +31,6 @@ public sealed class HomeKeyLeakTests : TestContext
         cut.Markup.ShouldContain("$QIKLOG_API_KEY");
         cut.Find("[data-tab=csharp]").Click();
         cut.Markup.ShouldContain("YOUR_API_KEY");
-        cut.Find("a[href='/login']").TextContent.ShouldContain("Sign in to get your own key");
+        cut.Find("a[href='/signup']").TextContent.ShouldContain("Create a free account to get your own key");
     }
 }

@@ -1,29 +1,58 @@
 ---
 interface Props {
-  manageUrl: string;
+  billingUrl: string;
+  signUpUrl: string;
 }
 
-const { manageUrl } = Astro.props;
+const { billingUrl, signUpUrl } = Astro.props;
 ---
 <section class="pricing" id="pricing">
-  <p class="eyebrow">Pro</p>
-  <h1>QikLog Pro</h1>
-  <p class="price"><span>$9</span>/month</p>
-  <p class="blurb">
-    Live log tailing for developers. Unlimited sources, real time streaming, API keys.
+  <p class="eyebrow">Pricing</p>
+  <h1>Start free. Upgrade when it's real.</h1>
+
+  <div class="tier">
+    <h2>Free</h2>
+    <p class="price"><span>$0</span></p>
+    <ul>
+      <li>10,000 log lines a month</li>
+      <li>Live tail in the browser</li>
+      <li>API keys, CLI, Serilog sink</li>
+    </ul>
+    <a class="btn btn-outline" href={signUpUrl}>Create a free account</a>
+  </div>
+
+  <div class="tier">
+    <h2>Pro</h2>
+    <p class="price"><span>$9</span>/month</p>
+    <ul>
+      <li>500,000 log lines a month</li>
+      <li>Everything in Free</li>
+      <li>Cancel anytime from Billing; Pro lasts to the end of the month you paid for</li>
+    </ul>
+    <a class="btn btn-primary" href={billingUrl}>Upgrade to Pro</a>
+  </div>
+
+  <p class="fineprint">
+    Over your limit, new lines are paused until next month or until you upgrade. Your existing logs always stay readable.
   </p>
-  <ul>
-    <li>Unlimited sources</li>
-    <li>Real-time streaming</li>
-    <li>API keys</li>
-  </ul>
-  <a class="btn btn-primary" href={manageUrl}>Upgrade</a>
-  <p class="fineprint">Checkout is not live yet. Upgrade opens Manage so you can keep using keys today.</p>
 </section>
 
 <style>
   .pricing {
     max-width: 36rem;
+  }
+
+  .tier {
+    margin: 0 0 1.75rem;
+    padding: 1.25rem 1.4rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: 12px;
+  }
+
+  .tier h2 {
+    margin: 0 0 0.25rem;
+    font-family: var(--ql-font-display);
+    font-size: 1.2rem;
   }
 
   .eyebrow {

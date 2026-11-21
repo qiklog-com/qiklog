@@ -6,12 +6,13 @@ import PricingCard from '../components/PricingCard.astro';
 
 const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
 const tryUrl = `${appUrl}/`;
-const manageUrl = `${appUrl}/manage`;
+const billingUrl = `${appUrl}/billing`;
+const signUpUrl = `${appUrl}/signup`;
 ---
-<BaseLayout title="Pricing · QikLog" description="QikLog Pro is $9/month. Unlimited sources, real time streaming, API keys.">
+<BaseLayout title="Pricing · QikLog" description="QikLog is free up to 10,000 log lines a month. Pro is $9/month for 500,000. Cancel anytime.">
   <SiteNav appUrl={tryUrl} />
   <main class="wrap container">
-    <PricingCard manageUrl={manageUrl} />
+    <PricingCard billingUrl={billingUrl} signUpUrl={signUpUrl} />
   </main>
   <SiteFooter />
 </BaseLayout>
