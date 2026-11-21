@@ -20,7 +20,11 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
         tenant.Property(t => t.Name).HasMaxLength(128).IsRequired();
         tenant.Property(t => t.ZitadelOrgId).HasMaxLength(64);
         tenant.Property(t => t.Plan).HasMaxLength(32).IsRequired();
-        tenant.HasIndex(t => t.ZitadelOrgId).IsUnique();
+        tenant.Property(t => t.ZitadelUserId).HasMaxLength(64);
+        // One org tenant per org, and one personal tenant per user. Personal tenants share
+        // their org id (the sign-up org), so org uniqueness applies to org tenants only.
+        tenant.HasIndex(t => t.ZitadelOrgId).IsUnique().HasFilter("\"ZitadelUserId\" IS NULL");
+        tenant.HasIndex(t => t.ZitadelUserId).IsUnique().HasFilter("\"ZitadelUserId\" IS NOT NULL");
         tenant.Property(t => t.StripeCustomerId).HasMaxLength(64);
         tenant.Property(t => t.StripeSubscriptionId).HasMaxLength(64);
         tenant.HasIndex(t => t.StripeCustomerId);

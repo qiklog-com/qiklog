@@ -32,6 +32,14 @@ public static class TenantClaims
         return string.IsNullOrWhiteSpace(resourceOwner) ? null : resourceOwner.Trim();
     }
 
+    /// <summary>Zitadel user id: the <c>sub</c> claim (or its mapped NameIdentifier form).</summary>
+    public static string? TryGetUserId(ClaimsPrincipal? principal)
+    {
+        var sub = principal?.FindFirst("sub")?.Value
+            ?? principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return string.IsNullOrWhiteSpace(sub) ? null : sub.Trim();
+    }
+
     public static string GetDisplayName(ClaimsPrincipal? principal)
     {
         if (principal is null)

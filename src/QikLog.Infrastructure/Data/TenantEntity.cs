@@ -10,6 +10,12 @@ public sealed class TenantEntity
     /// <summary>Zitadel org ID claim when using OIDC.</summary>
     public string? ZitadelOrgId { get; set; }
 
+    /// <summary>
+    /// Zitadel user id (sub) for a personal tenant in the sign-up org. Null for an
+    /// org tenant, where the whole org shares the tenant.
+    /// </summary>
+    public string? ZitadelUserId { get; set; }
+
     public string Plan { get; set; } = "free";
 
     /// <summary>Stripe customer id (cus_...) once the tenant has started a checkout.</summary>

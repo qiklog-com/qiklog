@@ -169,6 +169,10 @@ namespace QikLog.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("ZitadelUserId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StripeCustomerId");
@@ -176,7 +180,12 @@ namespace QikLog.Infrastructure.Migrations
                     b.HasIndex("StripeSubscriptionId");
 
                     b.HasIndex("ZitadelOrgId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"ZitadelUserId\" IS NULL");
+
+                    b.HasIndex("ZitadelUserId")
+                        .IsUnique()
+                        .HasFilter("\"ZitadelUserId\" IS NOT NULL");
 
                     b.ToTable("tenants", (string)null);
                 });

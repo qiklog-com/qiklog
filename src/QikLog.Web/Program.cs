@@ -109,6 +109,19 @@ if (webAuth.Enabled && !string.IsNullOrWhiteSpace(webAuth.Authority))
         new AuthenticationProperties { RedirectUri = "/" },
         [OpenIdConnectDefaults.AuthenticationScheme]));
 
+    // Self-serve sign-up: straight to Zitadel's registration screen, scoped to the sign-up
+    // org so the new user lands there (and gets a personal tenant), not in Jamey's org.
+    app.MapGet("/signup", (
+        Microsoft.Extensions.Options.IOptionsMonitor<OpenIdConnectOptions> oidc) =>
+    {
+        if (string.IsNullOrWhiteSpace(webAuth.SignupOrgId))
+            return Results.Redirect("/login");
+
+        return Results.Challenge(
+            SignupChallenge.Build(oidc.Get(OpenIdConnectDefaults.AuthenticationScheme).Scope, webAuth.SignupOrgId),
+            [OpenIdConnectDefaults.AuthenticationScheme]);
+    });
+
     app.MapGet("/logout", async (HttpContext httpContext) =>
     {
         await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
