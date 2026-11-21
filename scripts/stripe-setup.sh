@@ -29,13 +29,22 @@ ok()   { printf '✓ %s\n' "$1"; }
 fail() { printf '✗ %s\n' "$1" >&2; exit 1; }
 
 json() { python3 -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.argv[1]))" "$1"; }
-stripe_cli() { stripe "$@" "${MODE_FLAG[@]}"; }
+# ${arr[@]+...}: macOS ships bash 3.2, where expanding an empty array under `set -u` is an
+# "unbound variable" error that kills the script.
+stripe_cli() { stripe "$@" ${MODE_FLAG[@]+"${MODE_FLAG[@]}"}; }
 
 command -v stripe  >/dev/null || fail "stripe CLI not found (brew install stripe/stripe-cli/stripe)"
 command -v railway >/dev/null || fail "railway CLI not found"
 command -v python3 >/dev/null || fail "python3 not found"
-stripe_cli products list --limit 1 >/dev/null 2>&1 || fail "stripe CLI is not logged in for $MODE mode. Run: stripe login"
+if ! LOGIN_CHECK=$(stripe_cli products list --limit 1 2>&1); then
+  printf '%s\n' "$LOGIN_CHECK" | tail -3 >&2
+  fail "stripe CLI cannot reach your account in $MODE mode. Run: stripe login"
+fi
+unset LOGIN_CHECK
 railway status >/dev/null 2>&1 || fail "railway is not linked here. Run: railway link"
+
+# Any later failure names the line instead of exiting silently.
+trap 'printf "✗ stopped at line %s (exit %s). Nothing after this step ran.\n" "$LINENO" "$?" >&2' ERR
 
 echo "QikLog Stripe setup ($MODE mode) → $WEBHOOK_URL"
 
