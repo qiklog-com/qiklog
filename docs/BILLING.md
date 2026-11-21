@@ -56,7 +56,7 @@ failed-payment setting below still has to be set by hand.
 5. Settings → Billing → Customer portal: allow cancellation **at end of billing period**, allow
    payment method updates, invoice history on. No retention offers.
 
-Test mode and live mode have separate keys, prices, webhook endpoints, and signing secrets.
+If you add the webhook endpoint by hand, set its **API version** to the one Stripe.net is built for\n(`2024-10-28.acacia` for Stripe.net 47.0.0), not the account default. The script does this.\n\nTest mode and live mode have separate keys, prices, webhook endpoints, and signing secrets.
 
 ## Local testing
 
