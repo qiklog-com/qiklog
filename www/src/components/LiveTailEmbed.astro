@@ -1,5 +1,4 @@
 ---
-import TerminalFrame from './TerminalFrame.astro';
 
 /**
  * Real live tail: iframe to the Blazor LiveTailPanel at /embed/tail/{source}.
@@ -15,7 +14,6 @@ const origin = appUrl.replace(/\/$/, '');
 const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
 ---
 <div class="live-frame">
-  <TerminalFrame title="demo · tail">
     <div class="live-stage">
       <ul class="live-skeleton" data-live-skeleton aria-hidden="true">
         <li class="log-line">
@@ -41,7 +39,6 @@ const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
         onload="this.previousElementSibling.setAttribute('hidden','')"
       ></iframe>
     </div>
-  </TerminalFrame>
   <p class="live-note">
     Same panel as <a href={`${origin}/tail/${encodeURIComponent(source)}`}>/tail/{source}</a>.
     Send a line to this source and it appears here.
@@ -76,12 +73,20 @@ const embedUrl = `${origin}/embed/tail/${encodeURIComponent(source)}`;
     display: none;
   }
 
+  /* No fake window chrome: the real app panel stands on its own. */
+  .live-stage {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--ql-ink) 55%, transparent);
+    border: 1px solid var(--ql-hairline);
+  }
+
   .live-iframe {
     display: block;
     width: 100%;
     min-height: 18.5rem;
     border: 0;
-    background: var(--ql-ink);
+    background: var(--ql-paper);
   }
 
   .live-note {

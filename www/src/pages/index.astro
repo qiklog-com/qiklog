@@ -11,10 +11,11 @@ import Lockup from '../components/Lockup.astro';
 
 const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'http://localhost:5081').replace(/\/$/, '');
 const tryUrl = `${appUrl}/`;
+const signUpUrl = `${appUrl}/signup`;
 
 const title = 'QikLog: see what your app is doing, live';
 const description =
-  'See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No signup.';
+  'See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No account needed to try.';
 ---
 <BaseLayout title={title} description={description} snap>
   <SiteNav appUrl={appUrl} />
@@ -24,10 +25,12 @@ const description =
         <div class="copy">
           <h1 data-enter="up">See what your app is doing, live.</h1>
           <p class="lede" data-enter="up" style="--enter-delay: 100ms">
-            Add a log line from your code. Watch it stream in the browser. No signup.
+            Add a log line from your code. Watch it stream in the browser. No account needed to try.
           </p>
           <a href={tryUrl} class="btn btn-primary" data-enter="up" style="--enter-delay: 200ms">Try it now</a>
-          <p class="price-hint" data-enter="up" style="--enter-delay: 300ms">$9/mo, cancel anytime.</p>
+          <p class="price-hint" data-enter="up" style="--enter-delay: 300ms">
+            Free up to 10,000 lines a month. <a href={signUpUrl}>Create a free account</a>
+          </p>
         </div>
       </div>
       <div class="hero-play container" data-enter="up" style="--enter-delay: 200ms">
@@ -37,7 +40,6 @@ const description =
     </section>
 
     <ScrollScene id="scene-2" eyebrow="INGEST">
-      <h1 class="scene-title" data-enter="up" style="--enter-delay: 100ms">One POST. From anywhere.</h1>
       <div data-enter="left" style="--enter-delay: 200ms">
         <TapeTerminal />
       </div>
@@ -45,7 +47,6 @@ const description =
     </ScrollScene>
 
     <ScrollScene id="scene-3" eyebrow="LIVE">
-      <h1 class="scene-title" data-enter="up" style="--enter-delay: 100ms">It's already streaming.</h1>
       <div data-enter="right" style="--enter-delay: 480ms">
         <LiveTailEmbed appUrl={appUrl} source="demo" />
       </div>
@@ -95,8 +96,8 @@ const description =
         <Lockup size="nav" />
         <h1 class="scene-title cta-title">Still under 300ms.</h1>
         <p class="cta-lede">Terminal to browser. Measured, not marketing.</p>
-        <a href={tryUrl} class="btn btn-primary">Get started</a>
-        <p class="price-hint">$9/mo, cancel anytime.</p>
+        <a href={signUpUrl} class="btn btn-primary">Create a free account</a>
+        <p class="price-hint">Free up to 10,000 lines a month. Pro is $9/mo, cancel anytime.</p>
         <p class="cta-alt">
           Prefer another way in?
           <a href="/docs/">Read the docs</a>
