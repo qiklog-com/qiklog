@@ -70,11 +70,11 @@ public sealed class PlaygroundBehaviorTests : TestContext
         // When: the third succeeds
         Send(cut, harness, "three");
 
-        // Then: the quiet card links to sign-in
+        // Then: the quiet card links to sign-up
         cut.Markup.ShouldContain("That's QikLog.");
         cut.Markup.ShouldContain("free up to 10,000 lines a month.");
-        cut.Find("a[href='/login']").ShouldNotBeNull();
-        cut.Markup.ShouldContain("Get your own key");
+        cut.Find("a[href='/signup']").ShouldNotBeNull();
+        cut.Markup.ShouldContain("Create a free account");
     }
 
     [Fact]
