@@ -397,3 +397,16 @@ h1:focus,
 .ql-tail-wait-label {
     color: var(--ql-ink-caption);
 }
+
+/* Header "Sign up": the one filled call to action on a dark header. */
+.ql-nav-link.ql-nav-cta {
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    background: var(--ql-rust);
+    color: var(--ql-paper);
+    font-weight: 600;
+}
+
+.ql-nav-link.ql-nav-cta:hover {
+    filter: brightness(1.08);
+}
