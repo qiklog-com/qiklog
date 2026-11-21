@@ -52,6 +52,10 @@ echo "QikLog Stripe setup ($MODE mode) → $WEBHOOK_URL"
 say "Pro product"
 PRODUCT_ID=$(stripe_cli products search --query "metadata['qiklog_plan']:'pro'" | json "d['data'][0]['id'] if d['data'] else ''")
 if [[ -z "$PRODUCT_ID" ]]; then
+  # A product made by hand in the dashboard has no metadata; match it by name.
+  PRODUCT_ID=$(stripe_cli products list --limit 100 -d "active=true" | json "next((p['id'] for p in d['data'] if p['name']=='QikLog Pro'), '')")
+fi
+if [[ -z "$PRODUCT_ID" ]]; then
   PRODUCT_ID=$(stripe_cli products create --name "QikLog Pro" \
     -d "description=500,000 log lines a month, live tail, API keys." \
     -d "metadata[qiklog_plan]=pro" | json "d['id']")
@@ -63,6 +67,10 @@ fi
 # 2. Price: $9/month, found by lookup key so re-runs reuse it
 say "Pro price (\$9/month)"
 PRICE_ID=$(stripe_cli prices list -d "lookup_keys[]=$PRICE_LOOKUP_KEY" -d "active=true" | json "d['data'][0]['id'] if d['data'] else ''")
+if [[ -z "$PRICE_ID" ]]; then
+  # Or an existing $9/month price on that product (made by hand, no lookup key).
+  PRICE_ID=$(stripe_cli prices list --product "$PRODUCT_ID" -d "active=true" --limit 100 | json "next((p['id'] for p in d['data'] if p['unit_amount']==900 and p['currency']=='usd' and (p.get('recurring') or {}).get('interval')=='month' and (p.get('recurring') or {}).get('interval_count',1)==1), '')")
+fi
 if [[ -z "$PRICE_ID" ]]; then
   PRICE_ID=$(stripe_cli prices create --product "$PRODUCT_ID" --unit-amount 900 --currency usd \
     -d "recurring[interval]=month" -d "lookup_key=$PRICE_LOOKUP_KEY" | json "d['id']")
