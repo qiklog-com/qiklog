@@ -6,42 +6,91 @@ namespace QikLog.Core.Tests;
 public sealed class LandingPageContractTests
 {
     [Fact]
-    public void Landing_page_leads_with_visitor_outcome_not_tool_speed()
+    public void Given_landing_When_read_Then_the_log_link_is_the_hero_and_the_pitch_is_console_log_for_your_server()
     {
+        // The five-scene landing was replaced by the log link hero (docs/MARKETING_PLAN.md).
         var index = ReadRepoFile("www/src/pages/index.astro");
         var layout = ReadRepoFile("www/src/layouts/BaseLayout.astro");
+        var hero = ReadRepoFile("www/src/components/LinkHero.astro");
+        var deck = ReadRepoFile("www/src/lib/link-deck.ts");
 
-        // Visible H1 + lede: outcome for the visitor's app (Option B).
-        index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
-        index.ShouldContain("Try it now");
+        // Given: the page a stranger lands on
+        // Then: the headline names the job in the visitor's words, not a product category
+        index.ShouldContain("<h1>console.log for your server.</h1>");
+        index.ShouldContain("Get a link. Send it a line. Watch it land.");
+        index.ShouldContain("QikLog: console.log for your server");
+        layout.ShouldContain("QikLog: console.log for your server");
+        layout.ShouldContain("Get a link. Send it a line. Watch it land.");
+        layout.ShouldNotContain("See what your app is doing, live");
+
+        // Then: the hero is the product, with nothing else above it
         index.ShouldContain("<SiteNav");
-        index.ShouldContain("<HeroPlayground");
-        index.ShouldContain("$9/mo, cancel anytime.");
-        index.ShouldContain("PUBLIC_APP_URL");
-        index.ShouldContain("const tryUrl = `${appUrl}/`");
+        index.ShouldContain("<LinkHero");
+        index.ShouldContain("<SiteFooter");
+        index.ShouldNotContain("<HeroPlayground");
+        index.ShouldNotContain("<ScrollScene");
+        index.ShouldNotContain("<StatsRow");
+        index.ShouldNotContain("300ms");
+        index.ShouldNotContain("278ms");
 
-        // Meta / OG defaults match the same outcome framing (not the old tool-speed pitch).
-        index.ShouldContain("description =");
-        index.ShouldContain(
-            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No account needed to try.");
-        layout.ShouldContain(
-            "See what your app is doing, live. Add a log line from your code. Watch it stream in the browser. No account needed to try.");
-        layout.ShouldNotContain("log tailing that works in seconds");
-
-        index.ShouldNotContain("Log tailing that works in seconds");
-        index.ShouldNotContain("Add logs to your app in seconds");
-        index.ShouldNotContain("QikLog Pro");
-        index.ShouldNotContain("Upgrade");
-        index.ShouldContain("/signup");
-        ReadRepoFile("www/src/components/Lockup.astro").ShouldContain("qiklog-mark.svg");
+        // Then: what it is not, the price in one line, and the .NET hook below the fold
+        index.ShouldContain("<strong>No dashboard</strong> to configure.");
+        index.ShouldContain("<strong>No agent</strong> to install.");
+        index.ShouldContain("<strong>No query language</strong> to learn.");
+        index.ShouldContain("Free up to 10,000 lines a month. Pro is $9/mo, cancel anytime.");
         index.ShouldContain("Create a free account");
-        index.ShouldNotContain("GET STARTED", Case.Sensitive);
-        index.ShouldNotContain("Open app");
-        index.ShouldNotContain("coming soon");
-        index.ShouldNotContain("checkout.stripe.com");
-        index.ShouldNotContain("—");
-        index.ShouldNotContain("–");
+        index.ShouldContain("/signup");
+        index.ShouldContain("Serilog sink");
+        index.ShouldContain("PUBLIC_APP_URL");
+        index.ShouldContain("PUBLIC_API_URL");
+        index.ShouldContain("https://api.qiklog.com");
+
+        // Then: one button, and the address it returns is both where you send and where you watch
+        hero.ShouldContain("Get a log link");
+        hero.ShouldContain("No account. No agent. No dashboard.");
+        hero.ShouldContain("fetch(`${api}/l`, { method: 'POST' })");
+        hero.ShouldContain("/embed/l/");
+        hero.ShouldContain("Send a test line");
+        hero.ShouldContain("fetch(link.url, { method: 'POST', body: 'hello from the browser' })");
+        hero.ShouldContain("Anyone with this link can read it, so do not log secrets. It lasts 24 hours and holds 500 lines.");
+
+        // Then: accounts are mentioned only after the first line lands
+        hero.ShouldContain("data-keep hidden");
+        hero.ShouldContain("qiklog-log");
+        hero.ShouldContain("for logs that stay private and do not expire.");
+
+        // Then: the samples need no key, no JSON, and no headers
+        deck.ShouldContain("curl __URL__ -d \"it broke\"");
+        deck.ShouldContain("label: 'curl'");
+        deck.ShouldContain("label: 'JavaScript'");
+        deck.ShouldContain("label: 'C#'");
+        deck.ShouldNotContain("API_KEY");
+        deck.ShouldNotContain("Authorization");
+        hero.ShouldNotContain("API_KEY");
+        hero.ShouldContain("sample.innerHTML = highlight(");
+
+        foreach (var file in new[] { index, hero, deck })
+        {
+            file.ShouldNotContain("QikLog Pro");
+            file.ShouldNotContain("Upgrade");
+            file.ShouldNotContain("coming soon");
+            file.ShouldNotContain("checkout.stripe.com");
+            file.ShouldNotContain("\u2014");
+            file.ShouldNotContain("\u2013");
+        }
+    }
+
+    [Fact]
+    public void Given_the_marketing_host_When_configured_Then_log_link_paths_are_proxied_to_the_api()
+    {
+        // Given: qiklog.com is a static site, and a log link lives at qiklog.com/l/{id}
+        var vercel = ReadRepoFile("www/vercel.json");
+
+        // Then: creating, sending and reading all reach the API through the same address
+        vercel.ShouldContain("\"source\": \"/l\"");
+        vercel.ShouldContain("\"destination\": \"https://api.qiklog.com/l\"");
+        vercel.ShouldContain("\"source\": \"/l/:path*\"");
+        vercel.ShouldContain("\"destination\": \"https://api.qiklog.com/l/:path*\"");
     }
 
     [Fact]
@@ -51,7 +100,7 @@ public sealed class LandingPageContractTests
         readme.ShouldContain("docs/assets/qiklog-lockup.svg");
         readme.ShouldContain("actions/workflows/ci.yml/badge.svg");
         readme.ShouldContain("badge/.NET-9");
-        readme.ShouldContain("badge/status-pre--alpha");
+        readme.ShouldContain("badge/status-beta");
         readme.ShouldContain("www.qiklog.com");
         readme.ShouldContain("app.qiklog.com");
         readme.ShouldNotContain("src/QikLog.Web/wwwroot/brand/lockup.svg");
@@ -97,7 +146,6 @@ public sealed class LandingPageContractTests
     public void Landing_scroll_scenes_use_real_live_embed()
     {
         // Given: the marketing landing page
-        var index = ReadRepoFile("www/src/pages/index.astro");
         var embed = ReadRepoFile("www/src/components/LiveTailEmbed.astro");
         var scene = ReadRepoFile("www/src/components/ScrollScene.astro");
         var panel = ReadRepoFile("src/QikLog.Web/Components/Shared/LiveTailPanel.razor");
@@ -106,21 +154,7 @@ public sealed class LandingPageContractTests
         var tape = ReadRepoFile("tapes/landing-live.tape");
 
         // When / Then: five-scene structure, hero copy unchanged, scene 3 is real embed
-        index.ShouldContain("id=\"scene-1\"");
-        index.ShouldContain("id=\"scene-2\"");
-        index.ShouldContain("id=\"scene-3\"");
-        index.ShouldContain("id=\"scene-4\"");
-        index.ShouldContain("id=\"scene-5\"");
         // Scene 2 and 3 titles removed 2026-11-21: the tape and the live panel carry those scenes.
-        index.ShouldNotContain("One POST. From anywhere.");
-        index.ShouldNotContain("It's already streaming.");
-        index.ShouldContain("No dashboard to configure.");
-        index.ShouldContain("<LiveTailEmbed");
-        index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
-        index.ShouldContain("prefers-reduced-motion");
-        index.ShouldContain("IntersectionObserver");
-        index.ShouldContain("scrollIntoView");
 
         embed.ShouldContain("/embed/tail/");
         embed.ShouldContain("loading=\"lazy\"");
@@ -189,19 +223,10 @@ public sealed class LandingPageContractTests
     [Fact]
     public void Hero_terminal_is_the_visual_anchor()
     {
-        // Given: the landing hero
-        var index = ReadRepoFile("www/src/pages/index.astro");
+        // Given: the tail preview component
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");
 
-        // When: layout is inspected
-        // Then: copy stays; playground (input + deck + live panel) sits under it
-        index.ShouldContain("class=\"hero-play");
-        index.ShouldContain("<HeroPlayground");
-        index.ShouldContain("See what your app is doing, live.");
-        index.ShouldContain("Add a log line from your code. Watch it stream in the browser. No account needed to try.");
-        index.ShouldContain("Try it now");
-        index.ShouldNotContain("minmax(16rem, 22rem)");
-
+        // Then: it fills its column and uses brand tokens, not raw hex
         preview.ShouldContain("JWT expired 401");
         preview.ShouldContain("width: 100%");
         preview.ShouldNotContain("width: min(100%, 22rem)");
@@ -256,7 +281,6 @@ public sealed class LandingPageContractTests
     public void Given_landing_When_inspected_Then_snap_slides_chevron_and_one_shot_motion()
     {
         // Given: the marketing landing deck
-        var index = ReadRepoFile("www/src/pages/index.astro");
         var scene = ReadRepoFile("www/src/components/ScrollScene.astro");
         var css = ReadRepoFile("www/src/styles/global.css");
 
@@ -266,16 +290,6 @@ public sealed class LandingPageContractTests
         css.ShouldContain("--ql-shadow-pop");
         scene.ShouldContain("scroll-snap-align");
         scene.ShouldContain("620ms");
-        index.ShouldContain("scroll-chevron");
-        index.ShouldContain("scrollIntoView");
-        index.ShouldContain("2000");
-        index.ShouldContain("chevron-pop");
-        index.ShouldContain("toggleAttribute('hidden'");
-        index.ShouldContain("IntersectionObserver");
-        index.ShouldContain("dataset.seen");
-        index.ShouldContain("prefers-reduced-motion");
-        index.ShouldContain("@media (max-width: 375px)");
-        index.ShouldNotContain("—");
         scene.ShouldNotContain("—");
     }
 
@@ -283,15 +297,9 @@ public sealed class LandingPageContractTests
     public void Given_ingest_slide_When_read_Then_tape_types_real_api_curl()
     {
         // Given: scene 2 is the ingest tell
-        var index = ReadRepoFile("www/src/pages/index.astro");
         var tape = ReadRepoFile("www/src/components/TapeTerminal.astro");
 
         // When / Then: real production curl, tape treatment, caption last
-        index.ShouldContain("INGEST");
-        index.ShouldNotContain("One POST. From anywhere.");
-        index.ShouldContain("<TapeTerminal");
-        index.ShouldContain("All you need is a path to send.");
-        index.ShouldContain("data-enter=\"left\"");
         tape.ShouldContain("https://api.qiklog.com/v1/logs");
         tape.ShouldContain("Content-Type: application/json");
         tape.ShouldContain("Authorization: Bearer");
@@ -312,16 +320,10 @@ public sealed class LandingPageContractTests
     public void Given_live_slide_When_read_Then_embed_enters_from_right_with_realistic_placeholder()
     {
         // Given: scene 3 is the real Blazor embed
-        var index = ReadRepoFile("www/src/pages/index.astro");
         var embed = ReadRepoFile("www/src/components/LiveTailEmbed.astro");
         var smoke = ReadRepoFile("tests/QikLog.Smoke.Tests/WebSmokeTests.cs");
 
         // When / Then: lazy iframe to demo; placeholder lines are HTTP logs, not file tails
-        index.ShouldContain("LIVE");
-        index.ShouldNotContain("It's already streaming.");
-        index.ShouldContain("source=\"demo\"");
-        index.ShouldContain("data-enter=\"right\"");
-        index.ShouldContain("--enter-delay: 480ms");
         embed.ShouldContain("/embed/tail/");
         embed.ShouldContain("loading=\"lazy\"");
         embed.ShouldContain("200 GET /api/orders 24.31ms");
@@ -340,32 +342,17 @@ public sealed class LandingPageContractTests
         embed.ShouldNotContain("hello from curl");
         smoke.ShouldContain("Given_demo_ingest_When_history_read_Then_embed_source_receives_line");
         smoke.ShouldContain("/embed/tail/demo");
-        index.ShouldNotContain("—");
     }
 
     [Fact]
-    public void Given_path_and_cta_slides_When_read_Then_cards_and_sentence_case_close()
+    public void Given_site_nav_When_read_Then_it_is_a_sticky_glass_bar()
     {
-        // Given: scenes 4 and 5
-        var index = ReadRepoFile("www/src/pages/index.astro");
+        // Given: the shared site navigation
         var nav = ReadRepoFile("www/src/components/SiteNav.astro");
 
-        // When / Then: three elevated cards, quiet .NET line, Get started close
-        index.ShouldContain("PATH");
-        index.ShouldContain("No dashboard to configure.");
-        index.ShouldContain("your code");
-        index.ShouldContain("your browser");
-        index.ShouldContain("qiklog-mark.svg");
-        index.ShouldContain("M8 6 3 12l5 6");
-        index.ShouldNotContain("&lt;/&gt;");
-        index.ShouldNotContain("path-icon\" aria-hidden=\"true\">[]");
-        index.ShouldContain("Prebuilt .NET integration included.");
-        index.ShouldContain("Create a free account");
-        index.ShouldNotContain("GET STARTED", Case.Sensitive);
-        index.ShouldContain("<SiteFooter");
+        // Then: it stays a 60px sticky glass bar
         nav.ShouldContain("backdrop-filter");
         nav.ShouldContain("height: 60px");
-        index.ShouldNotContain("—");
     }
 
     [Fact]
@@ -407,32 +394,9 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
-    public void Given_cta_slide_When_read_Then_measured_close_and_quiet_entry_links()
-    {
-        // Given: scene 5 is the close
-        var index = ReadRepoFile("www/src/pages/index.astro");
-
-        // When / Then: measured headline, supporting line, quiet text links (not buttons)
-        index.ShouldContain("Still under 300ms.");
-        index.ShouldContain("Terminal to browser. Measured, not marketing.");
-        index.ShouldContain("Prefer another way in?");
-        index.ShouldContain("Read the docs");
-        index.ShouldContain("href=\"/docs/\"");
-        index.ShouldContain("Install the CLI");
-        index.ShouldContain("href=\"/docs/cli/\"");
-        index.ShouldContain("Clone the repo");
-        index.ShouldContain("https://github.com/qiklog-com/qiklog");
-        index.ShouldContain("cta-alt");
-        index.ShouldNotContain("cta-alt btn");
-        index.ShouldContain("toggleAttribute('hidden'");
-        index.ShouldNotContain("—");
-    }
-
-    [Fact]
     public void Given_hero_playground_When_read_Then_data_driven_deck_proxy_and_gated_stats()
     {
         // Given: ntfy-style hero send + code deck
-        var index = ReadRepoFile("www/src/pages/index.astro");
         var playground = ReadRepoFile("www/src/components/HeroPlayground.astro");
         var deck = ReadRepoFile("www/src/lib/code-deck.ts");
         var message = ReadRepoFile("www/src/lib/demo-message.ts");
@@ -441,9 +405,6 @@ public sealed class LandingPageContractTests
         var panel = ReadRepoFile("src/QikLog.Web/Components/Shared/LiveTailPanel.razor");
 
         // When / Then
-        index.ShouldContain("<HeroPlayground");
-        index.ShouldContain("<StatsRow");
-        index.ShouldContain("hero-play");
         playground.ShouldContain("Send");
         playground.ShouldNotContain("Simulate");
         playground.ShouldContain("/api/demo-send");
@@ -480,7 +441,6 @@ public sealed class LandingPageContractTests
         embed.ShouldContain("NotifyEmbed=\"true\"");
         var home = ReadRepoFile("src/QikLog.Web/Components/Pages/Home.razor");
         home.ShouldNotContain("NotifyEmbed");
-        index.ShouldNotContain("—");
         playground.ShouldNotContain("—");
     }
 
@@ -610,6 +570,25 @@ public sealed class LandingPageContractTests
         start.ShouldContain("Authorization: Bearer $QIKLOG_API_KEY");
     }
 
+    [Fact]
+    public void Given_code_samples_When_rendered_Then_they_are_highlighted_and_escaped()
+    {
+        // Given: the hero's curl / C# / JavaScript sample includes the visitor's own message
+        var hl = ReadRepoFile("www/src/lib/highlight.ts");
+        var hero = ReadRepoFile("www/src/components/HeroPlayground.astro");
+
+        // Then: the sample goes through the highlighter, which escapes every token
+        hero.ShouldContain("sample.innerHTML = highlight(");
+        hero.ShouldNotContain("sample.innerHTML = tab.template");
+        hl.ShouldContain("escapeHtml");
+        hl.ShouldContain("&lt;");
+        foreach (var cls in new[] { "tok-cmd", "tok-flag", "tok-url", "tok-str", "tok-key", "tok-kw" })
+            hero.ShouldContain(cls);
+
+        // And: the live result panel has no fake window chrome
+        ReadRepoFile("www/src/components/LiveTailEmbed.astro").ShouldNotContain("<TerminalFrame");
+    }
+
     private static void AssertPngSize(string relativePath, int width, int height)
     {
         var bytes = ReadRepoBytes(relativePath);
@@ -628,25 +607,6 @@ public sealed class LandingPageContractTests
 
         dir.ShouldNotBeNull("could not find repo root from test output directory");
         return dir!;
-    }
-
-    [Fact]
-    public void Given_code_samples_When_rendered_Then_they_are_highlighted_and_escaped()
-    {
-        // Given: the hero's curl / C# / JavaScript sample includes the visitor's own message
-        var hl = ReadRepoFile("www/src/lib/highlight.ts");
-        var hero = ReadRepoFile("www/src/components/HeroPlayground.astro");
-
-        // Then: the sample goes through the highlighter, which escapes every token
-        hero.ShouldContain("sample.innerHTML = highlight(");
-        hero.ShouldNotContain("sample.innerHTML = tab.template");
-        hl.ShouldContain("escapeHtml");
-        hl.ShouldContain("&lt;");
-        foreach (var cls in new[] { "tok-cmd", "tok-flag", "tok-url", "tok-str", "tok-key", "tok-kw" })
-            hero.ShouldContain(cls);
-
-        // And: the live result panel has no fake window chrome
-        ReadRepoFile("www/src/components/LiveTailEmbed.astro").ShouldNotContain("<TerminalFrame");
     }
 
     private static string ReadRepoFile(string relativePath)
