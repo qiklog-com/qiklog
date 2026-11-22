@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using QikLog.Api.Auth;
 using QikLog.Api.Observability;
+using QikLog.Core.Links;
 using QikLog.Infrastructure;
 using QikLog.Infrastructure.Auth;
 
@@ -86,6 +87,20 @@ public sealed class LogHub(
             group);
         return Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
     }
+
+    /// <summary>
+    /// Joins the live stream of an anonymous log link. Whoever holds the id may read
+    /// the link, so this needs no tenant check; a malformed id is ignored.
+    /// </summary>
+    public Task SubscribeLink(string linkId) =>
+        LogLinkId.IsValid(linkId)
+            ? Groups.AddToGroupAsync(Context.ConnectionId, LogHubGroups.ForLink(linkId))
+            : Task.CompletedTask;
+
+    public Task UnsubscribeLink(string linkId) =>
+        LogLinkId.IsValid(linkId)
+            ? Groups.RemoveFromGroupAsync(Context.ConnectionId, LogHubGroups.ForLink(linkId))
+            : Task.CompletedTask;
 
     private string ResolveGroupName(string source)
     {

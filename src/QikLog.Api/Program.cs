@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QikLog.Api.Hubs;
+using QikLog.Api.Links;
 using QikLog.Infrastructure.Tenants;
 using QikLog.Api.Middleware;
 using QikLog.Core;
@@ -33,7 +34,14 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
+
+    // Log links are called from anywhere (a visitor's page, their app) and carry no credentials.
+    options.AddPolicy(LinkEndpoints.CorsPolicy, policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .WithMethods("GET", "POST"));
 });
+builder.Services.AddSingleton<LinkCreateLimiter>();
 
 var app = builder.Build();
 
@@ -141,6 +149,7 @@ app.MapPost("/v1/logs", async (
 .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
 app.MapQikLogManagement();
+app.MapQikLogLinks();
 app.MapQikLogBilling();
 
 // Back-compat alias for CLI/scripts when management API is enabled.
