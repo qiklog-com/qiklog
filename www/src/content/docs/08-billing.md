@@ -1,7 +1,7 @@
 ---
 title: Billing
 description: Stripe Pro checkout and usage limits.
-order: 9
+order: 10
 ---
 
 ## Plans

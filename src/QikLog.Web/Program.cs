@@ -151,6 +151,12 @@ public sealed class QikLogOptions
     /// <summary>Optional API key for SignalR hub + history when API auth enforcement is enabled.</summary>
     public string? HubApiKey { get; set; }
 
+    /// <summary>
+    /// Origin shown in log link URLs on the link page, e.g. <c>https://qiklog.com</c>.
+    /// When blank the page shows the API origin, which accepts the same paths.
+    /// </summary>
+    public string? LinkBaseUrl { get; set; }
+
     /// <summary>Try-it-now credential. Not used by the signed-in dashboard.</summary>
     public DemoOptions Demo { get; set; } = new();
 }

@@ -1,0 +1,27 @@
+@page "/embed/l/{Id}"
+@layout QikLog.Web.Components.Layout.EmbedLayout
+@rendermode InteractiveServer
+@using QikLog.Core.Links
+@using QikLog.Web.Components.Shared
+
+@* Compact tail of a log link for the marketing page iframe. *@
+
+<PageTitle>log link &middot; QikLog</PageTitle>
+
+@if (LogLinkId.IsValid(Id))
+{
+    <LiveTailPanel Source="your link"
+                   LinkId="@Id"
+                   Compact="true"
+                   UseDemoCredential="true"
+                   NotifyEmbed="true"
+                   ViewportHeight="22rem" />
+}
+else
+{
+    <p class="ql-muted">This log link is not valid.</p>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+}

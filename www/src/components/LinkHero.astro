@@ -1,0 +1,508 @@
+---
+import TerminalFrame from './TerminalFrame.astro';
+import { LINK_TABS, PLACEHOLDER_URL } from '../lib/link-deck';
+
+/**
+ * The hero is the product: one button makes a log link, then the page shows the
+ * address, the line to paste, and the live tail of that link.
+ * The API is called directly (not through this site) so its per-address limit
+ * sees the visitor, not the proxy.
+ */
+interface Props {
+  appUrl: string;
+  apiUrl: string;
+}
+
+const { appUrl, apiUrl } = Astro.props;
+const signUpUrl = `${appUrl}/signup`;
+const tabsJson = JSON.stringify(LINK_TABS);
+---
+<div class="link-hero" data-link-hero data-api={apiUrl} data-app={appUrl} data-placeholder={PLACEHOLDER_URL}>
+  <div class="start" data-start>
+    <button type="button" class="btn btn-primary get" data-get>Get a log link</button>
+    <p class="hint">No account. No agent. No dashboard.</p>
+  </div>
+
+  <div class="url-row" data-url-row hidden>
+    <code class="url" data-url></code>
+    <button type="button" class="btn btn-primary copy-url" data-copy-url>Copy link</button>
+    <button type="button" class="btn btn-ghost another" data-another>New link</button>
+  </div>
+
+  <p class="status" data-status aria-live="polite"></p>
+
+  <div class="work">
+    <div class="work-left">
+      <div class="tabs" role="tablist" aria-label="Language samples">
+        {LINK_TABS.map((tab, i) => (
+          <button
+            type="button"
+            class:list={['tab', { active: i === 0 }]}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+            data-tab={tab.id}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <TerminalFrame title="paste this where you would write console.log">
+        <div class="sample-wrap">
+          <button type="button" class="copy" data-copy>Copy</button>
+          <pre class="sample"><code data-sample></code></pre>
+        </div>
+      </TerminalFrame>
+      <div class="actions" data-actions hidden>
+        <button type="button" class="btn btn-ghost test" data-test>Send a test line</button>
+        <a class="open" data-open target="_blank" rel="noopener">Open the tail in its own tab</a>
+      </div>
+      <p class="note" data-note hidden>
+        Anyone with this link can read it, so do not log secrets. It lasts 24 hours and holds 500 lines.
+      </p>
+      <p class="keep" data-keep hidden>
+        That is QikLog. <a href={signUpUrl}>Create a free account</a> for logs that stay private and do not expire.
+      </p>
+    </div>
+
+    <div class="work-right">
+      <div class="tail-stage">
+        <ul class="tail-skeleton" data-skeleton aria-hidden="true">
+          <li class="log-line">
+            <span class="log-ts">14:02:11</span>
+            <span class="log-level is-info">INFO</span>
+            <span class="log-msg">it broke</span>
+          </li>
+          <li class="log-line">
+            <span class="log-ts">14:02:12</span>
+            <span class="log-level is-error">ERROR</span>
+            <span class="log-msg">500 POST /checkout NullReferenceException</span>
+          </li>
+        </ul>
+        <iframe class="tail" data-tail title="Live tail for your log link" hidden></iframe>
+      </div>
+      <p class="tail-note" data-tail-note>Your lines show up here, live.</p>
+    </div>
+  </div>
+
+  <div id="link-deck-config" hidden data-json={tabsJson}></div>
+</div>
+
+<script>
+  import { highlight, langForTab } from '../lib/highlight';
+
+  const STORE_KEY = 'qiklog-link';
+
+  const root = document.querySelector('[data-link-hero]');
+  const api = (root?.getAttribute('data-api') ?? '').replace(/\/$/, '');
+  const app = (root?.getAttribute('data-app') ?? '').replace(/\/$/, '');
+  const placeholder = root?.getAttribute('data-placeholder') ?? '';
+  const tabs = JSON.parse(document.getElementById('link-deck-config')?.getAttribute('data-json') ?? '[]');
+
+  const q = (sel) => root?.querySelector(sel);
+  const start = q('[data-start]');
+  const getBtn = q('[data-get]');
+  const urlRow = q('[data-url-row]');
+  const urlEl = q('[data-url]');
+  const copyUrlBtn = q('[data-copy-url]');
+  const anotherBtn = q('[data-another]');
+  const status = q('[data-status]');
+  const sample = q('[data-sample]');
+  const copyBtn = q('[data-copy]');
+  const actions = q('[data-actions]');
+  const testBtn = q('[data-test]');
+  const openLink = q('[data-open]');
+  const note = q('[data-note]');
+  const keep = q('[data-keep]');
+  const skeleton = q('[data-skeleton]');
+  const tail = q('[data-tail]');
+  const tailNote = q('[data-tail-note]');
+
+  let activeId = tabs[0]?.id ?? 'curl';
+  let link = null;
+
+  function setStatus(text) {
+    if (status) status.textContent = text;
+  }
+
+  function render() {
+    const tab = tabs.find((t) => t.id === activeId) ?? tabs[0];
+    if (!tab || !sample) return;
+    // highlight() escapes every token, so nothing from the API can inject markup.
+    sample.innerHTML = highlight(tab.template.replaceAll('__URL__', link?.url ?? placeholder), langForTab(tab.id));
+    root?.querySelectorAll('[data-tab]').forEach((btn) => {
+      const on = btn.getAttribute('data-tab') === activeId;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  function isLink(value) {
+    return (
+      value &&
+      typeof value.id === 'string' &&
+      /^[a-z0-9]{12}$/.test(value.id) &&
+      typeof value.url === 'string' &&
+      /^https?:\/\//.test(value.url)
+    );
+  }
+
+  function show(next) {
+    link = next;
+    if (urlEl) urlEl.textContent = link.url;
+    start?.setAttribute('hidden', '');
+    urlRow?.removeAttribute('hidden');
+    actions?.removeAttribute('hidden');
+    note?.removeAttribute('hidden');
+    keep?.setAttribute('hidden', '');
+    if (openLink instanceof HTMLAnchorElement) openLink.href = `${app}/l/${link.id}`;
+    if (tail instanceof HTMLIFrameElement) {
+      tail.src = `${app}/embed/l/${link.id}`;
+      tail.removeAttribute('hidden');
+    }
+    skeleton?.setAttribute('hidden', '');
+    if (tailNote) tailNote.textContent = 'This is your link, live. Send it a line.';
+    render();
+  }
+
+  function reset() {
+    link = null;
+    try {
+      window.localStorage.removeItem(STORE_KEY);
+    } catch {
+      // Storage is optional.
+    }
+    urlRow?.setAttribute('hidden', '');
+    actions?.setAttribute('hidden', '');
+    note?.setAttribute('hidden', '');
+    keep?.setAttribute('hidden', '');
+    start?.removeAttribute('hidden');
+    if (tail instanceof HTMLIFrameElement) {
+      tail.setAttribute('hidden', '');
+      tail.removeAttribute('src');
+    }
+    skeleton?.removeAttribute('hidden');
+    if (tailNote) tailNote.textContent = 'Your lines show up here, live.';
+    setStatus('');
+    render();
+  }
+
+  async function createLink() {
+    if (!(getBtn instanceof HTMLButtonElement)) return;
+    getBtn.disabled = true;
+    setStatus('Making your link...');
+    try {
+      const res = await fetch(`${api}/l`, { method: 'POST' });
+      if (res.status === 429) {
+        setStatus('Too many new links from this address. Try again next hour.');
+        return;
+      }
+      if (!res.ok) throw new Error('create failed');
+      const created = await res.json();
+      if (!isLink(created)) throw new Error('unexpected response');
+      const next = { id: created.id, url: created.url, expiresAt: created.expiresAt };
+      try {
+        window.localStorage.setItem(STORE_KEY, JSON.stringify(next));
+      } catch {
+        // Storage is optional.
+      }
+      setStatus('');
+      show(next);
+    } catch {
+      setStatus('Could not make a link right now. Try again in a minute.');
+    } finally {
+      getBtn.disabled = false;
+    }
+  }
+
+  async function sendTestLine() {
+    if (!link || !(testBtn instanceof HTMLButtonElement)) return;
+    testBtn.disabled = true;
+    try {
+      const res = await fetch(link.url, { method: 'POST', body: 'hello from the browser' });
+      if (res.status === 402) setStatus('This link is full. Reading still works.');
+      else if (res.status === 404 || res.status === 410) setStatus('This link has expired. Get a new one.');
+      else if (!res.ok) setStatus('Could not send the line.');
+      else setStatus('Sent. Now try it from your own code.');
+    } catch {
+      setStatus('Could not send the line.');
+    } finally {
+      window.setTimeout(() => {
+        testBtn.disabled = false;
+      }, 1000);
+    }
+  }
+
+  async function copy(text, button, idle) {
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = 'Copied';
+    } catch {
+      button.textContent = 'Copy failed';
+    }
+    window.setTimeout(() => {
+      button.textContent = idle;
+    }, 1200);
+  }
+
+  root?.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeId = btn.getAttribute('data-tab') ?? activeId;
+      render();
+    });
+  });
+
+  getBtn?.addEventListener('click', createLink);
+  anotherBtn?.addEventListener('click', reset);
+  testBtn?.addEventListener('click', sendTestLine);
+  copyBtn?.addEventListener('click', () => copy(sample?.textContent ?? '', copyBtn, 'Copy'));
+  copyUrlBtn?.addEventListener('click', () => link && copy(link.url, copyUrlBtn, 'Copy link'));
+
+  // The tail iframe reports each line it paints. The first one is the moment to
+  // mention accounts, and not before.
+  window.addEventListener('message', (event) => {
+    if (!link || event.data?.type !== 'qiklog-log') return;
+    keep?.removeAttribute('hidden');
+  });
+
+  // Coming back within the day: pick up the same link instead of minting another.
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(STORE_KEY) ?? 'null');
+    if (isLink(saved) && Date.parse(saved.expiresAt) > Date.now()) show(saved);
+  } catch {
+    // Storage is optional.
+  }
+
+  render();
+</script>
+
+<style>
+  .link-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    width: 100%;
+  }
+
+  .start {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem 1.25rem;
+  }
+
+  .start[hidden],
+  .url-row[hidden],
+  .actions[hidden] {
+    display: none;
+  }
+
+  .get {
+    padding: 0.95rem 1.7rem;
+    font-size: 1.1rem;
+    box-shadow: var(--ql-shadow-sm);
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .url-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .url {
+    flex: 1 1 18rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--ql-rust);
+    border-radius: var(--ql-radius-sm);
+    background: var(--ql-paper);
+    color: var(--ql-ink);
+    font-family: var(--ql-font-mono);
+    font-size: 0.98rem;
+    overflow-wrap: anywhere;
+  }
+
+  .copy-url,
+  .another {
+    padding: 0.7rem 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  .status {
+    margin: 0;
+    min-height: 1.3em;
+    font-family: var(--ql-font-mono);
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+  }
+
+  .work {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem 2.25rem;
+    align-items: start;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1.1rem;
+    margin: 0 0 0.65rem;
+  }
+
+  .tab {
+    padding: 0.2rem 0 0.35rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    font-family: var(--ql-font-mono);
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+    cursor: pointer;
+  }
+
+  .tab.active {
+    color: var(--ql-ink);
+    border-bottom-color: var(--ql-rust);
+  }
+
+  .sample-wrap {
+    position: relative;
+  }
+
+  .copy {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    background: transparent;
+    color: var(--ql-ink-caption);
+    font-family: var(--ql-font-mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  .sample {
+    margin: 0;
+    min-height: 4.5rem;
+    font-family: var(--ql-font-mono);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding-right: 3.5rem;
+  }
+
+  /* Syntax colors on --ql-ink; each is at least 4.5:1 against it. */
+  .sample :global(.tok-cmd) { color: #f2a65a; font-weight: 600; }
+  .sample :global(.tok-flag) { color: #e8875a; }
+  .sample :global(.tok-url) { color: #8fd1a6; }
+  .sample :global(.tok-str) { color: #e6c07b; }
+  .sample :global(.tok-key) { color: #7eb8e8; }
+  .sample :global(.tok-kw) { color: #d6a1e0; }
+  .sample :global(.tok-type) { color: #8fd1c9; }
+  .sample :global(.tok-num) { color: #f0a0a0; }
+  .sample :global(.tok-var) { color: #e8a0c8; }
+  .sample :global(.tok-punct) { color: #a99f94; }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.1rem;
+    margin: 0.9rem 0 0;
+  }
+
+  .test {
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .open {
+    font-size: 0.88rem;
+    color: var(--ql-rust);
+  }
+
+  .note,
+  .keep {
+    margin: 0.85rem 0 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--ql-ink-caption);
+  }
+
+  .keep {
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    color: var(--ql-ink);
+    background: var(--ql-paper);
+  }
+
+  .keep a {
+    color: var(--ql-rust);
+  }
+
+  .tail-stage {
+    position: relative;
+    min-height: 18.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--ql-hairline);
+    box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--ql-ink) 55%, transparent);
+    background: var(--ql-ink);
+  }
+
+  .tail-skeleton {
+    margin: 0;
+    padding: 1rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    opacity: 0.55;
+  }
+
+  .tail-skeleton[hidden],
+  .tail[hidden] {
+    display: none;
+  }
+
+  .tail {
+    display: block;
+    width: 100%;
+    min-height: 18.5rem;
+    border: 0;
+    background: var(--ql-paper);
+  }
+
+  .tail-note {
+    margin: 0.7rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ql-ink-caption);
+  }
+
+  @media (max-width: 720px) {
+    .work {
+      grid-template-columns: 1fr;
+    }
+
+    .get {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 375px) {
+    .tail-stage,
+    .tail {
+      min-height: 14rem;
+    }
+  }
+</style>

@@ -1,7 +1,7 @@
 ---
 title: Serilog
 description: One-line Serilog sink that POSTs to QikLog ingest.
-order: 6
+order: 7
 ---
 
 Ship logs from a .NET app with one line after the package reference. The sink

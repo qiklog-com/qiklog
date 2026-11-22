@@ -1,5 +1,9 @@
 {
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/l", "destination": "https://api.qiklog.com/l" },
+    { "source": "/l/:path*", "destination": "https://api.qiklog.com/l/:path*" }
+  ]
 }

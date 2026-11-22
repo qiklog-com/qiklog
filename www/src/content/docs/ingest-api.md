@@ -1,7 +1,7 @@
 ---
 title: Ingest API
 description: POST /v1/logs JSON shape, auth headers, log levels, and response codes.
-order: 3
+order: 4
 ---
 
 Send logs to the API with a single JSON POST. Same contract for curl, the CLI, and the Serilog sink.

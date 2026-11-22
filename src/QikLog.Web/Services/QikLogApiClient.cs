@@ -45,6 +45,26 @@ public sealed class QikLogApiClient(HttpClient http)
             cancellationToken) ?? [];
     }
 
+    /// <summary>
+    /// Lines of an anonymous log link, oldest first, or null when the link is unknown
+    /// or has expired.
+    /// </summary>
+    public async Task<IReadOnlyList<LogEntry>?> GetLinkLinesAsync(
+        string linkId,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var response = await http.GetAsync(
+            $"/l/{Uri.EscapeDataString(linkId)}/lines?limit={limit}",
+            cancellationToken);
+        if (response.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.Gone)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<IReadOnlyList<LogEntry>>(JsonOptions, cancellationToken)
+            ?? [];
+    }
+
     public async Task<bool> RevokeApiKeyAsync(Guid id, CancellationToken cancellationToken)
     {
         var response = await http.PostAsync($"/v1/keys/{id}/revoke", null, cancellationToken);

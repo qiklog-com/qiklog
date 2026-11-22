@@ -1,75 +1,65 @@
 ---
 title: Quickstart
-description: Run QikLog locally with Docker and see your first live log line.
-order: 2
+description: See your first live log line in under a minute, then move to your own account and API key.
+order: 3
 ---
 
-Get the full stack running on your machine in a few minutes.
+Nothing to install. You need a terminal and a browser.
 
-## Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) with Compose
-- A browser
-
-## 1. Start the stack
-
-From the QikLog repository root:
+## 1. Get a log link
 
 ```bash
-docker compose up -d
+curl -X POST https://qiklog.com/l
 ```
 
-Or use the Makefile:
+Copy the `url` from the response, or click **Get a log link** on [qiklog.com](https://www.qiklog.com/).
+
+## 2. Send a line
 
 ```bash
-make up-d
+curl https://qiklog.com/l/k7mq2x9d4fab -d "it broke"
 ```
 
-Wait until Postgres, Redis, API, and Web are up. Check API health:
-
-```bash
-curl http://localhost:5080/healthz
-```
-
-You should see `{"status":"ok","postgres":"ok"}` when the database is connected.
-
-## 2. Send a test log
-
-```bash
-curl -X POST http://localhost:5080/v1/logs \
-  -H "Content-Type: application/json" \
-  -d '{"source":"demo","level":"info","message":"hello from curl"}'
-```
-
-A successful ingest returns **HTTP 202 Accepted** with an empty body.
+A successful send returns **HTTP 202 Accepted**.
 
 ## 3. Watch it live
 
-Open the tail page for source `demo`:
+Open the link in your browser. Your line is there, and new ones appear as you send them.
 
-**http://localhost:5081/tail/demo**
+That is the whole product. A log link lasts 24 hours, holds 500 lines, and anyone with the address can read it. See [Log links](/docs/log-links/) for levels, piping, and plain-text reads.
 
-You should see your line appear within a second. Send another curl with a different message to confirm streaming.
+## 4. When you want it private and permanent
 
-## 4. Verify persistence (optional)
-
-Logs are written to the `log_entries` table in Postgres. If you have `psql` handy:
+1. [Create a free account](https://app.qiklog.com/signup). You get your own workspace.
+2. Open **Manage** and create an API key. Save it: it is shown once.
+3. Send with the key, to a source name you choose:
 
 ```bash
-docker compose exec postgres psql -U qiklog -d qiklog -c \
-  "SELECT source, level, message, received_at FROM log_entries ORDER BY received_at DESC LIMIT 5;"
+export QIKLOG_API_KEY=ql_...
+curl -X POST https://api.qiklog.com/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $QIKLOG_API_KEY" \
+  -d '{"source":"api-prod","level":"info","message":"hello from curl"}'
 ```
+
+4. Watch it at `https://app.qiklog.com/tail/api-prod`. Only you can read it.
+
+Free accounts take 10,000 log lines a month. Pro takes 500,000. When you reach the cap, sending stops; reading always works.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| Connection refused on 5080 | Run `docker compose ps` — ensure `api` is running |
-| Tail page empty | Confirm `source` in curl matches the URL (`demo` in `/tail/demo`) |
-| 401 on ingest | You may have created API keys and enabled required auth — see [API keys](/docs/api-keys/) |
-| Postgres not ok in healthz | Wait for Postgres healthcheck; run `docker compose logs postgres` |
+| `404` on a log link | Check the address. Ids are 12 lowercase characters. |
+| `410` on a log link | It expired after 24 hours. Get a new one. |
+| `402` on a log link | It reached 500 lines. Reading still works; get a new link or use an account. |
+| `401` on `/v1/logs` | The key is missing. Send `Authorization: Bearer $QIKLOG_API_KEY`. |
+| Tail page empty | Confirm the `source` you sent matches the one in the tail address. |
 
 ## Next steps
 
-- [Ingest API](/docs/ingest-api/) — full request format
-- [API keys](/docs/api-keys/) — secure production ingest
+- [Log links](/docs/log-links/): everything a link can do
+- [Ingest API](/docs/ingest-api/): full request format
+- [API keys](/docs/api-keys/): create and revoke keys
+- [Serilog](/docs/serilog/): one line in Program.cs
+- [Self-hosting](/docs/self-hosting/): run the stack yourself with Docker

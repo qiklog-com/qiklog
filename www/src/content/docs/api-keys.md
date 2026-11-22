@@ -1,7 +1,7 @@
 ---
 title: API keys
 description: Create keys, authenticate ingest, and understand rate limits.
-order: 5
+order: 6
 ---
 
 API keys protect the **ingest** endpoint so random traffic cannot spam your project.
@@ -10,7 +10,7 @@ API keys protect the **ingest** endpoint so random traffic cannot spam your proj
 
 | Environment | Default |
 |-------------|---------|
-| **Local Docker Compose** | Keys optional (`RequireApiKey=false`) — quickstart curl works without a key |
+| **Local Docker Compose** | Keys optional (`RequireApiKey=false`) — the self-hosting curl works without a key |
 | **Production** | Keys **required** on every `POST /v1/logs` |
 
 If you create keys locally and enable `RequireApiKey`, ingest without a key returns **401**.

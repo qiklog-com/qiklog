@@ -1,10 +1,10 @@
 ---
 title: Manage UI
 description: Create API keys, list sources, and revoke keys in the dashboard at /manage.
-order: 8
+order: 9
 ---
 
-The dashboard includes a pre-alpha **Manage** console for sources and API keys.
+The dashboard includes a **Manage** console for sources and API keys.
 
 ## Open Manage
 

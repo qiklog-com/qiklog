@@ -1,7 +1,7 @@
 ---
 title: Live tail
 description: Watch logs stream in the browser with the Blazor dashboard.
-order: 4
+order: 5
 ---
 
 The dashboard is where you **watch** logs in real time.
