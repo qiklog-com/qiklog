@@ -116,7 +116,7 @@ Truth pass, required before any traffic:
 - [x] Quickstart no longer tells hosted users to run Docker (self-hosting has its own page).
 - [x] Pricing page has Free and Pro and no "checkout is not live" line (done in #42).
 - [x] README leads with the product; status badge is beta.
-- [ ] App header still says "pre-alpha".
+- [x] App header says beta. (The terms page still says "pre-alpha"; that is legal text for Jamey to change.)
 - [ ] GitHub About link points to qiklog-www.vercel.app.
 - [ ] Decide the one-sentence answer to "is it open source?"
 
