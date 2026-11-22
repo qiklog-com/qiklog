@@ -21,7 +21,14 @@
         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalAlignment="VerticalAlignment.Center">
             @if (!Compact)
             {
-                <h2 style="margin: 0;">tail <code>@Source</code></h2>
+                @if (LinkId is null)
+                {
+                    <h2 class="ql-tail-title" style="margin: 0;">tail <code>@Source</code></h2>
+                }
+                else
+                {
+                    <h2 class="ql-tail-title" style="margin: 0;">Live tail</h2>
+                }
                 <FluentSpacer />
             }
             else
@@ -72,10 +79,10 @@
                 {
                     @foreach (var row in _entries)
                     {
-                        <div @key="row.Sequence" style="display: flex; gap: 0.75rem; padding: 0.15rem 0;">
-                            <span style="opacity: 0.5; white-space: nowrap;">@row.Entry.Timestamp.ToString("HH:mm:ss.fff")</span>
-                            <span style="@LevelStyle(row.Entry.Level); font-weight: 600; min-width: 4rem;">@LevelLabel(row.Entry.Level)</span>
-                            <span style="white-space: pre-wrap; word-break: break-word;">@row.Entry.Message</span>
+                        <div @key="row.Sequence" class="ql-tail-row">
+                            <span class="ql-tail-ts">@LocalTime(row.Entry.Timestamp)</span>
+                            <span class="ql-tail-level" style="@LevelStyle(row.Entry.Level)">@LevelLabel(row.Entry.Level)</span>
+                            <span class="ql-tail-msg">@row.Entry.Message</span>
                             @if (!string.IsNullOrEmpty(row.Note))
                             {
                                 <span class="ql-tail-latency">@row.Note</span>
@@ -165,6 +172,12 @@
     private string? _connectionError;
     private string? _historyError;
 
+    /// <summary>
+    /// The viewer's offset from UTC. The page renders on the server, so until the
+    /// browser reports its offset the times are UTC.
+    /// </summary>
+    private TimeSpan _viewerOffset = TimeSpan.Zero;
+
     private string ViewportStyle =>
         $"height: {ViewportHeight}; overflow-y: auto; padding: 1rem; font-family: var(--ql-font-mono); font-size: 0.85rem; line-height: 1.5;";
 
@@ -192,8 +205,37 @@
             return;
 
         _flushLoop = RunFlushLoopAsync();
+        await LoadViewerOffsetAsync();
         await ConnectAsync();
     }
+
+    private async Task LoadViewerOffsetAsync()
+    {
+        try
+        {
+            // getTimezoneOffset is minutes behind UTC, so New York in winter is 300.
+            var minutesBehindUtc = await JS.InvokeAsync<int>("qiklogTimezoneOffset");
+            if (minutesBehindUtc is 0 or < -14 * 60 or > 14 * 60)
+                return;
+
+            _viewerOffset = TimeSpan.FromMinutes(-minutesBehindUtc);
+            StateHasChanged();
+        }
+        catch (JSException)
+        {
+            // No script on the page: keep UTC.
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+            // Prerender / circuit not ready.
+        }
+    }
+
+    private string LocalTime(DateTimeOffset timestamp) =>
+        timestamp.ToOffset(_viewerOffset).ToString("HH:mm:ss.fff");
 
     private async Task RunFlushLoopAsync()
     {

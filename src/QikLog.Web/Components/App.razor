@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=Public+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="brand/brand.css" />
-    <link rel="stylesheet" href="app.css?v=20261119" />
+    <link rel="stylesheet" href="app.css?v=20261122" />
     <link rel="icon" href="favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -24,6 +24,10 @@
 </head>
 <body>
     <Routes />
+    <script>
+        // The tail renders on the server; it asks the browser for its UTC offset to show local times.
+        window.qiklogTimezoneOffset = function () { return new Date().getTimezoneOffset(); };
+    </script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

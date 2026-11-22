@@ -68,6 +68,45 @@ public sealed class LinkPageTests : TestContext
         stub.Paths.ShouldNotContain(path => path.StartsWith("/v1/"));
         cut.Markup.ShouldContain("it broke");
         cut.Markup.ShouldContain("ERROR");
+
+        // Then: the heading is plain words, not the internal source name
+        cut.Markup.ShouldContain("Live tail");
+        cut.Markup.ShouldNotContain($"link-{LinkId}");
+
+        // Then: rows use the classes that let the message drop to its own line on a phone
+        cut.Find(".ql-tail-row .ql-tail-msg").TextContent.ShouldBe("it broke");
+        cut.Find("[data-link-sample]").ClassList.ShouldContain("ql-link-sample");
+    }
+
+    [Fact]
+    public void Given_a_viewer_five_hours_behind_utc_When_the_tail_renders_Then_times_are_in_their_local_time()
+    {
+        // Given: a line stored at 20:59:03 UTC, and a browser in New York in winter
+        Install(
+            HttpStatusCode.OK,
+            """[{"source":"link-k7mq2x9d4fab","level":"info","message":"it broke","timestamp":"2026-11-21T20:59:03Z"}]""");
+        JSInterop.Setup<int>("qiklogTimezoneOffset").SetResult(300);
+
+        // When
+        var cut = RenderComponent<Link>(parameters => parameters.Add(p => p.Id, LinkId));
+
+        // Then: 20:59 UTC reads as 15:59
+        cut.WaitForAssertion(() => cut.Find(".ql-tail-ts").TextContent.ShouldBe("15:59:03.000"));
+    }
+
+    [Fact]
+    public void Given_a_browser_that_reports_no_offset_When_the_tail_renders_Then_times_stay_utc()
+    {
+        // Given: no script answer (the test default returns 0)
+        Install(
+            HttpStatusCode.OK,
+            """[{"source":"link-k7mq2x9d4fab","level":"info","message":"it broke","timestamp":"2026-11-21T20:59:03Z"}]""");
+
+        // When
+        var cut = RenderComponent<Link>(parameters => parameters.Add(p => p.Id, LinkId));
+
+        // Then
+        cut.Find(".ql-tail-ts").TextContent.ShouldBe("20:59:03.000");
     }
 
     [Fact]
