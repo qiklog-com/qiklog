@@ -113,6 +113,28 @@ namespace QikLog.Infrastructure.Migrations
                     b.ToTable("log_entries", (string)null);
                 });
 
+            modelBuilder.Entity("QikLog.Infrastructure.Data.LogLinkEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("LineCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.ToTable("log_links", (string)null);
+                });
+
             modelBuilder.Entity("QikLog.Infrastructure.Data.ProcessedStripeEventEntity", b =>
                 {
                     b.Property<string>("EventId")

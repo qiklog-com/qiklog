@@ -12,6 +12,8 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
 
     public DbSet<ProcessedStripeEventEntity> ProcessedStripeEvents => Set<ProcessedStripeEventEntity>();
 
+    public DbSet<LogLinkEntity> LogLinks => Set<LogLinkEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var tenant = modelBuilder.Entity<TenantEntity>();
@@ -35,6 +37,14 @@ public sealed class QikLogDbContext(DbContextOptions<QikLogDbContext> options) :
         stripeEvent.HasKey(e => e.EventId);
         stripeEvent.Property(e => e.EventId).HasMaxLength(255);
         stripeEvent.Property(e => e.Type).HasMaxLength(128).IsRequired();
+
+        var logLink = modelBuilder.Entity<LogLinkEntity>();
+        logLink.ToTable("log_links");
+        logLink.HasKey(l => l.Id);
+        logLink.Property(l => l.Id).HasMaxLength(16);
+        logLink.Property(l => l.CreatedAt).HasColumnType("timestamptz");
+        logLink.Property(l => l.ExpiresAt).HasColumnType("timestamptz");
+        logLink.HasIndex(l => l.ExpiresAt);
 
         var apiKey = modelBuilder.Entity<ApiKeyEntity>();
         apiKey.ToTable("api_keys");

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using QikLog.Infrastructure.Auth;
 using QikLog.Infrastructure.Billing;
 using QikLog.Infrastructure.Data;
+using QikLog.Infrastructure.Links;
 using QikLog.Infrastructure.Sources;
 using QikLog.Infrastructure.Tenants;
 
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.Configure<QikLogAuthOptions>(configuration.GetSection(QikLogAuthOptions.SectionName));
         services.Configure<UsageLimitOptions>(configuration.GetSection(UsageLimitOptions.SectionName));
         services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
+        services.Configure<LogLinkOptions>(configuration.GetSection(LogLinkOptions.SectionName));
         services.AddScoped<IIngestContext, IngestContext>();
         services.AddSingleton<ApiKeyHasher>();
         services.AddSingleton<ApiKeyRateLimiter>();
@@ -42,6 +44,7 @@ public static class DependencyInjection
             services.AddScoped<ISourceCatalog, SourceCatalogService>();
             services.AddScoped<IUsageLimitService, UsageLimitService>();
             services.AddScoped<ITenantBillingService, TenantBillingService>();
+            services.AddScoped<ILogLinkService, EfLogLinkService>();
             RegisterTenantServices(services);
             return services;
         }
@@ -55,6 +58,7 @@ public static class DependencyInjection
             services.AddSingleton<ISourceCatalog, NullSourceCatalog>();
             services.AddSingleton<IUsageLimitService, NullUsageLimitService>();
             services.AddSingleton<ITenantBillingService, NullTenantBillingService>();
+            services.AddSingleton<ILogLinkService, NullLogLinkService>();
             return services;
         }
 
@@ -67,6 +71,7 @@ public static class DependencyInjection
         services.AddScoped<ISourceCatalog, SourceCatalogService>();
         services.AddScoped<IUsageLimitService, UsageLimitService>();
         services.AddScoped<ITenantBillingService, TenantBillingService>();
+        services.AddScoped<ILogLinkService, EfLogLinkService>();
         RegisterTenantServices(services);
         return services;
     }
