@@ -78,6 +78,7 @@ a:hover {
     font-size: 0.875rem;
     font-weight: 400;
     text-decoration: none;
+    white-space: nowrap;
 }
 
 .ql-nav-link:hover {
@@ -450,4 +451,78 @@ h1:focus,
 
 .ql-link-note {
     margin: 0.75rem 0 1.25rem;
+}
+
+.ql-link-page.ql-page-wide {
+    padding-bottom: 0;
+}
+
+.ql-link-tail .ql-page-wide {
+    padding-top: 0.5rem;
+}
+
+/* The address is long; let the sample wrap instead of scrolling sideways. */
+.ql-link-sample {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* One tail row: time, level, message. On a narrow screen the message drops to
+   its own line under the time and level instead of wrapping one word at a time. */
+.ql-tail-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.75rem;
+    padding: 0.15rem 0;
+}
+
+.ql-tail-ts {
+    opacity: 0.5;
+    white-space: nowrap;
+}
+
+.ql-tail-level {
+    min-width: 3.25rem;
+    font-weight: 600;
+}
+
+.ql-tail-msg {
+    flex: 1 1 14rem;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+    /* Header: keep the wordmark and the links on one line without overlapping. */
+    .ql-nav {
+        gap: 0.75rem;
+    }
+
+    .ql-nav-link {
+        font-size: 0.8125rem;
+    }
+
+    .ql-lockup .ql-wordmark {
+        font-size: 1.1rem;
+    }
+
+    .ql-tag {
+        display: none;
+    }
+
+    .ql-link-page.ql-page-wide,
+    .ql-link-tail .ql-page-wide {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .ql-link-page .ql-hero-title {
+        font-size: 2rem;
+    }
+
+    .ql-tail-title {
+        font-size: 1.15rem;
+        white-space: nowrap;
+    }
 }

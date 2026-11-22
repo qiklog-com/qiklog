@@ -218,7 +218,8 @@ const tabsJson = JSON.stringify(LINK_TABS);
     if (!link || !(testBtn instanceof HTMLButtonElement)) return;
     testBtn.disabled = true;
     try {
-      const res = await fetch(link.url, { method: 'POST', body: 'hello from the browser' });
+      // Same words as the sample above, so what lands is what the visitor just read.
+      const res = await fetch(link.url, { method: 'POST', body: 'it broke' });
       if (res.status === 402) setStatus('This link is full. Reading still works.');
       else if (res.status === 404 || res.status === 410) setStatus('This link has expired. Get a new one.');
       else if (!res.ok) setStatus('Could not send the line.');

@@ -51,7 +51,7 @@ public sealed class LandingPageContractTests
         hero.ShouldContain("fetch(`${api}/l`, { method: 'POST' })");
         hero.ShouldContain("/embed/l/");
         hero.ShouldContain("Send a test line");
-        hero.ShouldContain("fetch(link.url, { method: 'POST', body: 'hello from the browser' })");
+        hero.ShouldContain("fetch(link.url, { method: 'POST', body: 'it broke' })");
         hero.ShouldContain("Anyone with this link can read it, so do not log secrets. It lasts 24 hours and holds 500 lines.");
 
         // Then: accounts are mentioned only after the first line lands

@@ -14,7 +14,7 @@
 
 <PageTitle>Log link &middot; QikLog</PageTitle>
 
-<div class="ql-page-wide">
+<div class="ql-page-wide ql-link-page">
     @if (_gone)
     {
         <h1 class="ql-hero-title">This log link is gone</h1>
@@ -36,20 +36,26 @@
             </button>
         </div>
 
-        <pre class="ql-terminal" data-link-sample><span class="ql-terminal-prompt">$ </span>curl @LinkUrl -d "it broke"</pre>
+        <pre class="ql-terminal ql-link-sample" data-link-sample><span class="ql-terminal-prompt">$ </span>curl @LinkUrl -d "it broke"</pre>
 
         <p class="ql-muted ql-link-note">
             Anyone with this link can read it, so do not log secrets.
             It lasts 24 hours and holds 500 lines.
             <a href="/signup">Create a free account</a> for logs that stay private and do not expire.
         </p>
+    }
+</div>
 
+@if (!_gone)
+{
+    @* Outside the page wrapper: the panel brings its own page-width padding. *@
+    <div class="ql-link-tail">
         <LiveTailPanel Source="@LogLinkId.SourceFor(Id)"
                        LinkId="@Id"
                        UseDemoCredential="true"
                        ViewportHeight="55vh" />
-    }
-</div>
+    </div>
+}
 
 @code {
     [Parameter] public string Id { get; set; } = "";
