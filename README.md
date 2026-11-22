@@ -5,16 +5,32 @@
 <p align="center">
   <a href="https://github.com/qiklog-com/qiklog/actions/workflows/ci.yml"><img src="https://github.com/qiklog-com/qiklog/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/.NET-9-512BD4?logo=dotnet&logoColor=white" alt=".NET 9" />
-  <img src="https://img.shields.io/badge/status-pre--alpha-B94700" alt="pre-alpha" />
+  <img src="https://img.shields.io/badge/status-beta-B94700" alt="beta" />
   <a href="https://www.qiklog.com"><img src="https://img.shields.io/badge/www-qiklog.com-2E2A26" alt="www.qiklog.com" /></a>
   <a href="https://app.qiklog.com"><img src="https://img.shields.io/badge/app-app.qiklog.com-B94700" alt="app.qiklog.com" /></a>
 </p>
 
 # QikLog
 
-Lightweight log tailing for developers who want to see what their app is doing right now, without setting up Datadog.
+**console.log for your server.** Get a link. Send it a line. Watch it land.
 
-**Status:** pre-alpha. Hello World + Postgres ingest persistence locally; paid product not yet available.
+```bash
+curl -X POST https://qiklog.com/l                      # get a log link, no account
+curl https://qiklog.com/l/k7mq2x9d4fab -d "it broke"   # send it a line
+open https://qiklog.com/l/k7mq2x9d4fab                 # watch it, live
+```
+
+- **No account, no agent, no dashboard.** The request body is the line.
+- **A link is unlisted, not private.** It lasts 24 hours and holds 500 lines. Do not log secrets to it.
+- **Plain text for terminals and coding agents:** `curl https://qiklog.com/l/k7mq2x9d4fab/raw`
+- **An account makes it private and permanent:** your own sources and API keys. Free up to 10,000 lines a month; Pro is $9/mo for 500,000.
+- **.NET first:** a Serilog sink (`WriteTo.QikLog(...)`) and a `qiklog` CLI.
+
+Monitoring suites are for when it is serious. QikLog is for right now.
+
+User docs: [qiklog.com/docs](https://www.qiklog.com/docs/). Plan and positioning: [docs/MARKETING_PLAN.md](docs/MARKETING_PLAN.md).
+
+**Status:** beta. The source is public to read; all rights reserved (see License).
 
 ## Console apps (WebView shells)
 
