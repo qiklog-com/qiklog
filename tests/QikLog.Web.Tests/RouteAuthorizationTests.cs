@@ -46,6 +46,22 @@ public sealed class RouteAuthorizationTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [Theory]
+    [InlineData("/l/k7mq2x9d4fab")]
+    [InlineData("/embed/l/k7mq2x9d4fab")]
+    public async Task Given_oidc_enabled_and_anonymous_When_opening_a_log_link_Then_page_renders_without_sign_in(string path)
+    {
+        // Given: OIDC on, anonymous visitor, and an API that cannot be reached
+        await using var factory = new WebFactory(authEnabled: true);
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, BaseAddress = new Uri("https://localhost") });
+
+        // When: they open a log link
+        using var response = await client.GetAsync(path);
+
+        // Then: a link needs no account, and an unreachable API does not break the page
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
     [Fact]
     public async Task Given_oidc_disabled_When_opening_manage_Then_page_renders_for_local_demo()
     {

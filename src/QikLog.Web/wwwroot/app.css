@@ -410,3 +410,44 @@ h1:focus,
 .ql-nav-link.ql-nav-cta:hover {
     filter: brightness(1.08);
 }
+
+/* Log link page (/l/{id}): the address, the one line to paste, then the tail. */
+.ql-link-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem;
+}
+
+.ql-link-url {
+    flex: 1 1 18rem;
+    padding: 0.6rem 0.85rem;
+    color: var(--ql-text-ink);
+    background: var(--ql-paper);
+    border: 1px solid var(--ql-hairline);
+    border-radius: var(--ql-radius-sm);
+    font-family: var(--ql-font-mono);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+}
+
+.ql-link-copy {
+    font-family: var(--ql-font-sans);
+    font-size: 0.875rem;
+    color: var(--ql-paper);
+    background: var(--ql-accent-rust);
+    border: 1px solid var(--ql-accent-rust);
+    border-radius: var(--ql-radius-sm);
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+}
+
+.ql-link-copy:focus-visible {
+    outline: 2px solid var(--ql-accent-rust);
+    outline-offset: 2px;
+}
+
+.ql-link-note {
+    margin: 0.75rem 0 1.25rem;
+}

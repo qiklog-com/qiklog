@@ -1,0 +1,86 @@
+@page "/l/{Id}"
+@rendermode InteractiveServer
+@using Microsoft.Extensions.Options
+@using QikLog.Core.Links
+@using QikLog.Web.Components.Shared
+@using QikLog.Web.Services
+@inject IOptions<QikLogOptions> Options
+@inject QikLogApiClient Api
+
+@*
+  The live tail of an anonymous log link. The same address accepts lines (POST) and
+  shows them (this page). See docs/specs/log-link.md.
+*@
+
+<PageTitle>Log link &middot; QikLog</PageTitle>
+
+<div class="ql-page-wide">
+    @if (_gone)
+    {
+        <h1 class="ql-hero-title">This log link is gone</h1>
+        <p class="ql-lede">Links last 24 hours. This one has expired, or the address is not quite right.</p>
+        <p class="ql-muted"><a href="https://qiklog.com">Get a new log link</a></p>
+    }
+    else
+    {
+        <h1 class="ql-hero-title">Your log link</h1>
+        <p class="ql-lede">Send it a line. Watch it land here.</p>
+
+        <div class="ql-link-row">
+            <code class="ql-link-url" data-link-url>@LinkUrl</code>
+            <button type="button"
+                    class="ql-link-copy"
+                    data-copy="@LinkUrl"
+                    onclick="navigator.clipboard.writeText(this.dataset.copy); this.textContent = 'Copied';">
+                Copy link
+            </button>
+        </div>
+
+        <pre class="ql-terminal" data-link-sample><span class="ql-terminal-prompt">$ </span>curl @LinkUrl -d "it broke"</pre>
+
+        <p class="ql-muted ql-link-note">
+            Anyone with this link can read it, so do not log secrets.
+            It lasts 24 hours and holds 500 lines.
+            <a href="/signup">Create a free account</a> for logs that stay private and do not expire.
+        </p>
+
+        <LiveTailPanel Source="@LogLinkId.SourceFor(Id)"
+                       LinkId="@Id"
+                       UseDemoCredential="true"
+                       ViewportHeight="55vh" />
+    }
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    private bool _gone;
+
+    private string LinkUrl
+    {
+        get
+        {
+            var configured = Options.Value.LinkBaseUrl;
+            var origin = string.IsNullOrWhiteSpace(configured) ? Options.Value.ApiBaseUrl : configured;
+            return $"{origin.Trim().TrimEnd('/')}/l/{Id}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!LogLinkId.IsValid(Id))
+        {
+            _gone = true;
+            return;
+        }
+
+        try
+        {
+            _gone = await Api.GetLinkLinesAsync(Id, 1, CancellationToken.None) is null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            // The API is unreachable. Show the page; the tail reports the connection problem.
+        }
+    }
+}
