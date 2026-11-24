@@ -4,7 +4,9 @@
 @using QikLog.Core.Links
 @using QikLog.Web.Components.Shared
 
-@* Compact tail of a log link for the marketing page iframe. *@
+@* Compact tail of a log link for the marketing page iframe. The log area fills the
+   iframe under the LIVE header (4.5rem = embed padding + header + gap + border, with a little slack), so the panel itself
+   never scrolls; only the lines do. *@
 
 <PageTitle>log link &middot; QikLog</PageTitle>
 
@@ -15,7 +17,7 @@
                    Compact="true"
                    UseDemoCredential="true"
                    NotifyEmbed="true"
-                   ViewportHeight="22rem" />
+                   ViewportHeight="calc(100vh - 4.5rem)" />
 }
 else
 {
