@@ -150,4 +150,20 @@ public sealed class LinkPageTests : TestContext
         stub.Paths.ShouldContain(path => path.StartsWith($"/l/{LinkId}/lines"));
         cut.Markup.ShouldNotContain(DemoKey);
     }
+
+    [Fact]
+    public void Given_the_embed_When_rendered_Then_the_log_area_fits_the_iframe_instead_of_a_fixed_height()
+    {
+        // Given: the marketing iframe is shorter than a fixed 22rem log area plus header,
+        // which made the whole panel scroll (2026-11-24)
+        Install(HttpStatusCode.OK, "[]");
+
+        // When
+        var cut = RenderComponent<EmbedLink>(parameters => parameters.Add(p => p.Id, LinkId));
+
+        // Then: the log area is sized from the iframe's own height
+        var viewport = cut.Find("#tail-viewport").GetAttribute("style") ?? "";
+        viewport.ShouldContain("height: calc(100vh - 4.5rem)");
+        viewport.ShouldNotContain("22rem");
+    }
 }
