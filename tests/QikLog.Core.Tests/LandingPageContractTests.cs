@@ -238,6 +238,26 @@ public sealed class LandingPageContractTests
     }
 
     [Fact]
+    public void Given_embed_iframe_When_tail_panel_renders_Then_frame_document_does_not_scroll()
+    {
+        // Given: the marketing site iframes /embed/tail/{source} at a fixed height
+        var embedPage = ReadRepoFile("src/QikLog.Web/Components/Pages/EmbedTail.razor");
+        var brandCss = ReadRepoFile("src/QikLog.Web/wwwroot/brand/brand.css");
+
+        // When: the embed sizes its log viewport and root
+        var rootRule = brandCss[brandCss.IndexOf(".ql-embed-root {", StringComparison.Ordinal)..];
+        rootRule = rootRule[..rootRule.IndexOf('}')];
+
+        // Then: the viewport is sized from the frame height, not a fixed rem value,
+        // and the root is clipped to the frame so the iframe document never scrolls
+        embedPage.ShouldContain("ViewportHeight=\"calc(100vh - 4rem)\"");
+        embedPage.ShouldNotContain("ViewportHeight=\"22rem\"");
+        rootRule.ShouldContain("height: 100vh;");
+        rootRule.ShouldContain("overflow: hidden;");
+        rootRule.ShouldNotContain("min-height");
+    }
+
+    [Fact]
     public void Hero_preview_types_a_production_looking_log_line()
     {
         var preview = ReadRepoFile("www/src/components/TailPreview.astro");

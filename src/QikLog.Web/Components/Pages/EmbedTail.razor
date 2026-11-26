@@ -5,7 +5,9 @@
 
 <PageTitle>live @Source &middot; QikLog</PageTitle>
 
-<LiveTailPanel Source="@Source" Compact="true" NotifyEmbed="true" ViewportHeight="22rem" />
+@* Viewport fills the iframe minus the LIVE header row, card border, and root padding
+   (~60px measured), so the frame document itself never scrolls. Only the log list does. *@
+<LiveTailPanel Source="@Source" Compact="true" NotifyEmbed="true" ViewportHeight="calc(100vh - 4rem)" />
 
 @code {
     [Parameter] public string Source { get; set; } = "";

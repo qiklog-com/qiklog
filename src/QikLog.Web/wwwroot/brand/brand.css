@@ -130,7 +130,9 @@
 .ql-embed-root {
   margin: 0;
   padding: 0.75rem;
-  min-height: 100vh;
+  /* Exactly the iframe height, clipped: the embed must never scroll as a page. */
+  height: 100vh;
+  overflow: hidden;
   background: var(--ql-paper);
   box-sizing: border-box;
 }
